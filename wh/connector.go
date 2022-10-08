@@ -145,6 +145,9 @@ func (c *Connector) backoff(ctx context.Context) {
 	}
 	log.Printf("backoff finished")
 	c.backoffDuration = c.backoffDuration * 2
+	if c.backoffDuration > maxBackoff {
+		c.backoffDuration = maxBackoff
+	}
 }
 
 func (c *Connector) run(ctx context.Context, conn *grpc.ClientConn) error {
