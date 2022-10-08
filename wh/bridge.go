@@ -23,12 +23,18 @@ type Bridge struct {
 }
 
 func NewBridge(info *api.BridgeInfo) *Bridge {
-	return &Bridge{
+	b := &Bridge{
 		info:         info,
 		devices:      make(map[string]Device),
 		deviceInfos:  queue.New[*api.DeviceInfo](),
 		deviceStates: queue.New[*api.DeviceState](),
 	}
+
+	// Discard updates until we're connected to woodhouse.
+	b.deviceInfos.Discard(true)
+	b.deviceStates.Discard(true)
+
+	return b
 }
 
 func (b *Bridge) AddDevice(deviceID string, device Device) {
@@ -113,6 +119,15 @@ func (b *Bridge) Run(appctx context.Context, conn *grpc.ClientConn) error {
 			}
 			b.devicesMu.RUnlock()
 		}
+	}()
+
+	// Stop discarding updates until we're connected to woodhouse.
+	b.deviceInfos.Discard(false)
+	b.deviceStates.Discard(false)
+	defer func() {
+		// Discard updates again when disconnected.
+		b.deviceInfos.Discard(true)
+		b.deviceStates.Discard(true)
 	}()
 
 	// Flush queues before fill them with fresh items.

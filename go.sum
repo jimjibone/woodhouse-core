@@ -30,6 +30,8 @@ github.com/grandcat/zeroconf v1.0.0 h1:uHhahLBKqwWBV6WZUDAT71044vwOTL+McW0mBJvo6
 github.com/grandcat/zeroconf v1.0.0/go.mod h1:lTKmG1zh86XyCoUeIHSA4FJMBwCJiQmGfcP2PdzytEs=
 github.com/jimjibone/queue v0.0.0-20220328224520-d00fbb7b8c31 h1:XJGxZ+C34aIW/nKqStTMx4ZDGFxiUI85PZFMM0xdr/Y=
 github.com/jimjibone/queue v0.0.0-20220328224520-d00fbb7b8c31/go.mod h1:x9lSdmhC96e5FY2HvbEnFl+4IKhNje2gAIP//7wYcZM=
+github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac h1:Vyb1xeKPdJ1MBpeamVzBLj+EKuaFqIc6V2yrRk4IG1s=
+github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac/go.mod h1:x9lSdmhC96e5FY2HvbEnFl+4IKhNje2gAIP//7wYcZM=
 github.com/miekg/dns v1.1.27 h1:aEH/kqUzUxGJ/UHcEKdJY+ugH6WEzsEBBSPa8zuy1aM=
 github.com/miekg/dns v1.1.27/go.mod h1:KNUDUusw/aVsxyTYZM1oqvCicbwhgbNgztCETuNZ7xM=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

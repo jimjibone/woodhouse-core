@@ -9,7 +9,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grandcat/zeroconf v1.0.0 // indirect
-	github.com/jimjibone/queue v0.0.0-20220328224520-d00fbb7b8c31 // indirect
+	github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac // indirect
 	github.com/miekg/dns v1.1.27 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/mnemonicode v1.0.1 // indirect
