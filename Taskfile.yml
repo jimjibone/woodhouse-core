@@ -1,0 +1,50 @@
+version: '3'
+
+includes:
+  api:
+    taskfile: ./api/Taskfile.yml
+    dir: ./api
+
+tasks:
+  default:
+    deps:
+      - build
+
+  proto:
+    deps:
+      - api:proto-go
+
+  build:
+    deps:
+      - build-core
+      - build-bridge-shelly
+
+  run:
+    deps:
+      - run-core
+
+  build-core:
+    deps:
+      - proto
+    cmds:
+      - mkdir -p build
+      - go build -o build/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
+
+  run-core:
+    deps:
+      - build-core
+    cmds:
+      - cd build && ./woodhouse-core{{exeExt}}
+
+  build-bridge-shelly:
+    deps:
+      - proto
+    cmds:
+      - mkdir -p build
+      - go build -o build/woodhouse-bridge-shelly{{exeExt}} ./cmd/woodhouse-bridge-shelly
+
+  run-bridge-shelly:
+    deps:
+      - build-bridge-shelly
+    cmds:
+      - cd build && ./woodhouse-bridge-shelly{{exeExt}}
