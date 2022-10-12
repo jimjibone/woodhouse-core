@@ -41,7 +41,7 @@ func (b *Bridge) AddDevice(deviceID string, device Device) {
 	b.devicesMu.Lock()
 	defer b.devicesMu.Unlock()
 	b.devices[deviceID] = device
-	device.Init(&BridgeDevice{
+	device.Init(&BridgeComms{
 		deviceInfos:  b.deviceInfos,
 		deviceStates: b.deviceStates,
 	})
