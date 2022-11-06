@@ -16,9 +16,9 @@ type BridgeService struct {
 	requests *queue.Pub[*api.DeviceRequest]
 }
 
-func NewBridgeService() *BridgeService {
+func NewBridgeService(rs *ReactorService) *BridgeService {
 	return &BridgeService{
-		requests: queue.NewPub[*api.DeviceRequest](),
+		requests: rs.requests,
 	}
 }
 
@@ -68,12 +68,24 @@ func (b *BridgeService) GetDeviceRequests(server api.BridgeService_GetDeviceRequ
 	// 			return
 	// 		case <-ticker.C:
 	// 			lastval = !lastval
+	// 			// b.requests.Pub(&api.DeviceRequest{
+	// 			// 	BridgeId: bridgeID,
+	// 			// 	DeviceId: "shellydimmer2-redacted",
+	// 			// 	Values: []*api.DeviceValue{
+	// 			// 		{
+	// 			// 			Name: "On",
+	// 			// 			Bool: &api.BoolValue{
+	// 			// 				Value: lastval,
+	// 			// 			},
+	// 			// 		},
+	// 			// 	},
+	// 			// })
 	// 			b.requests.Pub(&api.DeviceRequest{
 	// 				BridgeId: bridgeID,
-	// 				DeviceId: "shellydimmer2-redacted",
+	// 				DeviceId: "zigbeeredacted",
 	// 				Values: []*api.DeviceValue{
 	// 					{
-	// 						Name: "On",
+	// 						Name: "state",
 	// 						Bool: &api.BoolValue{
 	// 							Value: lastval,
 	// 						},

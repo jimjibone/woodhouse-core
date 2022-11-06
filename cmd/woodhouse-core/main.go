@@ -46,7 +46,8 @@ func main() {
 			}
 
 			// Create services.
-			bridgeService := NewBridgeService()
+			reactorService := NewReactorService()
+			bridgeService := NewBridgeService(reactorService)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", lis.Addr())
@@ -64,6 +65,7 @@ func main() {
 			// grpc.Creds(creds),
 			)
 			api.RegisterBridgeServiceServer(server, bridgeService)
+			api.RegisterReactorServiceServer(server, reactorService)
 			reflection.Register(server)
 
 			// Run the server.
