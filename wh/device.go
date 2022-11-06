@@ -1,7 +1,7 @@
 package wh
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/jimjibone/queue/v2"
 	api "github.com/jimjibone/woodhouse-4/api/go"
@@ -13,20 +13,37 @@ type BridgeComms struct {
 	deviceStates *queue.Queue[*api.DeviceState]
 }
 
-func (bd *BridgeComms) SendInfo(info *api.DeviceInfo) {
-	if bd != nil {
-		bd.deviceInfos.Push(proto.Clone(info).(*api.DeviceInfo))
-	} else {
-		log.Printf("ERROR: SendInfo called on nil BridgeComms")
+func (bd *BridgeComms) SendInfo(info *api.DeviceInfo) error {
+	if bd == nil {
+		return fmt.Errorf("nil receiver")
 	}
+	if info == nil {
+		return fmt.Errorf("nil info")
+	}
+	if info.DeviceId == "" {
+		return fmt.Errorf("device id must be set")
+	}
+	bd.deviceInfos.Push(proto.Clone(info).(*api.DeviceInfo))
+	return nil
 }
 
-func (bd *BridgeComms) SendState(state *api.DeviceState) {
-	if bd != nil {
-		bd.deviceStates.Push(proto.Clone(state).(*api.DeviceState))
-	} else {
-		log.Printf("ERROR: SendState called on nil BridgeComms")
+func (bd *BridgeComms) SendState(state *api.DeviceState) error {
+	if bd == nil {
+		return fmt.Errorf("nil receiver")
 	}
+	if state == nil {
+		return fmt.Errorf("nil state")
+	}
+	if state.DeviceId == "" {
+		return fmt.Errorf("device id must be set")
+	}
+	for i, val := range state.Values {
+		if val.Name == "" {
+			return fmt.Errorf("value %d must have a name", i)
+		}
+	}
+	bd.deviceStates.Push(proto.Clone(state).(*api.DeviceState))
+	return nil
 }
 
 type Device interface {
