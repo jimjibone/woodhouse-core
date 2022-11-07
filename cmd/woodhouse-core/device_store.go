@@ -10,28 +10,43 @@ import (
 )
 
 type DeviceStore struct {
-	mu        sync.RWMutex
-	infos     map[string]*api.DeviceInfo
-	states    map[string]*api.DeviceState
-	infosPub  *queue.Pub[*api.DeviceInfo]
-	statesPub *queue.Pub[*api.DeviceState]
+	mu         sync.RWMutex
+	bridges    map[string]*api.BridgeInfo
+	infos      map[string]*api.DeviceInfo
+	states     map[string]*api.DeviceState
+	bridgesPub *queue.Pub[*api.BridgeInfo]
+	infosPub   *queue.Pub[*api.DeviceInfo]
+	statesPub  *queue.Pub[*api.DeviceState]
 }
 
 func NewDeviceStore() *DeviceStore {
 	return &DeviceStore{
-		infos:     make(map[string]*api.DeviceInfo),
-		states:    make(map[string]*api.DeviceState),
-		infosPub:  queue.NewPub[*api.DeviceInfo](),
-		statesPub: queue.NewPub[*api.DeviceState](),
+		bridges:    make(map[string]*api.BridgeInfo),
+		infos:      make(map[string]*api.DeviceInfo),
+		states:     make(map[string]*api.DeviceState),
+		bridgesPub: queue.NewPub[*api.BridgeInfo](),
+		infosPub:   queue.NewPub[*api.DeviceInfo](),
+		statesPub:  queue.NewPub[*api.DeviceState](),
 	}
 }
 
-// func (ds *DeviceStore) SetBridgeInfo(in *api.BridgeInfo) (error) {
-// 	ds.mu.Lock()
-// 	defer ds.mu.Unlock()
-// 	log.Printf("SetBridgeInfo %s", in)
-// 	return nil
-// }
+func (ds *DeviceStore) SetBridgeInfo(in *api.BridgeInfo) error {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	if prev, found := ds.bridges[in.BridgeId]; found {
+		log.Printf("SetBridgeInfo updated %s", in)
+		prev.Name = in.Name
+		prev.Description = in.Description
+		prev.BootTime = proto.Clone(in.BootTime).(*api.Timestamp)
+	} else {
+		log.Printf("SetBridgeInfo added %s", in)
+		ds.bridges[in.BridgeId] = proto.Clone(in).(*api.BridgeInfo)
+	}
+
+	// Publish the new version.
+	ds.bridgesPub.Pub(proto.Clone(ds.bridges[in.BridgeId]).(*api.BridgeInfo))
+	return nil
+}
 
 func (ds *DeviceStore) SetDeviceInfo(in *api.DeviceInfo) error {
 	ds.mu.Lock()
@@ -83,6 +98,16 @@ func (ds *DeviceStore) SetDeviceState(in *api.DeviceState) error {
 	// Publish the new version.
 	ds.statesPub.Pub(proto.Clone(ds.states[fullID]).(*api.DeviceState))
 	return nil
+}
+
+func (ds *DeviceStore) GetBridgeInfos() []*api.BridgeInfo {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	var out []*api.BridgeInfo
+	for _, bridge := range ds.bridges {
+		out = append(out, proto.Clone(bridge).(*api.BridgeInfo))
+	}
+	return out
 }
 
 func (ds *DeviceStore) GetDeviceInfos() []*api.DeviceInfo {

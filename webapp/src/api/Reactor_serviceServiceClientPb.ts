@@ -17,6 +17,7 @@
 
 import * as grpcWeb from 'grpc-web';
 
+import * as bridge_pb from './bridge_pb';
 import * as device_pb from './device_pb';
 import * as reactor_service_pb from './reactor_service_pb';
 
@@ -38,6 +39,28 @@ export class ReactorServiceClient {
     this.hostname_ = hostname.replace(/\/+$/, '');
     this.credentials_ = credentials;
     this.options_ = options;
+  }
+
+  methodDescriptorGetBridgeInfos = new grpcWeb.MethodDescriptor(
+    '/woodhouse.api.ReactorService/GetBridgeInfos',
+    grpcWeb.MethodType.SERVER_STREAMING,
+    reactor_service_pb.GetBridgeInfosRequest,
+    bridge_pb.BridgeInfo,
+    (request: reactor_service_pb.GetBridgeInfosRequest) => {
+      return request.serializeBinary();
+    },
+    bridge_pb.BridgeInfo.deserializeBinary
+  );
+
+  getBridgeInfos(
+    request: reactor_service_pb.GetBridgeInfosRequest,
+    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<bridge_pb.BridgeInfo> {
+    return this.client_.serverStreaming(
+      this.hostname_ +
+        '/woodhouse.api.ReactorService/GetBridgeInfos',
+      request,
+      metadata || {},
+      this.methodDescriptorGetBridgeInfos);
   }
 
   methodDescriptorGetDeviceInfos = new grpcWeb.MethodDescriptor(

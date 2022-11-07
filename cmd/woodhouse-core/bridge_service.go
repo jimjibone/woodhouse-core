@@ -25,7 +25,10 @@ func NewBridgeService(ds *DeviceStore, rs *ReactorService) *BridgeService {
 }
 
 func (b *BridgeService) SetBridgeInfo(ctx context.Context, in *api.BridgeInfo) (*api.SetBridgeInfoResponse, error) {
-	log.Printf("SetBridgeInfo %s", in)
+	err := b.ds.SetBridgeInfo(in)
+	if err != nil {
+		return nil, err
+	}
 	return &api.SetBridgeInfoResponse{}, nil
 }
 

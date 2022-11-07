@@ -21,6 +21,42 @@ func NewReactorService(ds *DeviceStore) *ReactorService {
 	}
 }
 
+func (rs *ReactorService) GetBridgeInfos(in *api.GetBridgeInfosRequest, server api.ReactorService_GetBridgeInfosServer) error {
+	log.Printf("GetBridgeInfos started")
+	defer log.Printf("GetBridgeInfos finished")
+
+	sub := rs.ds.bridgesPub.NewSub()
+	defer sub.Close()
+
+	for _, item := range rs.ds.GetBridgeInfos() {
+		err := server.Send(item)
+		if err != nil {
+			log.Printf("ERROR: GetBridgeInfos during send: %s", err)
+			return err
+		}
+	}
+
+	err := server.Send(&api.BridgeInfo{})
+	if err != nil {
+		log.Printf("ERROR: GetBridgeInfos during send: %s", err)
+		return err
+	}
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return nil
+
+		case item := <-sub.Sub():
+			err := server.Send(item)
+			if err != nil {
+				log.Printf("ERROR: GetBridgeInfos during send: %s", err)
+				return err
+			}
+		}
+	}
+}
+
 func (rs *ReactorService) GetDeviceInfos(in *api.GetDeviceInfosRequest, server api.ReactorService_GetDeviceInfosServer) error {
 	log.Printf("GetDeviceInfos started")
 	defer log.Printf("GetDeviceInfos finished")

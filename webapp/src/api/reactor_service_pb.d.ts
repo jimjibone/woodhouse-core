@@ -1,7 +1,22 @@
 import * as jspb from 'google-protobuf'
 
+import * as bridge_pb from './bridge_pb';
 import * as device_pb from './device_pb';
 
+
+export class GetBridgeInfosRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetBridgeInfosRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetBridgeInfosRequest): GetBridgeInfosRequest.AsObject;
+  static serializeBinaryToWriter(message: GetBridgeInfosRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetBridgeInfosRequest;
+  static deserializeBinaryFromReader(message: GetBridgeInfosRequest, reader: jspb.BinaryReader): GetBridgeInfosRequest;
+}
+
+export namespace GetBridgeInfosRequest {
+  export type AsObject = {
+  }
+}
 
 export class GetDeviceInfosRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
