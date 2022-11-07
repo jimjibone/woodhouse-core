@@ -46,8 +46,9 @@ func main() {
 			}
 
 			// Create services.
-			reactorService := NewReactorService()
-			bridgeService := NewBridgeService(reactorService)
+			deviceStore := NewDeviceStore()
+			reactorService := NewReactorService(deviceStore)
+			bridgeService := NewBridgeService(deviceStore, reactorService)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", lis.Addr())

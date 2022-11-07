@@ -13,11 +13,13 @@ import (
 
 type BridgeService struct {
 	api.UnimplementedBridgeServiceServer
+	ds       *DeviceStore
 	requests *queue.Pub[*api.DeviceRequest]
 }
 
-func NewBridgeService(rs *ReactorService) *BridgeService {
+func NewBridgeService(ds *DeviceStore, rs *ReactorService) *BridgeService {
 	return &BridgeService{
+		ds:       ds,
 		requests: rs.requests,
 	}
 }
@@ -28,12 +30,18 @@ func (b *BridgeService) SetBridgeInfo(ctx context.Context, in *api.BridgeInfo) (
 }
 
 func (b *BridgeService) SetDeviceInfo(ctx context.Context, in *api.DeviceInfo) (*api.SetDeviceInfoResponse, error) {
-	log.Printf("SetDeviceInfo %s", in)
+	err := b.ds.SetDeviceInfo(in)
+	if err != nil {
+		return nil, err
+	}
 	return &api.SetDeviceInfoResponse{}, nil
 }
 
 func (b *BridgeService) SetDeviceState(ctx context.Context, in *api.DeviceState) (*api.SetDeviceStateResponse, error) {
-	log.Printf("SetDeviceState %s", in)
+	err := b.ds.SetDeviceState(in)
+	if err != nil {
+		return nil, err
+	}
 	return &api.SetDeviceStateResponse{}, nil
 }
 

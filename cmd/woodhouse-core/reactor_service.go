@@ -10,11 +10,13 @@ import (
 
 type ReactorService struct {
 	api.UnimplementedReactorServiceServer
+	ds       *DeviceStore
 	requests *queue.Pub[*api.DeviceRequest]
 }
 
-func NewReactorService() *ReactorService {
+func NewReactorService(ds *DeviceStore) *ReactorService {
 	return &ReactorService{
+		ds:       ds,
 		requests: queue.NewPub[*api.DeviceRequest](),
 	}
 }
@@ -22,17 +24,73 @@ func NewReactorService() *ReactorService {
 func (rs *ReactorService) GetDeviceInfos(in *api.GetDeviceInfosRequest, server api.ReactorService_GetDeviceInfosServer) error {
 	log.Printf("GetDeviceInfos started")
 	defer log.Printf("GetDeviceInfos finished")
-	<-server.Context().Done()
-	return nil
-	// return status.Errorf(codes.Unimplemented, "method GetDeviceInfos not implemented")
+
+	sub := rs.ds.infosPub.NewSub()
+	defer sub.Close()
+
+	for _, item := range rs.ds.GetDeviceInfos() {
+		err := server.Send(item)
+		if err != nil {
+			log.Printf("ERROR: GetDeviceInfos during send: %s", err)
+			return err
+		}
+	}
+
+	err := server.Send(&api.DeviceInfo{})
+	if err != nil {
+		log.Printf("ERROR: GetDeviceInfos during send: %s", err)
+		return err
+	}
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return nil
+
+		case item := <-sub.Sub():
+			err := server.Send(item)
+			if err != nil {
+				log.Printf("ERROR: GetDeviceInfos during send: %s", err)
+				return err
+			}
+		}
+	}
 }
 
 func (rs *ReactorService) GetDeviceStates(in *api.GetDeviceStatesRequest, server api.ReactorService_GetDeviceStatesServer) error {
 	log.Printf("GetDeviceStates started")
 	defer log.Printf("GetDeviceStates finished")
-	<-server.Context().Done()
-	return nil
-	// return status.Errorf(codes.Unimplemented, "method GetDeviceStates not implemented")
+
+	sub := rs.ds.statesPub.NewSub()
+	defer sub.Close()
+
+	for _, item := range rs.ds.GetDeviceStates() {
+		err := server.Send(item)
+		if err != nil {
+			log.Printf("ERROR: GetDeviceStates during send: %s", err)
+			return err
+		}
+	}
+
+	err := server.Send(&api.DeviceState{})
+	if err != nil {
+		log.Printf("ERROR: GetDeviceStates during send: %s", err)
+		return err
+	}
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return nil
+
+		case item := <-sub.Sub():
+			err := server.Send(item)
+			if err != nil {
+				log.Printf("ERROR: GetDeviceStates during send: %s", err)
+				return err
+			}
+		}
+	}
 }
 
 func (rs *ReactorService) SendDeviceRequest(ctx context.Context, in *api.DeviceRequest) (*api.DeviceResponse, error) {
