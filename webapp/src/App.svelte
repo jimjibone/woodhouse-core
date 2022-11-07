@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { Router, Route } from 'svelte-routing';
-	// import { onDestroy } from 'svelte/internal';
 	import classnames from 'classnames';
-	// import type { DeviceInfo } from './api/device_pb';
 	import NavLink from './components/NavLink.svelte';
-	// import { deviceInfosStream } from './store';
 	import DevicesPage from './pages/DevicesPage.svelte';
+	import BridgesPage from './pages/BridgesPage.svelte';
 
 	export let url = "";
 
@@ -46,7 +44,8 @@
 			<div class={navbarMenuClasses}>
 				<div class="navbar-start">
 					<NavLink to="/">Home</NavLink>
-					<NavLink to="devices">Devices</NavLink>
+					<NavLink to="/devices">Devices</NavLink>
+					<NavLink to="/bridges">Bridges</NavLink>
 				</div>
 			</div>
 		</nav>
@@ -64,6 +63,7 @@
 			</section>
 		</Route>
 		<Route path="/devices" component="{DevicesPage}" />
+		<Route path="/bridges" component="{BridgesPage}" />
 		</div>
 	</Router>
 </main>

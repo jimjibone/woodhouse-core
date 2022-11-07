@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte/internal';
     import type { Unsubscriber } from 'svelte/store';
 	import type { DeviceInfo } from '../api/device_pb';
-	import { deviceInfosStream } from '../store';
+	import { deviceInfosStream } from '../stores/devices';
 
 	let deviceInfos: DeviceInfo[] = [];
 	let deviceInfosConnected: boolean = false;
