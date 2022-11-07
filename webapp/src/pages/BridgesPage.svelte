@@ -11,13 +11,11 @@
 	let unsubscribeBridgeInfosConnected: Unsubscriber = null;
 
 	onMount(async () => {
-		console.log("BridgesPage onMount");
 		unsubscribeBridgeInfos = bridgeInfosStream.subscribeData(value => { bridgeInfos = value; });
 		unsubscribeBridgeInfosConnected = bridgeInfosStream.subscribeConnected(value => { bridgeInfosConnected = value; });
 	});
 
 	onDestroy(() => {
-		console.log("BridgesPage onDestroy");
 		unsubscribeBridgeInfos();
 		unsubscribeBridgeInfosConnected();
 	});

@@ -51,3 +51,15 @@ tasks:
       - mkdir -p ./src/api
       - protoc -I../api --plugin="protoc-gen-ts={{.PROTOC_GEN_TS}}" --js_out=import_style=commonjs:./src/api --ts_out=./src/api ../api/*.proto
       - protoc -I../api --plugin="{{.PROTOC_GEN_GRPC_WEB}}" --grpc-web_out=import_style=typescript,mode=grpcwebtext:./src/api ../api/*_service.proto
+
+  build:
+    deps:
+      - proto
+    cmds:
+      - npm run build
+
+  dev:
+    deps:
+      - proto
+    cmds:
+      - npm run dev
