@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import type * as grpcWeb from 'grpc-web';
-import type { DeviceInfo, DeviceState } from '../api/device_pb';
+import type { DeviceInfo, DeviceResponse, DeviceState } from '../api/device_pb';
+import type { DeviceRequest } from '../api/device_pb';
 import { ReactorServiceClient } from '../api/Reactor_serviceServiceClientPb';
 import { GetDeviceInfosRequest, GetDeviceStatesRequest } from '../api/reactor_service_pb';
 import { createBackoff, defaultMinBackoffMs, defaultMaxBackoffMs } from './utils';
@@ -261,4 +262,8 @@ function createDevicesStream(name: string, debug: boolean) {
 		subscribeData: dataWriter.subscribe,
 		subscribeConnected: connectedWriter.subscribe,
 	};
+}
+
+export function sendDeviceRequest(req: DeviceRequest) : Promise<DeviceResponse> {
+	return reactorClient.sendDeviceRequest(req, null); //, {"authorization": getAccessToken()});
 }

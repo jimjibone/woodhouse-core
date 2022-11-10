@@ -1,0 +1,7 @@
+.is-inline-spacing > div:not(:first-child) {
+    padding-left: 1rem;
+}
+
+.is-inline-spacing > div:not(:last-child) {
+    padding-right: 1rem;
+}

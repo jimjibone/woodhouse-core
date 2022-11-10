@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte/internal';
 	import type { Unsubscriber } from 'svelte/store';
-	import type { DeviceInfo, DeviceState } from '../api/device_pb';
-    import DeviceValue from '../components/DeviceValue.svelte';
 	import { devicesStream, DeviceInfoState } from '../stores/devices';
+	import DevicePageItem from './DevicePageItem.svelte';
 
 	let devices: DeviceInfoState[] = [];
 	let connected: boolean = false;
@@ -37,20 +36,7 @@
 </section>
 
 {#each devices as device (device.fullId)}
-<div class="column is-full">
-	<div class="box">
-		{device.fullId}
-		{#if device.info != null}
-			{device.info.getBridgeId()} {device.info.getDeviceId()} {device.info.getName()} <a href="{device.info.getUrl()}">{device.info.getUrl()}</a>
-		{/if}
-		{#if device.state != null}
-			{device.state.getBridgeId()} {device.state.getDeviceId()} {device.state.getValuesList().length}
-			{#each device.state.getValuesList() as value (value.getName())}
-				<DeviceValue value={value} />
-			{/each}
-		{/if}
-	</div>
-</div>
+<DevicePageItem device={device} />
 {:else}
 <div class="column is-full">
 	<div class="box">
