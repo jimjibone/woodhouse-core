@@ -6,8 +6,9 @@ import { GetBridgeInfosRequest } from '../api/reactor_service_pb';
 import { createBackoff, defaultMinBackoffMs, defaultMaxBackoffMs } from './utils';
 
 const reactorClient = new ReactorServiceClient('/api');
+const debug = false;
 
-export const bridgeInfosStream = createBridgeInfosStream("getBridgeInfos", true);
+export const bridgeInfosStream = createBridgeInfosStream("getBridgeInfos", debug);
 function createBridgeInfosStream(name: string, debug: boolean) {
 	let data: BridgeInfo[] = [];
 	let connected: boolean = false;

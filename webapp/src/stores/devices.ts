@@ -7,8 +7,9 @@ import { GetDeviceInfosRequest, GetDeviceStatesRequest } from '../api/reactor_se
 import { createBackoff, defaultMinBackoffMs, defaultMaxBackoffMs } from './utils';
 
 const reactorClient = new ReactorServiceClient('/api');
+const debug = false;
 
-export const deviceInfosStream = createDeviceInfosStream("getDeviceInfos", true);
+export const deviceInfosStream = createDeviceInfosStream("getDeviceInfos", debug);
 function createDeviceInfosStream(name: string, debug: boolean) {
 	let data: DeviceInfo[] = [];
 	let connected: boolean = false;
@@ -74,7 +75,7 @@ function createDeviceInfosStream(name: string, debug: boolean) {
 	};
 }
 
-export const deviceStatesStream = createDeviceStatesStream("getDeviceStates", true);
+export const deviceStatesStream = createDeviceStatesStream("getDeviceStates", debug);
 function createDeviceStatesStream(name: string, debug: boolean) {
 	let data: DeviceState[] = [];
 	let connected: boolean = false;
@@ -146,7 +147,7 @@ export type DeviceInfoState = {
 	state: DeviceState,
 }
 
-export const devicesStream = createDevicesStream("deviceStream", true);
+export const devicesStream = createDevicesStream("deviceStream", debug);
 function createDevicesStream(name: string, debug: boolean) {
 	let data: DeviceInfoState[] = [];
 	let connected: boolean = false;
