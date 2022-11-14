@@ -11,6 +11,9 @@ includes:
   api:
     taskfile: ./api/Taskfile.yml
     dir: ./api
+  webapp:
+    taskfile: ./webapp/Taskfile.yml
+    dir: ./webapp
 
 tasks:
   default:
@@ -20,6 +23,12 @@ tasks:
   proto:
     deps:
       - api:proto-go
+      - webapp:proto
+
+  proto-all:
+    deps:
+      - proto
+      - webapp:proto
 
   build-dir:
     cmds:
@@ -30,6 +39,11 @@ tasks:
       - build-core
       - build-bridge-shelly
       - build-bridge-zigbee
+
+  build-all:
+    cmds:
+      - task: webapp:build
+      - task: build
 
   run:
     deps:
