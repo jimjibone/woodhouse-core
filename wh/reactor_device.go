@@ -10,13 +10,14 @@ import (
 )
 
 type ReactorDevice struct {
-	reactor         *Reactor
-	bridgeID        string
-	deviceID        string
-	valuesMu        sync.RWMutex
-	values          map[string]*api.DeviceValue
-	eventHandlersMu sync.RWMutex
-	eventHandlers   map[string]*eventHandler
+	reactor       *Reactor
+	bridgeID      string
+	deviceID      string
+	valuesMu      sync.RWMutex
+	values        map[string]*api.DeviceValue
+	handlersMu    sync.RWMutex
+	stateHandlers []func(value []*api.DeviceValue)
+	eventHandlers map[string]*eventHandler
 }
 
 type eventHandler struct {
@@ -48,6 +49,11 @@ func (rd *ReactorDevice) handleState(state *api.DeviceState) {
 		rd.values[name] = proto.Clone(value).(*api.DeviceValue)
 	}
 
+	// Call any state handlers.
+	for _, handler := range rd.stateHandlers {
+		handler(state.Values)
+	}
+
 	// Call any matching event handlers.
 	for _, value := range state.Values {
 		name := strings.ToLower(value.Name)
@@ -66,9 +72,15 @@ func (rd *ReactorDevice) originalValueName(name string) string {
 	return name
 }
 
+func (rd *ReactorDevice) OnState(handler func(values []*api.DeviceValue)) {
+	rd.handlersMu.Lock()
+	defer rd.handlersMu.Unlock()
+	rd.stateHandlers = append(rd.stateHandlers, handler)
+}
+
 func (rd *ReactorDevice) OnEvent(name string, handler func(value *api.DeviceValue)) {
-	rd.eventHandlersMu.Lock()
-	defer rd.eventHandlersMu.Unlock()
+	rd.handlersMu.Lock()
+	defer rd.handlersMu.Unlock()
 	name = strings.ToLower(name)
 	if handlers, found := rd.eventHandlers[name]; found {
 		handlers.Handlers = append(handlers.Handlers, handler)
