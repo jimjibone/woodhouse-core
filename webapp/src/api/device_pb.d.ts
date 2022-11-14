@@ -159,6 +159,11 @@ export class DeviceValue extends jspb.Message {
   getText(): value_pb.TextValue | undefined;
   setText(value?: value_pb.TextValue): void;
 
+  hasColor(): boolean;
+  clearColor(): void;
+  getColor(): value_pb.ColorValue | undefined;
+  setColor(value?: value_pb.ColorValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeviceValue.AsObject;
   static toObject(includeInstance: boolean, msg: DeviceValue): DeviceValue.AsObject;
@@ -175,6 +180,7 @@ export namespace DeviceValue {
     bool?: value_pb.BoolValue.AsObject,
     number?: value_pb.NumberValue.AsObject,
     text?: value_pb.TextValue.AsObject,
+    color?: value_pb.ColorValue.AsObject,
   }
 }
 

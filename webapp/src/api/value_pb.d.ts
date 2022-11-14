@@ -63,3 +63,27 @@ export namespace TextValue {
   }
 }
 
+export class ColorValue extends jspb.Message {
+  getHue(): number;
+  setHue(value: number): void;
+
+  getSat(): number;
+  setSat(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ColorValue.AsObject;
+  static toObject(includeInstance: boolean, msg: ColorValue): ColorValue.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ColorValue, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ColorValue;
+  static deserializeBinaryFromReader(message: ColorValue, reader: jspb.BinaryReader): ColorValue;
+}
+
+export namespace ColorValue {
+  export type AsObject = {
+    hue: number,
+    sat: number,
+  }
+}
+

@@ -1138,7 +1138,8 @@ proto.woodhouse.api.DeviceValue.toObject = function(includeInstance, msg) {
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
     bool: (f = msg.getBool()) && value_pb.BoolValue.toObject(includeInstance, f),
     number: (f = msg.getNumber()) && value_pb.NumberValue.toObject(includeInstance, f),
-    text: (f = msg.getText()) && value_pb.TextValue.toObject(includeInstance, f)
+    text: (f = msg.getText()) && value_pb.TextValue.toObject(includeInstance, f),
+    color: (f = msg.getColor()) && value_pb.ColorValue.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -1193,6 +1194,11 @@ proto.woodhouse.api.DeviceValue.deserializeBinaryFromReader = function(msg, read
       var value = new value_pb.TextValue;
       reader.readMessage(value,value_pb.TextValue.deserializeBinaryFromReader);
       msg.setText(value);
+      break;
+    case 5:
+      var value = new value_pb.ColorValue;
+      reader.readMessage(value,value_pb.ColorValue.deserializeBinaryFromReader);
+      msg.setColor(value);
       break;
     default:
       reader.skipField();
@@ -1252,6 +1258,14 @@ proto.woodhouse.api.DeviceValue.serializeBinaryToWriter = function(message, writ
       4,
       f,
       value_pb.TextValue.serializeBinaryToWriter
+    );
+  }
+  f = message.getColor();
+  if (f != null) {
+    writer.writeMessage(
+      5,
+      f,
+      value_pb.ColorValue.serializeBinaryToWriter
     );
   }
 };
@@ -1383,6 +1397,43 @@ proto.woodhouse.api.DeviceValue.prototype.clearText = function() {
  */
 proto.woodhouse.api.DeviceValue.prototype.hasText = function() {
   return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * optional ColorValue color = 5;
+ * @return {?proto.woodhouse.api.ColorValue}
+ */
+proto.woodhouse.api.DeviceValue.prototype.getColor = function() {
+  return /** @type{?proto.woodhouse.api.ColorValue} */ (
+    jspb.Message.getWrapperField(this, value_pb.ColorValue, 5));
+};
+
+
+/**
+ * @param {?proto.woodhouse.api.ColorValue|undefined} value
+ * @return {!proto.woodhouse.api.DeviceValue} returns this
+*/
+proto.woodhouse.api.DeviceValue.prototype.setColor = function(value) {
+  return jspb.Message.setWrapperField(this, 5, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.woodhouse.api.DeviceValue} returns this
+ */
+proto.woodhouse.api.DeviceValue.prototype.clearColor = function() {
+  return this.setColor(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.woodhouse.api.DeviceValue.prototype.hasColor = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 

@@ -27,6 +27,8 @@
 		<p>Number: {value.getNumber().getValue()}</p>
 		{:else if value.hasText()}
 		<p>Text: {value.getText().getValue()}</p>
+		{:else if value.hasColor()}
+		<p>Color: Hue: {value.getColor().getHue()}, Sat: {value.getColor().getSat()}</p>
 		{/if}
 	</div>
 </div>
