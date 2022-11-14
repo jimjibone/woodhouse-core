@@ -1,5 +1,12 @@
 version: '3'
 
+vars:
+  GOOS:
+    sh: go env GOOS
+  GOARCH:
+    sh: go env GOARCH
+  BUILD_DIR: "build-{{.GOOS}}-{{.GOARCH}}"
+
 includes:
   api:
     taskfile: ./api/Taskfile.yml
@@ -14,6 +21,10 @@ tasks:
     deps:
       - api:proto-go
 
+  build-dir:
+    cmds:
+      - mkdir -p "{{.BUILD_DIR}}"
+
   build:
     deps:
       - build-core
@@ -27,38 +38,38 @@ tasks:
   build-core:
     deps:
       - proto
+      - build-dir
     cmds:
-      - mkdir -p build
-      - go build -o build/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
+      - go build -o {{.BUILD_DIR}}/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
 
   run-core:
     deps:
       - build-core
     cmds:
-      - cd build && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
+      - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
   build-bridge-shelly:
     deps:
       - proto
+      - build-dir
     cmds:
-      - mkdir -p build
-      - go build -o build/woodhouse-bridge-shelly{{exeExt}} ./cmd/woodhouse-bridge-shelly
+      - go build -o {{.BUILD_DIR}}/woodhouse-bridge-shelly{{exeExt}} ./cmd/woodhouse-bridge-shelly
 
   run-bridge-shelly:
     deps:
       - build-bridge-shelly
     cmds:
-      - cd build && ./woodhouse-bridge-shelly{{exeExt}} {{.CLI_ARGS}}
+      - cd {{.BUILD_DIR}} && ./woodhouse-bridge-shelly{{exeExt}} {{.CLI_ARGS}}
 
   build-bridge-zigbee:
     deps:
       - proto
+      - build-dir
     cmds:
-      - mkdir -p build
-      - go build -o build/woodhouse-bridge-zigbee{{exeExt}} ./cmd/woodhouse-bridge-zigbee
+      - go build -o {{.BUILD_DIR}}/woodhouse-bridge-zigbee{{exeExt}} ./cmd/woodhouse-bridge-zigbee
 
   run-bridge-zigbee:
     deps:
       - build-bridge-zigbee
     cmds:
-      - cd build && ./woodhouse-bridge-zigbee{{exeExt}} {{.CLI_ARGS}}
+      - cd {{.BUILD_DIR}} && ./woodhouse-bridge-zigbee{{exeExt}} {{.CLI_ARGS}}
