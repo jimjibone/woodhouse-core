@@ -102,7 +102,7 @@ func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
 				log.Printf("ERROR: failed to receive device info: %s", err)
 				return
 			}
-			log.Printf("received device info: %s", info)
+			// log.Printf("received device info: %s", info)
 
 			// Exit if the context is done.
 			select {
@@ -129,7 +129,7 @@ func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
 				log.Printf("ERROR: failed to receive device state: %s", err)
 				return
 			}
-			log.Printf("received device state: %s", state)
+			// log.Printf("received device state: %s", state)
 
 			// Exit if the context is done.
 			select {
