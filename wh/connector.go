@@ -20,6 +20,7 @@ type Connector struct {
 	disableDiscovery bool
 	serverAddr       string
 	lastBackoff      time.Time
+	lastRestart      time.Time
 	backoffDuration  time.Duration
 	onConnected      ConnectionHandler
 }
@@ -130,7 +131,7 @@ func (c *Connector) connect(ctx context.Context) (conn *grpc.ClientConn, err err
 func (c *Connector) backoff(ctx context.Context) {
 	// Reset the backoff duration if the backoff has not been used for a
 	// suitable amount of time.
-	dt := time.Since(c.lastBackoff)
+	dt := time.Since(c.lastRestart)
 	if dt > c.backoffDuration {
 		log.Printf("backoff reset after %s", dt)
 		c.backoffDuration = minBackoff
@@ -148,6 +149,7 @@ func (c *Connector) backoff(ctx context.Context) {
 	if c.backoffDuration > maxBackoff {
 		c.backoffDuration = maxBackoff
 	}
+	c.lastRestart = time.Now()
 }
 
 func (c *Connector) run(ctx context.Context, conn *grpc.ClientConn) error {
