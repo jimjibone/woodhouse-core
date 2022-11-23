@@ -23,21 +23,29 @@
 <div class="card">
 	<div class="card-content">
 		<div class="content">
-			<p class="title is-4">{device.info != null ? device.info.getName() : "<no name>"}</p>
+			<p class="title is-4">{device.info != null ? device.info.getName() : "<no device info>"}</p>
 			{#if device.info}
 			<p class="subtitle is-6">bridge: <code>{device.info.getBridgeId()}</code>, device: <code>{device.info.getDeviceId()}</code>
 				{#if device.info.getUrl() !== ""}
 				, url: <a href="{device.info.getUrl()}">{device.info.getUrl()}</a>
 				{/if}
 			</p>
+			{:else}
+			<p class="subtitle is-6">bridge: <code>{device.state.getBridgeId()}</code>, device: <code>{device.state.getDeviceId()}</code></p>
 			{/if}
 		</div>
 
 		{#if device.state}
-		<div class="content is-inline-flex is-inline-spacing">
+		<div class="content is-inline-flex is-inline-spacing is-flex-wrap-wrap">
 			{#each device.state.getValuesList() as value (value.getName())}
 				<DeviceValue value={value} writable writer={onRequest} />
+			{:else}
+			<p>No values!</p>
 			{/each}
+		</div>
+		{:else}
+		<div class="content">
+			<p>No state!</p>
 		</div>
 		{/if}
 	</div>
