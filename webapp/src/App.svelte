@@ -2,6 +2,7 @@
 	import { Router, Route } from 'svelte-routing';
 	import classnames from 'classnames';
 	import NavLink from './components/NavLink.svelte';
+    import Toast from './components/Toast.svelte';
 	import DevicesPage from './pages/DevicesPage.svelte';
 	import BridgesPage from './pages/BridgesPage.svelte';
 
@@ -66,6 +67,7 @@
 		<Route path="/bridges" component="{BridgesPage}" />
 		</div>
 	</Router>
+	<Toast/>
 </main>
 
 <style>
