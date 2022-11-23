@@ -17,7 +17,7 @@ type ReactorApp struct {
 	Reactors []ReactorFunc // Reactor functions to be called once the reactor starts.
 }
 
-type ReactorFunc func(ctx context.Context, reactor *Reactor) error
+type ReactorFunc func(args *cli.Context, ctx context.Context, reactor *Reactor) error
 
 func (ra *ReactorApp) Run(arguments []string) error {
 	flags := append([]cli.Flag{
@@ -58,7 +58,7 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			for _, reactFunc := range ra.Reactors {
 				wg.Add(1)
 				go func(reactFunc ReactorFunc) {
-					err := reactFunc(ctx, reactor)
+					err := reactFunc(args, ctx, reactor)
 					if err != nil {
 						errs <- err
 					}
