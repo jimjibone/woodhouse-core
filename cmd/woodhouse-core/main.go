@@ -15,6 +15,9 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	api "github.com/jimjibone/woodhouse-4/api/go"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
@@ -29,36 +32,50 @@ func main() {
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:  "addr",
-				Usage: "woodhouse api server address",
-				Value: ":4000",
-			},
-			&cli.StringFlag{
-				Name:  "http",
-				Usage: "woodhouse web server address",
-				Value: ":4080",
-			},
-			&cli.StringFlag{
 				Name:      "config",
 				Usage:     "Load configuration from `DIR`",
 				EnvVars:   []string{"WOODHOUSE_CONFIG"},
-				Value:     "woodhouse.yml",
+				Value:     "woodhouse.yaml",
 				TakesFile: true,
 			},
 		},
-		Before: func(c *cli.Context) error {
+		Before: func(args *cli.Context) error {
+			// Load the config.
+			configPath := internal.AbsPathify(args.String("config"))
+			if _, err := os.Stat(configPath); !os.IsNotExist(err) {
+				log.Printf("loading config from %s", configPath)
+				err := yamlfile.LoadFile(&config.LoadedConfig, configPath)
+				if err != nil {
+					return fmt.Errorf("failed to load config: %w", err)
+				}
+			} else {
+				log.Printf("using default config")
+				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
+				if err != nil {
+					return fmt.Errorf("failed to save config: %w", err)
+				}
+			}
 			return nil
 		},
-		After: func(c *cli.Context) error {
+		After: func(args *cli.Context) error {
+			// Save the config if it has changed.
+			configPath := internal.AbsPathify(args.String("config"))
+			log.Printf("saving config to %s", configPath)
+			if config.LoadedConfig.Changed {
+				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
+				if err != nil {
+					return fmt.Errorf("failed to save config: %w", err)
+				}
+			}
 			return nil
 		},
-		Action: func(c *cli.Context) error {
+		Action: func(args *cli.Context) error {
 			// Try to listen on the selected server addresses.
-			apiLis, err := net.Listen("tcp", c.String("addr"))
+			apiLis, err := net.Listen("tcp", config.LoadedConfig.Server.ApiAddr)
 			if err != nil {
 				return fmt.Errorf("failed to listen on api addr: %w", err)
 			}
-			webLis, err := net.Listen("tcp", c.String("http"))
+			webLis, err := net.Listen("tcp", config.LoadedConfig.Server.WebAddr)
 			if err != nil {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
 			}
