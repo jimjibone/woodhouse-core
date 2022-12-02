@@ -1,9 +1,16 @@
 <script lang="ts">
+    import { formatISO9075, fromUnixTime } from 'date-fns';
 	import DeviceValue from '../components/DeviceValue.svelte';
 	import { DeviceRequest, DeviceResponse, DeviceValue as DeviceValueType } from '../api/device_pb';
 	import { DeviceInfoState, sendDeviceRequest } from '../stores/devices';
 
 	export let device: DeviceInfoState = null;
+
+	$: bridgeID = device.info ? device.info.getBridgeId() : (device.state ? device.state.getBridgeId() : "<no bridge id>");
+	$: deviceID = device.info ? device.info.getDeviceId() : (device.state ? device.state.getDeviceId() : "<no device id>");
+	$: url = device.info ? device.info.getUrl() : "";
+	$: online = device.state ? (device.state.getOnline() ? "online" : "offline") : "<no online state>";
+	$: lastSeen = device.state ? (device.state.hasLastSeen() ? formatISO9075(fromUnixTime(device.state.getLastSeen().getSeconds())) : "<no time>") : "<no time>";
 
 	function onRequest(v: DeviceValueType) : void {
 		const req = new DeviceRequest();
@@ -24,15 +31,12 @@
 	<div class="card-content">
 		<div class="content">
 			<p class="title is-4">{device.info != null ? device.info.getName() : "<no device info>"}</p>
-			{#if device.info}
-			<p class="subtitle is-6">bridge: <code>{device.info.getBridgeId()}</code>, device: <code>{device.info.getDeviceId()}</code>
-				{#if device.info.getUrl() !== ""}
-				, url: <a href="{device.info.getUrl()}">{device.info.getUrl()}</a>
+			<p class="subtitle is-6">bridge: <code>{bridgeID}</code>, device: <code>{deviceID}</code>, {online}
+				{#if url !== ""}
+				, url: <a href="{url}">{url}</a>
 				{/if}
+				, last seen: {lastSeen}
 			</p>
-			{:else}
-			<p class="subtitle is-6">bridge: <code>{device.state.getBridgeId()}</code>, device: <code>{device.state.getDeviceId()}</code></p>
-			{/if}
 		</div>
 
 		{#if device.state}

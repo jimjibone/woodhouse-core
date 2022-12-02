@@ -76,6 +76,8 @@ func (ds *DeviceStore) SetDeviceState(in *api.DeviceState) error {
 		if in.FullUpdate {
 			ds.states[fullID] = proto.Clone(in).(*api.DeviceState)
 		} else {
+			prev.Online = in.Online
+			prev.LastSeen = proto.Clone(in.LastSeen).(*api.Timestamp)
 			for _, next := range in.Values {
 				found := false
 				for i, val := range prev.Values {

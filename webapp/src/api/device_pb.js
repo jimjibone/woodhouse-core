@@ -21,6 +21,8 @@ var global = (function() {
   return Function('return this')();
 }.call(null));
 
+var timestamp_pb = require('./timestamp_pb.js');
+goog.object.extend(proto, timestamp_pb);
 var value_pb = require('./value_pb.js');
 goog.object.extend(proto, value_pb);
 goog.exportSymbol('proto.woodhouse.api.DeviceInfo', null, global);
@@ -389,7 +391,7 @@ proto.woodhouse.api.DeviceInfo.prototype.setUrl = function(value) {
  * @private {!Array<number>}
  * @const
  */
-proto.woodhouse.api.DeviceState.repeatedFields_ = [4];
+proto.woodhouse.api.DeviceState.repeatedFields_ = [6];
 
 
 
@@ -424,7 +426,9 @@ proto.woodhouse.api.DeviceState.toObject = function(includeInstance, msg) {
   var f, obj = {
     bridgeId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     deviceId: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    fullUpdate: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
+    online: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
+    lastSeen: (f = msg.getLastSeen()) && timestamp_pb.Timestamp.toObject(includeInstance, f),
+    fullUpdate: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
     valuesList: jspb.Message.toObjectList(msg.getValuesList(),
     proto.woodhouse.api.DeviceValue.toObject, includeInstance)
   };
@@ -473,9 +477,18 @@ proto.woodhouse.api.DeviceState.deserializeBinaryFromReader = function(msg, read
       break;
     case 3:
       var value = /** @type {boolean} */ (reader.readBool());
-      msg.setFullUpdate(value);
+      msg.setOnline(value);
       break;
     case 4:
+      var value = new timestamp_pb.Timestamp;
+      reader.readMessage(value,timestamp_pb.Timestamp.deserializeBinaryFromReader);
+      msg.setLastSeen(value);
+      break;
+    case 5:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFullUpdate(value);
+      break;
+    case 6:
       var value = new proto.woodhouse.api.DeviceValue;
       reader.readMessage(value,proto.woodhouse.api.DeviceValue.deserializeBinaryFromReader);
       msg.addValues(value);
@@ -523,17 +536,32 @@ proto.woodhouse.api.DeviceState.serializeBinaryToWriter = function(message, writ
       f
     );
   }
-  f = message.getFullUpdate();
+  f = message.getOnline();
   if (f) {
     writer.writeBool(
       3,
       f
     );
   }
+  f = message.getLastSeen();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      timestamp_pb.Timestamp.serializeBinaryToWriter
+    );
+  }
+  f = message.getFullUpdate();
+  if (f) {
+    writer.writeBool(
+      5,
+      f
+    );
+  }
   f = message.getValuesList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
-      4,
+      6,
       f,
       proto.woodhouse.api.DeviceValue.serializeBinaryToWriter
     );
@@ -578,10 +606,10 @@ proto.woodhouse.api.DeviceState.prototype.setDeviceId = function(value) {
 
 
 /**
- * optional bool full_update = 3;
+ * optional bool online = 3;
  * @return {boolean}
  */
-proto.woodhouse.api.DeviceState.prototype.getFullUpdate = function() {
+proto.woodhouse.api.DeviceState.prototype.getOnline = function() {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
 };
 
@@ -590,18 +618,73 @@ proto.woodhouse.api.DeviceState.prototype.getFullUpdate = function() {
  * @param {boolean} value
  * @return {!proto.woodhouse.api.DeviceState} returns this
  */
-proto.woodhouse.api.DeviceState.prototype.setFullUpdate = function(value) {
+proto.woodhouse.api.DeviceState.prototype.setOnline = function(value) {
   return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 
 /**
- * repeated DeviceValue values = 4;
+ * optional Timestamp last_seen = 4;
+ * @return {?proto.woodhouse.api.Timestamp}
+ */
+proto.woodhouse.api.DeviceState.prototype.getLastSeen = function() {
+  return /** @type{?proto.woodhouse.api.Timestamp} */ (
+    jspb.Message.getWrapperField(this, timestamp_pb.Timestamp, 4));
+};
+
+
+/**
+ * @param {?proto.woodhouse.api.Timestamp|undefined} value
+ * @return {!proto.woodhouse.api.DeviceState} returns this
+*/
+proto.woodhouse.api.DeviceState.prototype.setLastSeen = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.woodhouse.api.DeviceState} returns this
+ */
+proto.woodhouse.api.DeviceState.prototype.clearLastSeen = function() {
+  return this.setLastSeen(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.woodhouse.api.DeviceState.prototype.hasLastSeen = function() {
+  return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * optional bool full_update = 5;
+ * @return {boolean}
+ */
+proto.woodhouse.api.DeviceState.prototype.getFullUpdate = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 5, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.woodhouse.api.DeviceState} returns this
+ */
+proto.woodhouse.api.DeviceState.prototype.setFullUpdate = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 5, value);
+};
+
+
+/**
+ * repeated DeviceValue values = 6;
  * @return {!Array<!proto.woodhouse.api.DeviceValue>}
  */
 proto.woodhouse.api.DeviceState.prototype.getValuesList = function() {
   return /** @type{!Array<!proto.woodhouse.api.DeviceValue>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.woodhouse.api.DeviceValue, 4));
+    jspb.Message.getRepeatedWrapperField(this, proto.woodhouse.api.DeviceValue, 6));
 };
 
 
@@ -610,7 +693,7 @@ proto.woodhouse.api.DeviceState.prototype.getValuesList = function() {
  * @return {!proto.woodhouse.api.DeviceState} returns this
 */
 proto.woodhouse.api.DeviceState.prototype.setValuesList = function(value) {
-  return jspb.Message.setRepeatedWrapperField(this, 4, value);
+  return jspb.Message.setRepeatedWrapperField(this, 6, value);
 };
 
 
@@ -620,7 +703,7 @@ proto.woodhouse.api.DeviceState.prototype.setValuesList = function(value) {
  * @return {!proto.woodhouse.api.DeviceValue}
  */
 proto.woodhouse.api.DeviceState.prototype.addValues = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 4, opt_value, proto.woodhouse.api.DeviceValue, opt_index);
+  return jspb.Message.addToRepeatedWrapperField(this, 6, opt_value, proto.woodhouse.api.DeviceValue, opt_index);
 };
 
 

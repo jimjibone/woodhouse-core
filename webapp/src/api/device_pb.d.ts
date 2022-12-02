@@ -2,6 +2,7 @@
 // file: device.proto
 
 import * as jspb from "google-protobuf";
+import * as timestamp_pb from "./timestamp_pb";
 import * as value_pb from "./value_pb";
 
 export class DeviceInfo extends jspb.Message {
@@ -47,6 +48,14 @@ export class DeviceState extends jspb.Message {
   getDeviceId(): string;
   setDeviceId(value: string): void;
 
+  getOnline(): boolean;
+  setOnline(value: boolean): void;
+
+  hasLastSeen(): boolean;
+  clearLastSeen(): void;
+  getLastSeen(): timestamp_pb.Timestamp | undefined;
+  setLastSeen(value?: timestamp_pb.Timestamp): void;
+
   getFullUpdate(): boolean;
   setFullUpdate(value: boolean): void;
 
@@ -69,6 +78,8 @@ export namespace DeviceState {
   export type AsObject = {
     bridgeId: string,
     deviceId: string,
+    online: boolean,
+    lastSeen?: timestamp_pb.Timestamp.AsObject,
     fullUpdate: boolean,
     valuesList: Array<DeviceValue.AsObject>,
   }
