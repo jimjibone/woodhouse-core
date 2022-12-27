@@ -1,9 +1,9 @@
 package config
 
 type CoreConfig struct {
-	Changed bool          `yaml:"-"`
-	Server  ServerConfig  `yaml:"server"`
-	History HistoryConfig `yaml:"history"`
+	Changed  bool           `yaml:"-"`
+	Server   ServerConfig   `yaml:"server"`
+	InfluxDB InfluxDBConfig `yaml:"influxdb"`
 }
 
 type ServerConfig struct {
@@ -11,9 +11,12 @@ type ServerConfig struct {
 	WebAddr string `yaml:"web-addr"`
 }
 
-type HistoryConfig struct {
-	InfluxDBAddr  string `yaml:"influxdb-addr"`
-	InfluxDBToken string `yaml:"influxdb-token"`
+type InfluxDBConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Addr    string `yaml:"addr"`
+	Token   string `yaml:"token"`
+	Org     string `yaml:"org"`
+	Bucket  string `yaml:"bucket"`
 }
 
 var LoadedConfig CoreConfig = defaultConfig
@@ -23,8 +26,11 @@ var defaultConfig = CoreConfig{
 		ApiAddr: "localhost:4000",
 		WebAddr: "localhost:4080",
 	},
-	History: HistoryConfig{
-		InfluxDBAddr:  "localhost:8086",
-		InfluxDBToken: "",
+	InfluxDB: InfluxDBConfig{
+		Enabled: false,
+		Addr:    "localhost:8086",
+		Token:   "",
+		Org:     "",
+		Bucket:  "woodhouse",
 	},
 }

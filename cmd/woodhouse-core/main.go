@@ -80,8 +80,12 @@ func main() {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
 			}
 
-			// Create services.
+			// Create store.
 			deviceStore := NewDeviceStore()
+			historyStore := NewHistoryStore(deviceStore)
+			defer historyStore.Close()
+
+			// Create services.
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
 
