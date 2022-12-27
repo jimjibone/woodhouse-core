@@ -10,7 +10,14 @@
 	let unsubscribeConnected: Unsubscriber = null;
 
 	onMount(async () => {
-		unsubscribeDevices = devicesStream.subscribeData(value => { devices = value; });
+		// unsubscribeDevices = devicesStream.subscribeData(value => { devices = value; });
+		unsubscribeDevices = devicesStream.subscribeData(value => {
+			devices = value.sort((a, b) => {
+				const aName = a.info ? a.info.getName() : a.fullId
+				const bName = b.info ? b.info.getName() : b.fullId
+				return aName > bName ? 1 : (bName > aName ? -1 : 0)
+			})
+		});
 		unsubscribeConnected = devicesStream.subscribeConnected(value => { connected = value; });
 	});
 
