@@ -3,3 +3,4 @@
 /build*
 *.log
 webapp/node_modules/
+examples/
