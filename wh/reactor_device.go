@@ -1,6 +1,7 @@
 package wh
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -91,14 +92,27 @@ func (rd *ReactorDevice) OnEvent(name string, handler func(value *api.DeviceValu
 	}
 }
 
-func (rd *ReactorDevice) ValueAs(name string, out interface{}) bool {
+// func (rd *ReactorDevice) ValueAs(name string, out interface{}) bool {
+// 	rd.valuesMu.RLock()
+// 	defer rd.valuesMu.RUnlock()
+// 	name = strings.ToLower(name)
+// 	if value, found := rd.values[name]; found {
+// 		return apitools.ValueAs(value, out)
+// 	}
+// 	return false
+// }
+
+func (rd *ReactorDevice) ValueAs(name string, out interface{}) error {
 	rd.valuesMu.RLock()
 	defer rd.valuesMu.RUnlock()
 	name = strings.ToLower(name)
 	if value, found := rd.values[name]; found {
-		return apitools.ValueAs(value, out)
+		if apitools.ValueAs(value, out) {
+			return nil
+		}
+		return fmt.Errorf("failed conversion")
 	}
-	return false
+	return fmt.Errorf("no value with name")
 }
 
 func (rd *ReactorDevice) RequestOne(name string, value interface{}) error {
