@@ -68,45 +68,6 @@ func (b *BridgeService) GetDeviceRequests(server api.BridgeService_GetDeviceRequ
 	ctx, cancel := context.WithCancel(server.Context())
 	defer cancel()
 
-	// Inject some fake requests.
-	// go func() {
-	// 	ticker := time.NewTicker(5 * time.Second)
-	// 	defer ticker.Stop()
-	// 	lastval := false
-	// 	for {
-	// 		select {
-	// 		case <-ctx.Done():
-	// 			return
-	// 		case <-ticker.C:
-	// 			lastval = !lastval
-	// 			// b.requests.Pub(&api.DeviceRequest{
-	// 			// 	BridgeId: bridgeID,
-	// 			// 	DeviceId: "shellydimmer2-redacted",
-	// 			// 	Values: []*api.DeviceValue{
-	// 			// 		{
-	// 			// 			Name: "On",
-	// 			// 			Bool: &api.BoolValue{
-	// 			// 				Value: lastval,
-	// 			// 			},
-	// 			// 		},
-	// 			// 	},
-	// 			// })
-	// 			b.requests.Pub(&api.DeviceRequest{
-	// 				BridgeId: bridgeID,
-	// 				DeviceId: "zigbeeredacted",
-	// 				Values: []*api.DeviceValue{
-	// 					{
-	// 						Name: "state",
-	// 						Bool: &api.BoolValue{
-	// 							Value: lastval,
-	// 						},
-	// 					},
-	// 				},
-	// 			})
-	// 		}
-	// 	}
-	// }()
-
 	go func() {
 		defer cancel()
 		for {
@@ -132,6 +93,12 @@ func (b *BridgeService) GetDeviceRequests(server api.BridgeService_GetDeviceRequ
 			return nil
 
 		case request := <-requests.Sub():
+			// Only send requests destined for this bridge.
+			if request.BridgeId != bridgeID {
+				continue
+			}
+
+			// Generate a new request ID if not already set.
 			if request.RequestId == "" {
 				requestID, err := internal.GenerateRandomString(6)
 				if err != nil {
@@ -140,6 +107,7 @@ func (b *BridgeService) GetDeviceRequests(server api.BridgeService_GetDeviceRequ
 				request.RequestId = requestID
 			}
 
+			// Send the request.
 			log.Printf("GetDeviceRequests %s sending request: %s", bridgeID, request)
 			if err := server.Send(request); err != nil {
 				log.Printf("ERROR: GetDeviceRequests failed to receive send request: %s", err)
