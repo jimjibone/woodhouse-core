@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/jimjibone/queue/v2"
 	api "github.com/jimjibone/woodhouse-4/api/go"
@@ -42,10 +43,20 @@ func (rs *ReactorService) GetBridgeInfos(in *api.GetBridgeInfosRequest, server a
 		return err
 	}
 
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-server.Context().Done():
 			return nil
+
+		case <-ticker.C:
+			err := server.Send(&api.BridgeInfo{})
+			if err != nil {
+				log.Printf("ERROR: GetBridgeInfos during send: %s", err)
+				return err
+			}
 
 		case item := <-sub.Sub():
 			err := server.Send(item)
@@ -78,10 +89,20 @@ func (rs *ReactorService) GetDeviceInfos(in *api.GetDeviceInfosRequest, server a
 		return err
 	}
 
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-server.Context().Done():
 			return nil
+
+		case <-ticker.C:
+			err := server.Send(&api.DeviceInfo{})
+			if err != nil {
+				log.Printf("ERROR: GetDeviceInfos during send: %s", err)
+				return err
+			}
 
 		case item := <-sub.Sub():
 			err := server.Send(item)
@@ -114,10 +135,20 @@ func (rs *ReactorService) GetDeviceStates(in *api.GetDeviceStatesRequest, server
 		return err
 	}
 
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-server.Context().Done():
 			return nil
+
+		case <-ticker.C:
+			err := server.Send(&api.DeviceState{})
+			if err != nil {
+				log.Printf("ERROR: GetDeviceStates during send: %s", err)
+				return err
+			}
 
 		case item := <-sub.Sub():
 			err := server.Send(item)

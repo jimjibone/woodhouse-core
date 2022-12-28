@@ -4,7 +4,7 @@ import type { DeviceInfo, DeviceResponse, DeviceState } from '../api/device_pb';
 import type { DeviceRequest } from '../api/device_pb';
 import { ReactorServiceClient } from '../api/Reactor_serviceServiceClientPb';
 import { GetDeviceInfosRequest, GetDeviceStatesRequest } from '../api/reactor_service_pb';
-import { createBackoff, defaultMinBackoffMs, defaultMaxBackoffMs } from './utils';
+import { defaultMinBackoffMs, defaultMaxBackoffMs, createBackoffWithHeartbeat } from './utils';
 
 const reactorClient = new ReactorServiceClient('/api');
 const debug = false;
@@ -16,6 +16,8 @@ function createDeviceInfosStream(name: string, debug: boolean) {
 	let stream: grpcWeb.ClientReadableStream<DeviceInfo> = null;
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
+
+	const backoff = createBackoffWithHeartbeat(name, defaultMinBackoffMs, defaultMaxBackoffMs, 60000, run, stop);
 
 	function start() : VoidFunction {
 		if (debug) console.log(`${name}: starting...`);
@@ -31,20 +33,19 @@ function createDeviceInfosStream(name: string, debug: boolean) {
 		}
 	}
 
-	const backoff = createBackoff(name, defaultMinBackoffMs, defaultMaxBackoffMs, run, stop);
-
-	function run(restart: VoidFunction) {
+	function run(resetHeartbeat: VoidFunction, restartConnection: VoidFunction) {
 		if (debug) console.log(`${name}: started`);
 		const request = new GetDeviceInfosRequest();
 		stream = reactorClient.getDeviceInfos(request);
 		stream.on("error", (err: grpcWeb.RpcError) => {
 			console.error(`${name}: unexpected stream error: code = ${err.code}` + `, message = "${err.message}"`);
 			connectedWriter.set(false);
-			restart();
+			restartConnection();
 		});
 		stream.on("data", (response: DeviceInfo) => {
 			if (debug) console.log(`${name}: data:`, response.toObject());
 			connectedWriter.set(true);
+			resetHeartbeat();
 			if (response.getBridgeId() !== "") {
 				dataWriter.update(u => {
 					const response_id = response.getBridgeId() + "." + response.getDeviceId();
@@ -65,7 +66,7 @@ function createDeviceInfosStream(name: string, debug: boolean) {
 		stream.on("end", () => {
 			if (debug) console.log(`${name}: done`);
 			connectedWriter.set(false);
-			restart();
+			restartConnection();
 		});
 	}
 
@@ -83,6 +84,8 @@ function createDeviceStatesStream(name: string, debug: boolean) {
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 
+	const backoff = createBackoffWithHeartbeat(name, defaultMinBackoffMs, defaultMaxBackoffMs, 60000, run, stop);
+
 	function start() : VoidFunction {
 		if (debug) console.log(`${name}: starting...`);
 		backoff.start();
@@ -97,20 +100,19 @@ function createDeviceStatesStream(name: string, debug: boolean) {
 		}
 	}
 
-	const backoff = createBackoff(name, defaultMinBackoffMs, defaultMaxBackoffMs, run, stop);
-
-	function run(restart: VoidFunction) {
+	function run(resetHeartbeat: VoidFunction, restartConnection: VoidFunction) {
 		if (debug) console.log(`${name}: started`);
 		const request = new GetDeviceStatesRequest();
 		stream = reactorClient.getDeviceStates(request);
 		stream.on("error", (err: grpcWeb.RpcError) => {
 			console.error(`${name}: unexpected stream error: code = ${err.code}` + `, message = "${err.message}"`);
 			connectedWriter.set(false);
-			restart();
+			restartConnection();
 		});
 		stream.on("data", (response: DeviceState) => {
 			if (debug) console.log(`${name}: data:`, response.toObject());
 			connectedWriter.set(true);
+			resetHeartbeat();
 			if (response.getBridgeId() !== "") {
 				dataWriter.update(u => {
 					const response_id = response.getBridgeId() + "." + response.getDeviceId();
@@ -131,7 +133,7 @@ function createDeviceStatesStream(name: string, debug: boolean) {
 		stream.on("end", () => {
 			if (debug) console.log(`${name}: done`);
 			connectedWriter.set(false);
-			restart();
+			restartConnection();
 		});
 	}
 
@@ -157,6 +159,8 @@ function createDevicesStream(name: string, debug: boolean) {
 	let infoStream: grpcWeb.ClientReadableStream<DeviceInfo> = null;
 	let stateStream: grpcWeb.ClientReadableStream<DeviceState> = null;
 
+	const backoff = createBackoffWithHeartbeat(name, defaultMinBackoffMs, defaultMaxBackoffMs, 60000, run, stop);
+
 	function start() : VoidFunction {
 		if (debug) console.log(`${name}: starting...`);
 		backoff.start();
@@ -175,9 +179,7 @@ function createDevicesStream(name: string, debug: boolean) {
 		}
 	}
 
-	const backoff = createBackoff(name, defaultMinBackoffMs, defaultMaxBackoffMs, run, stop);
-
-	function run(restart: VoidFunction) {
+	function run(resetHeartbeat: VoidFunction, restartConnection: VoidFunction) {
 		if (debug) console.log(`${name}: started`);
 		// DeviceInfo
 		infoStream = reactorClient.getDeviceInfos(new GetDeviceInfosRequest());
@@ -186,11 +188,12 @@ function createDevicesStream(name: string, debug: boolean) {
 			connectedWriter.set(false);
 			infoStream.cancel();
 			stateStream.cancel();
-			restart();
+			restartConnection();
 		});
 		infoStream.on("data", (response: DeviceInfo) => {
 			if (debug) console.log(`${name}: info data:`, response.toObject());
 			connectedWriter.set(true);
+			resetHeartbeat();
 			if (response.getBridgeId() !== "") {
 				dataWriter.update(devices => {
 					const response_id = response.getBridgeId() + "." + response.getDeviceId();
@@ -216,7 +219,7 @@ function createDevicesStream(name: string, debug: boolean) {
 			connectedWriter.set(false);
 			infoStream.cancel();
 			stateStream.cancel();
-			restart();
+			restartConnection();
 		});
 		// DeviceState
 		stateStream = reactorClient.getDeviceStates(new GetDeviceStatesRequest());
@@ -225,11 +228,12 @@ function createDevicesStream(name: string, debug: boolean) {
 			connectedWriter.set(false);
 			infoStream.cancel();
 			stateStream.cancel();
-			restart();
+			restartConnection();
 		});
 		stateStream.on("data", (response: DeviceState) => {
 			if (debug) console.log(`${name}: state data:`, response.toObject());
 			connectedWriter.set(true);
+			resetHeartbeat();
 			if (response.getBridgeId() !== "") {
 				dataWriter.update(devices => {
 					const response_id = response.getBridgeId() + "." + response.getDeviceId();
@@ -255,7 +259,7 @@ function createDevicesStream(name: string, debug: boolean) {
 			connectedWriter.set(false);
 			infoStream.cancel();
 			stateStream.cancel();
-			restart();
+			restartConnection();
 		});
 	}
 

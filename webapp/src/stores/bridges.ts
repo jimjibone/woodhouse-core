@@ -3,7 +3,7 @@ import type * as grpcWeb from 'grpc-web';
 import type { BridgeInfo } from '../api/bridge_pb';
 import { ReactorServiceClient } from '../api/Reactor_serviceServiceClientPb';
 import { GetBridgeInfosRequest } from '../api/reactor_service_pb';
-import { createBackoff, defaultMinBackoffMs, defaultMaxBackoffMs } from './utils';
+import { createBackoffWithHeartbeat, defaultMinBackoffMs, defaultMaxBackoffMs } from './utils';
 
 const reactorClient = new ReactorServiceClient('/api');
 const debug = false;
@@ -30,20 +30,21 @@ function createBridgeInfosStream(name: string, debug: boolean) {
 		}
 	}
 
-	const backoff = createBackoff(name, defaultMinBackoffMs, defaultMaxBackoffMs, run, stop);
+	const backoff = createBackoffWithHeartbeat(name, defaultMinBackoffMs, defaultMaxBackoffMs, 60000, run, stop);
 
-	function run(restart: VoidFunction) {
+	function run(resetHeartbeat: VoidFunction, restartConnection: VoidFunction) {
 		if (debug) console.log(`${name}: started`);
 		const request = new GetBridgeInfosRequest();
 		stream = reactorClient.getBridgeInfos(request);
 		stream.on("error", (err: grpcWeb.RpcError) => {
 			console.error(`${name}: unexpected stream error: code = ${err.code}` + `, message = "${err.message}"`);
 			connectedWriter.set(false);
-			restart();
+			restartConnection();
 		});
 		stream.on("data", (response: BridgeInfo) => {
 			if (debug) console.log(`${name}: data:`, response.toObject());
 			connectedWriter.set(true);
+			resetHeartbeat();
 			if (response.getBridgeId() !== "") {
 				dataWriter.update(u => {
 					let updated = false;
@@ -62,7 +63,7 @@ function createBridgeInfosStream(name: string, debug: boolean) {
 		stream.on("end", () => {
 			if (debug) console.log(`${name}: done`);
 			connectedWriter.set(false);
-			restart();
+			restartConnection();
 		});
 	}
 
