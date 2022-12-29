@@ -91,7 +91,7 @@ export function createBackoffWithHeartbeat(debug: string, minBackoffMs: number, 
 		const now = new Date();
 		const dt = differenceInMilliseconds(now, lastHeartbeatTime);
 		if (dt > heartbeatTimeoutMs) {
-			if (debug) console.log(`${debug}: heartbeat timeout after ${dt} ms`);
+			if (debug !== "") console.log(`${debug}: heartbeat timeout after ${dt} ms`);
 			doStop();
 			doStart();
 		}
