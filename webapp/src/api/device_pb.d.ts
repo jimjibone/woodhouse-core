@@ -41,6 +41,46 @@ export namespace DeviceInfo {
   }
 }
 
+export class DeviceExtendedInfo extends jspb.Message {
+  getBridgeId(): string;
+  setBridgeId(value: string): void;
+
+  getDeviceId(): string;
+  setDeviceId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getUrl(): string;
+  setUrl(value: string): void;
+
+  getHidden(): boolean;
+  setHidden(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeviceExtendedInfo.AsObject;
+  static toObject(includeInstance: boolean, msg: DeviceExtendedInfo): DeviceExtendedInfo.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeviceExtendedInfo, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeviceExtendedInfo;
+  static deserializeBinaryFromReader(message: DeviceExtendedInfo, reader: jspb.BinaryReader): DeviceExtendedInfo;
+}
+
+export namespace DeviceExtendedInfo {
+  export type AsObject = {
+    bridgeId: string,
+    deviceId: string,
+    name: string,
+    description: string,
+    url: string,
+    hidden: boolean,
+  }
+}
+
 export class DeviceState extends jspb.Message {
   getBridgeId(): string;
   setBridgeId(value: string): void;

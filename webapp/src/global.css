@@ -5,3 +5,7 @@
 .is-inline-spacing > div:not(:last-child) {
     padding-right: 1rem;
 }
+
+a.navbar-item.is-active, .navbar-link.is-active {
+    font-weight: 500;
+}

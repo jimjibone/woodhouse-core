@@ -1,9 +1,9 @@
 import { writable } from 'svelte/store';
 import type * as grpcWeb from 'grpc-web';
-import type { DeviceInfo, DeviceResponse, DeviceState } from '../api/device_pb';
+import type { DeviceExtendedInfo, DeviceResponse, DeviceState } from '../api/device_pb';
 import type { DeviceRequest } from '../api/device_pb';
 import { ReactorServiceClient } from '../api/Reactor_serviceServiceClientPb';
-import { GetDeviceInfosRequest, GetDeviceStatesRequest } from '../api/reactor_service_pb';
+import { GetDeviceInfosRequest, GetDeviceStatesRequest, SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
 import { defaultMinBackoffMs, defaultMaxBackoffMs, createBackoffWithHeartbeat } from './utils';
 
 const reactorClient = new ReactorServiceClient('/api');
@@ -11,9 +11,9 @@ const debug = false;
 
 export const deviceInfosStream = createDeviceInfosStream("getDeviceInfos", debug);
 function createDeviceInfosStream(name: string, debug: boolean) {
-	let data: DeviceInfo[] = [];
+	let data: DeviceExtendedInfo[] = [];
 	let connected: boolean = false;
-	let stream: grpcWeb.ClientReadableStream<DeviceInfo> = null;
+	let stream: grpcWeb.ClientReadableStream<DeviceExtendedInfo> = null;
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 
@@ -42,7 +42,7 @@ function createDeviceInfosStream(name: string, debug: boolean) {
 			connectedWriter.set(false);
 			restartConnection();
 		});
-		stream.on("data", (response: DeviceInfo) => {
+		stream.on("data", (response: DeviceExtendedInfo) => {
 			if (debug) console.log(`${name}: data:`, response.toObject());
 			connectedWriter.set(true);
 			resetHeartbeat();
@@ -145,7 +145,7 @@ function createDeviceStatesStream(name: string, debug: boolean) {
 
 export type DeviceInfoState = {
 	fullId: string,
-	info: DeviceInfo,
+	info: DeviceExtendedInfo,
 	state: DeviceState,
 }
 
@@ -156,7 +156,7 @@ function createDevicesStream(name: string, debug: boolean) {
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 
-	let infoStream: grpcWeb.ClientReadableStream<DeviceInfo> = null;
+	let infoStream: grpcWeb.ClientReadableStream<DeviceExtendedInfo> = null;
 	let stateStream: grpcWeb.ClientReadableStream<DeviceState> = null;
 
 	const backoff = createBackoffWithHeartbeat(name, defaultMinBackoffMs, defaultMaxBackoffMs, 60000, run, stop);
@@ -190,7 +190,7 @@ function createDevicesStream(name: string, debug: boolean) {
 			stateStream.cancel();
 			restartConnection();
 		});
-		infoStream.on("data", (response: DeviceInfo) => {
+		infoStream.on("data", (response: DeviceExtendedInfo) => {
 			if (debug) console.log(`${name}: info data:`, response.toObject());
 			connectedWriter.set(true);
 			resetHeartbeat();
@@ -267,6 +267,10 @@ function createDevicesStream(name: string, debug: boolean) {
 		subscribeData: dataWriter.subscribe,
 		subscribeConnected: connectedWriter.subscribe,
 	};
+}
+
+export function setDeviceHidden(req: SetDeviceHiddenRequest) : Promise<SetDeviceHiddenResponse> {
+	return reactorClient.setDeviceHidden(req, null); //, {"authorization": getAccessToken()});
 }
 
 export function sendDeviceRequest(req: DeviceRequest) : Promise<DeviceResponse> {

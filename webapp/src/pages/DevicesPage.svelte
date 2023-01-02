@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte/internal';
 	import type { Unsubscriber } from 'svelte/store';
+    import Chip from '../components/Chip.svelte';
 	import { devicesStream, DeviceInfoState } from '../stores/devices';
 	import DevicePageItem from './DevicePageItem.svelte';
 
@@ -8,6 +9,7 @@
 	let connected: boolean = false;
 	let unsubscribeDevices: Unsubscriber = null;
 	let unsubscribeConnected: Unsubscriber = null;
+	let showHidden: boolean = true;
 
 	onMount(async () => {
 		// unsubscribeDevices = devicesStream.subscribeData(value => { devices = value; });
@@ -27,27 +29,18 @@
 	});
 </script>
 
-<section class="hero">
-	<div class="hero-body">
-		<p class="title">
-			Devices
-		</p>
-		<p class="subtitle">
-			{#if connected}
-				Connected - {devices.length} {devices.length == 1 ? "device" : "devices"}
-			{:else}
-				Disconnected
-			{/if}
-		</p>
+<div class="container is-fluid">
+	<div class="block">
+		<Chip checked={showHidden} on:click={() => showHidden = !showHidden}>Show Hidden</Chip>
 	</div>
-</section>
 
-{#each devices as device (device.fullId)}
-<DevicePageItem device={device} />
-{:else}
-<div class="column is-full">
-	<div class="box">
-		No devices.
+	{#each devices as device (device.fullId)}
+	<DevicePageItem device={device} showHidden={showHidden}/>
+	{:else}
+	<div class="column is-full">
+		<div class="box">
+			No devices.
+		</div>
 	</div>
+	{/each}
 </div>
-{/each}

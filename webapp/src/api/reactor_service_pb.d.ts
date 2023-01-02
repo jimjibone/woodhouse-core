@@ -46,3 +46,43 @@ export namespace GetDeviceStatesRequest {
   }
 }
 
+export class SetDeviceHiddenRequest extends jspb.Message {
+  getBridgeId(): string;
+  setBridgeId(value: string): SetDeviceHiddenRequest;
+
+  getDeviceId(): string;
+  setDeviceId(value: string): SetDeviceHiddenRequest;
+
+  getHidden(): boolean;
+  setHidden(value: boolean): SetDeviceHiddenRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetDeviceHiddenRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SetDeviceHiddenRequest): SetDeviceHiddenRequest.AsObject;
+  static serializeBinaryToWriter(message: SetDeviceHiddenRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SetDeviceHiddenRequest;
+  static deserializeBinaryFromReader(message: SetDeviceHiddenRequest, reader: jspb.BinaryReader): SetDeviceHiddenRequest;
+}
+
+export namespace SetDeviceHiddenRequest {
+  export type AsObject = {
+    bridgeId: string,
+    deviceId: string,
+    hidden: boolean,
+  }
+}
+
+export class SetDeviceHiddenResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetDeviceHiddenResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SetDeviceHiddenResponse): SetDeviceHiddenResponse.AsObject;
+  static serializeBinaryToWriter(message: SetDeviceHiddenResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SetDeviceHiddenResponse;
+  static deserializeBinaryFromReader(message: SetDeviceHiddenResponse, reader: jspb.BinaryReader): SetDeviceHiddenResponse;
+}
+
+export namespace SetDeviceHiddenResponse {
+  export type AsObject = {
+  }
+}
+

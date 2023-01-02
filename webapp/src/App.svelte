@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Router, Route } from 'svelte-routing';
+	import { Router, Route, Link } from 'svelte-routing';
 	import classnames from 'classnames';
 	import NavLink from './components/NavLink.svelte';
-    import Toast from './components/Toast.svelte';
+	import Toast from './components/Toast.svelte';
 	import DevicesPage from './pages/DevicesPage.svelte';
 	import BridgesPage from './pages/BridgesPage.svelte';
 
@@ -29,11 +29,11 @@
 
 <main>
 	<Router url="{url}">
-		<nav class="navbar" aria-label="main navigation">
+		<nav class="navbar is-light" aria-label="main navigation">
 			<div class="navbar-brand">
-				<a class="navbar-item" href="/">
-					<p>Woodhouse</p>
-				</a>
+				<Link to="/" class="navbar-item">
+					Woodhouse
+				</Link>
 
 				<button class={navbarBurgerClasses} aria-label="menu" aria-expanded="false" data-target="navbarBasicExample" on:click={toggleNavOpen}>
 					<span aria-hidden="true"></span>
@@ -44,27 +44,14 @@
 
 			<div class={navbarMenuClasses}>
 				<div class="navbar-start">
-					<NavLink to="/">Home</NavLink>
-					<NavLink to="/devices">Devices</NavLink>
+					<NavLink to="/">Devices</NavLink>
 					<NavLink to="/bridges">Bridges</NavLink>
 				</div>
 			</div>
 		</nav>
 		<div>
-		<Route path="/">
-			<section class="hero">
-				<div class="hero-body">
-					<p class="title">
-						Woodhouse 4
-					</p>
-					<p class="subtitle">
-						Hero subtitle
-					</p>
-				</div>
-			</section>
-		</Route>
-		<Route path="/devices" component="{DevicesPage}" />
-		<Route path="/bridges" component="{BridgesPage}" />
+			<Route path="/" component="{DevicesPage}" />
+			<Route path="/bridges" component="{BridgesPage}" />
 		</div>
 	</Router>
 	<Toast/>

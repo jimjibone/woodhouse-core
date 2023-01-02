@@ -18,3 +18,10 @@
 <Link to="{to}" getProps="{getProps}">
 	<slot />
 </Link>
+
+<!-- svelte-ignore css-unused-selector -->
+<style>
+	.is-active {
+		font-weight: 700;
+	}
+</style>

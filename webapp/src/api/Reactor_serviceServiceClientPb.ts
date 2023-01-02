@@ -67,16 +67,16 @@ export class ReactorServiceClient {
     '/woodhouse.api.ReactorService/GetDeviceInfos',
     grpcWeb.MethodType.SERVER_STREAMING,
     reactor_service_pb.GetDeviceInfosRequest,
-    device_pb.DeviceInfo,
+    device_pb.DeviceExtendedInfo,
     (request: reactor_service_pb.GetDeviceInfosRequest) => {
       return request.serializeBinary();
     },
-    device_pb.DeviceInfo.deserializeBinary
+    device_pb.DeviceExtendedInfo.deserializeBinary
   );
 
   getDeviceInfos(
     request: reactor_service_pb.GetDeviceInfosRequest,
-    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<device_pb.DeviceInfo> {
+    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<device_pb.DeviceExtendedInfo> {
     return this.client_.serverStreaming(
       this.hostname_ +
         '/woodhouse.api.ReactorService/GetDeviceInfos',
@@ -105,6 +105,49 @@ export class ReactorServiceClient {
       request,
       metadata || {},
       this.methodDescriptorGetDeviceStates);
+  }
+
+  methodDescriptorSetDeviceHidden = new grpcWeb.MethodDescriptor(
+    '/woodhouse.api.ReactorService/SetDeviceHidden',
+    grpcWeb.MethodType.UNARY,
+    reactor_service_pb.SetDeviceHiddenRequest,
+    reactor_service_pb.SetDeviceHiddenResponse,
+    (request: reactor_service_pb.SetDeviceHiddenRequest) => {
+      return request.serializeBinary();
+    },
+    reactor_service_pb.SetDeviceHiddenResponse.deserializeBinary
+  );
+
+  setDeviceHidden(
+    request: reactor_service_pb.SetDeviceHiddenRequest,
+    metadata: grpcWeb.Metadata | null): Promise<reactor_service_pb.SetDeviceHiddenResponse>;
+
+  setDeviceHidden(
+    request: reactor_service_pb.SetDeviceHiddenRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: reactor_service_pb.SetDeviceHiddenResponse) => void): grpcWeb.ClientReadableStream<reactor_service_pb.SetDeviceHiddenResponse>;
+
+  setDeviceHidden(
+    request: reactor_service_pb.SetDeviceHiddenRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: reactor_service_pb.SetDeviceHiddenResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/woodhouse.api.ReactorService/SetDeviceHidden',
+        request,
+        metadata || {},
+        this.methodDescriptorSetDeviceHidden,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/woodhouse.api.ReactorService/SetDeviceHidden',
+    request,
+    metadata || {},
+    this.methodDescriptorSetDeviceHidden);
   }
 
   methodDescriptorSendDeviceRequest = new grpcWeb.MethodDescriptor(
