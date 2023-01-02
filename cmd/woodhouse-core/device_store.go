@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"sync"
 
@@ -9,23 +10,27 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	ErrDeviceNotFound = errors.New("device not found")
+)
+
 type DeviceStore struct {
 	mu         sync.RWMutex
 	bridges    map[string]*api.BridgeInfo
-	infos      map[string]*api.DeviceInfo
+	infos      map[string]*api.DeviceExtendedInfo
 	states     map[string]*api.DeviceState
 	bridgesPub *queue.Pub[*api.BridgeInfo]
-	infosPub   *queue.Pub[*api.DeviceInfo]
+	infosPub   *queue.Pub[*api.DeviceExtendedInfo]
 	statesPub  *queue.Pub[*api.DeviceState]
 }
 
 func NewDeviceStore() *DeviceStore {
 	return &DeviceStore{
 		bridges:    make(map[string]*api.BridgeInfo),
-		infos:      make(map[string]*api.DeviceInfo),
+		infos:      make(map[string]*api.DeviceExtendedInfo),
 		states:     make(map[string]*api.DeviceState),
 		bridgesPub: queue.NewPub[*api.BridgeInfo](),
-		infosPub:   queue.NewPub[*api.DeviceInfo](),
+		infosPub:   queue.NewPub[*api.DeviceExtendedInfo](),
 		statesPub:  queue.NewPub[*api.DeviceState](),
 	}
 }
@@ -59,11 +64,34 @@ func (ds *DeviceStore) SetDeviceInfo(in *api.DeviceInfo) error {
 		prev.Url = in.Url
 	} else {
 		log.Printf("SetDeviceInfo added %s", in)
-		ds.infos[fullID] = proto.Clone(in).(*api.DeviceInfo)
+		ds.infos[fullID] = &api.DeviceExtendedInfo{
+			BridgeId:    in.BridgeId,
+			DeviceId:    in.DeviceId,
+			Name:        in.Name,
+			Description: in.Description,
+			Url:         in.Url,
+			Hidden:      false,
+		}
 	}
 
 	// Publish the new version.
-	ds.infosPub.Pub(proto.Clone(ds.infos[fullID]).(*api.DeviceInfo))
+	ds.infosPub.Pub(proto.Clone(ds.infos[fullID]).(*api.DeviceExtendedInfo))
+	return nil
+}
+
+func (ds *DeviceStore) SetDeviceHidden(bridgeID, deviceID string, hidden bool) error {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	fullID := bridgeID + "." + deviceID
+	if prev, found := ds.infos[fullID]; found {
+		log.Printf("SetDeviceHidden %q hidden set to %t", fullID, hidden)
+		prev.Hidden = hidden
+	} else {
+		return ErrDeviceNotFound
+	}
+
+	// Publish the new version.
+	ds.infosPub.Pub(proto.Clone(ds.infos[fullID]).(*api.DeviceExtendedInfo))
 	return nil
 }
 
@@ -112,12 +140,12 @@ func (ds *DeviceStore) GetBridgeInfos() []*api.BridgeInfo {
 	return out
 }
 
-func (ds *DeviceStore) GetDeviceInfos() []*api.DeviceInfo {
+func (ds *DeviceStore) GetDeviceExtendedInfos() []*api.DeviceExtendedInfo {
 	ds.mu.RLock()
 	defer ds.mu.RUnlock()
-	var out []*api.DeviceInfo
+	var out []*api.DeviceExtendedInfo
 	for _, info := range ds.infos {
-		out = append(out, proto.Clone(info).(*api.DeviceInfo))
+		out = append(out, proto.Clone(info).(*api.DeviceExtendedInfo))
 	}
 	return out
 }

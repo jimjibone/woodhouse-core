@@ -34,7 +34,7 @@ func newReactorDevice(reactor *Reactor, deviceID string) *ReactorDevice {
 	}
 }
 
-func (rd *ReactorDevice) handleInfo(info *api.DeviceInfo) {
+func (rd *ReactorDevice) handleInfo(info *api.DeviceExtendedInfo) {
 	rd.valuesMu.Lock()
 	defer rd.valuesMu.Unlock()
 	rd.bridgeID = info.BridgeId

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -75,7 +76,7 @@ func (rs *ReactorService) GetDeviceInfos(in *api.GetDeviceInfosRequest, server a
 	sub := rs.ds.infosPub.NewSub()
 	defer sub.Close()
 
-	for _, item := range rs.ds.GetDeviceInfos() {
+	for _, item := range rs.ds.GetDeviceExtendedInfos() {
 		err := server.Send(item)
 		if err != nil {
 			log.Printf("ERROR: GetDeviceInfos during send: %s", err)
@@ -83,7 +84,7 @@ func (rs *ReactorService) GetDeviceInfos(in *api.GetDeviceInfosRequest, server a
 		}
 	}
 
-	err := server.Send(&api.DeviceInfo{})
+	err := server.Send(&api.DeviceExtendedInfo{})
 	if err != nil {
 		log.Printf("ERROR: GetDeviceInfos during send: %s", err)
 		return err
@@ -98,7 +99,7 @@ func (rs *ReactorService) GetDeviceInfos(in *api.GetDeviceInfosRequest, server a
 			return nil
 
 		case <-ticker.C:
-			err := server.Send(&api.DeviceInfo{})
+			err := server.Send(&api.DeviceExtendedInfo{})
 			if err != nil {
 				log.Printf("ERROR: GetDeviceInfos during send: %s", err)
 				return err
@@ -160,7 +161,28 @@ func (rs *ReactorService) GetDeviceStates(in *api.GetDeviceStatesRequest, server
 	}
 }
 
+func (rs *ReactorService) SetDeviceHidden(ctx context.Context, in *api.SetDeviceHiddenRequest) (*api.SetDeviceHiddenResponse, error) {
+	if in.BridgeId == "" {
+		return nil, fmt.Errorf("bridge_id must be set")
+	}
+	if in.DeviceId == "" {
+		return nil, fmt.Errorf("device_id must be set")
+	}
+	log.Printf("SetDeviceHidden %s", in)
+	err := rs.ds.SetDeviceHidden(in.BridgeId, in.DeviceId, in.Hidden)
+	if err != nil {
+		return nil, err
+	}
+	return &api.SetDeviceHiddenResponse{}, nil
+}
+
 func (rs *ReactorService) SendDeviceRequest(ctx context.Context, in *api.DeviceRequest) (*api.DeviceResponse, error) {
+	if in.BridgeId == "" {
+		return nil, fmt.Errorf("bridge_id must be set")
+	}
+	if in.DeviceId == "" {
+		return nil, fmt.Errorf("device_id must be set")
+	}
 	log.Printf("SendDeviceRequest %s", in)
 	rs.requests.Pub(in)
 	return &api.DeviceResponse{}, nil
