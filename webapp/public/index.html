@@ -6,8 +6,16 @@
 	<title>Woodhouse</title>
 	<link rel='icon' type='image/png' href='/favicon.png'>
 	<link rel='stylesheet' href='/build/bundle.css'>
+	<script type="text/javascript">
+		// On page load or when changing themes, best to add inline in `head` to avoid FOUC.
+		if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+			document.documentElement.classList.add('dark');
+		} else {
+			document.documentElement.classList.remove('dark');
+		}
+	</script>
 	<script defer type='text/javascript' src='/build/bundle.js'></script>
 </head>
-<body>
+<body class="text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 min-h-full">
 </body>
 </html>

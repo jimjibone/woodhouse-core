@@ -16,15 +16,21 @@
 		navOpen = !navOpen;
 	}
 
-	// let deviceInfos: DeviceInfo[] = [];
-	// let deviceInfosConnected: boolean = false;
-	// const unsubscribeDeviceInfos = deviceInfosStream.subscribeData(value => { deviceInfos = value; });
-	// const unsubscribeDeviceInfosConnected = deviceInfosStream.subscribeConnected(value => { deviceInfosConnected = value; });
+	function toggleDarkMode() {
+		if (localStorage.theme == undefined) {
+			localStorage.theme = 'dark';
+		} else if (localStorage.theme === 'dark') {
+			localStorage.theme = 'light';
+		} else if (localStorage.theme === 'light') {
+			localStorage.removeItem('theme');
+		}
 
-	// onDestroy(() => {
-	// 	unsubscribeDeviceInfos();
-	// 	unsubscribeDeviceInfosConnected();
-	// });
+		if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+			document.documentElement.classList.add('dark');
+		} else {
+			document.documentElement.classList.remove('dark');
+		}
+	}
 </script>
 
 <main>
@@ -46,6 +52,9 @@
 				<div class="navbar-start">
 					<NavLink to="/">Devices</NavLink>
 					<NavLink to="/bridges">Bridges</NavLink>
+					<!-- <button on:click={toggleDarkMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+						Dark Mode
+					</button> -->
 				</div>
 			</div>
 		</nav>
