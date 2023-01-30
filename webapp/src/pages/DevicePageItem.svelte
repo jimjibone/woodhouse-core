@@ -16,7 +16,7 @@
 	$: bridgeID = device.info ? device.info.getBridgeId() : (device.state ? device.state.getBridgeId() : "<no bridge id>");
 	$: deviceID = device.info ? device.info.getDeviceId() : (device.state ? device.state.getDeviceId() : "<no device id>");
 	$: url = device.info ? device.info.getUrl() : "";
-	$: online = device.state ? (device.state.getOnline() ? "online" : "offline") : "<no online state>";
+	$: online = device.state ? device.state.getOnline() : false;
 	$: lastSeen = device.state ? (device.state.hasLastSeen() ? formatISO9075(fromUnixTime(device.state.getLastSeen().getSeconds())) : "<no time>") : "<no time>";
 	$: hidden = device.info ? device.info.getHidden() : false;
 
@@ -72,6 +72,11 @@
 				<div class="level-item">
 					<p class="title is-5">{device.info != null ? device.info.getName() : "<no device info>"}</p>
 				</div>
+				{#if !online}
+				<div class="level-item">
+					<p class="tag is-danger">offline</p>
+				</div>
+				{/if}
 			</div>
 			<div class="level-right">
 				<div class="level-item">
