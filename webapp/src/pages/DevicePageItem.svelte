@@ -7,6 +7,11 @@
 
 	export let device: DeviceInfoState = null;
 	export let showHidden: boolean = true;
+	$: values = device.state ? device.state.getValuesList().sort((a, b) => {
+		const aName = a.getName()
+		const bName = b.getName()
+		return aName > bName ? 1 : (bName > aName ? -1 : 0)
+	}) : []
 
 	$: bridgeID = device.info ? device.info.getBridgeId() : (device.state ? device.state.getBridgeId() : "<no bridge id>");
 	$: deviceID = device.info ? device.info.getDeviceId() : (device.state ? device.state.getDeviceId() : "<no device id>");
@@ -96,7 +101,7 @@
 
 		{#if device.state}
 		<div class="content is-inline-flex is-inline-spacing is-flex-wrap-wrap">
-			{#each device.state.getValuesList() as value (value.getName())}
+			{#each values as value (value.getName())}
 				<DeviceValue value={value} writable writer={onRequest} />
 			{:else}
 			<p>No values!</p>
