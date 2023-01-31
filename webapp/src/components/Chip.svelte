@@ -5,6 +5,7 @@
 <button on:click class="button tag is-info is-light">
 	{#if checked}
 	<div class="iconWrapper">
+		<!-- https://ionic.io/ionicons -->
 		<svg
 			class="checkIcon"
 			viewBox="0 0 10 7"

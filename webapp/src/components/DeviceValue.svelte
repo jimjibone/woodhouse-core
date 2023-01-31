@@ -2,6 +2,7 @@
 	import uid from '../internal/uid';
 	import type { DeviceValue } from '../api/device_pb';
 	import BoolValue from './values/BoolValue.svelte';
+	import NumberValue from './values/NumberValue.svelte';
 
 	export let id = null;
 	export let value: DeviceValue = null;
@@ -24,7 +25,7 @@
 		{#if value.hasBool()}
 		<BoolValue value={value.getBool()} writable={writable} writer={onRequest} />
 		{:else if value.hasNumber()}
-		<p>Number: {value.getNumber().getValue()}</p>
+		<NumberValue value={value.getNumber()} writable={writable} writer={onRequest} />
 		{:else if value.hasText()}
 		<p>Text: {value.getText().getValue()}</p>
 		{:else if value.hasColor()}
