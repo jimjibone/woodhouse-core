@@ -176,6 +176,21 @@ func (rs *ReactorService) SetDeviceHidden(ctx context.Context, in *api.SetDevice
 	return &api.SetDeviceHiddenResponse{}, nil
 }
 
+func (rs *ReactorService) SetDeviceFavourite(ctx context.Context, in *api.SetDeviceFavouriteRequest) (*api.SetDeviceFavouriteResponse, error) {
+	if in.BridgeId == "" {
+		return nil, fmt.Errorf("bridge_id must be set")
+	}
+	if in.DeviceId == "" {
+		return nil, fmt.Errorf("device_id must be set")
+	}
+	log.Printf("SetDeviceFavourite %s", in)
+	err := rs.ds.SetDeviceFavourite(in.BridgeId, in.DeviceId, in.Favourite)
+	if err != nil {
+		return nil, err
+	}
+	return &api.SetDeviceFavouriteResponse{}, nil
+}
+
 func (rs *ReactorService) SendDeviceRequest(ctx context.Context, in *api.DeviceRequest) (*api.DeviceResponse, error) {
 	if in.BridgeId == "" {
 		return nil, fmt.Errorf("bridge_id must be set")

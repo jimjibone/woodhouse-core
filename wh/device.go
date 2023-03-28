@@ -47,7 +47,7 @@ func (bd *BridgeComms) SendState(state *api.DeviceState) error {
 }
 
 type Device interface {
-	Init(bridge *BridgeComms)
+	Init(comms *BridgeComms)
 	SendFullUpdate() // Send a full update of info and state. Typically done just after connecting to woodhouse or being added to the bridge.
 	HandleRequest(*api.DeviceRequest) error
 }

@@ -60,6 +60,9 @@ export class DeviceExtendedInfo extends jspb.Message {
   getHidden(): boolean;
   setHidden(value: boolean): void;
 
+  getFavourite(): boolean;
+  setFavourite(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeviceExtendedInfo.AsObject;
   static toObject(includeInstance: boolean, msg: DeviceExtendedInfo): DeviceExtendedInfo.AsObject;
@@ -78,6 +81,7 @@ export namespace DeviceExtendedInfo {
     description: string,
     url: string,
     hidden: boolean,
+    favourite: boolean,
   }
 }
 

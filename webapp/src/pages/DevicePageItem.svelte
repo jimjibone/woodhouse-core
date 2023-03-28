@@ -2,8 +2,8 @@
     import { formatISO9075, fromUnixTime } from 'date-fns';
 	import DeviceValue from '../components/DeviceValue.svelte';
 	import { DeviceRequest, DeviceResponse, DeviceValue as DeviceValueType } from '../api/device_pb';
-	import { DeviceInfoState, sendDeviceRequest, setDeviceHidden } from '../stores/devices';
-    import { SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
+	import { DeviceInfoState, sendDeviceRequest, setDeviceFavourite, setDeviceHidden } from '../stores/devices';
+    import { SetDeviceFavouriteRequest, SetDeviceFavouriteResponse, SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
 
 	export let device: DeviceInfoState = null;
 	export let showHidden: boolean = true;
@@ -19,6 +19,7 @@
 	$: online = device.state ? device.state.getOnline() : false;
 	$: lastSeen = device.state ? (device.state.hasLastSeen() ? formatISO9075(fromUnixTime(device.state.getLastSeen().getSeconds())) : "<no time>") : "<no time>";
 	$: hidden = device.info ? device.info.getHidden() : false;
+	$: favourite = device.info ? device.info.getFavourite() : false;
 
 	function toggleHidden() : void {
 		const req = new SetDeviceHiddenRequest();
@@ -28,6 +29,20 @@
 		console.log(`${device.fullId} request:`, req.toObject());
 		setDeviceHidden(req)
 		.then((res: SetDeviceHiddenResponse) => {
+			console.log(`${device.fullId} response:`, res.toObject());
+		}).catch((err: any) => {
+			console.error(`${device.fullId} response:`, err);
+		});
+	}
+
+	function toggleFavourite() : void {
+		const req = new SetDeviceFavouriteRequest();
+		req.setBridgeId(device.info.getBridgeId());
+		req.setDeviceId(device.info.getDeviceId());
+		req.setFavourite(!favourite);
+		console.log(`${device.fullId} request:`, req.toObject());
+		setDeviceFavourite(req)
+		.then((res: SetDeviceFavouriteResponse) => {
 			console.log(`${device.fullId} response:`, res.toObject());
 		}).catch((err: any) => {
 			console.error(`${device.fullId} response:`, err);
@@ -91,6 +106,18 @@
 					</button>
 				</div>
 				{/if}
+				<div class="level-item">
+					<button class="button tag is-light" on:click={toggleFavourite}>
+						<div class="iconWrapper">
+							<!-- https://ionic.io/ionicons -->
+							{#if favourite}
+							<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><title>Star</title><path d="M394 480a16 16 0 01-9.39-3L256 383.76 127.39 477a16 16 0 01-24.55-18.08L153 310.35 23 221.2a16 16 0 019-29.2h160.38l48.4-148.95a16 16 0 0130.44 0l48.4 149H480a16 16 0 019.05 29.2L359 310.35l50.13 148.53A16 16 0 01394 480z"/></svg>
+							{:else}
+							<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><title>Star</title><path d="M480 208H308L256 48l-52 160H32l140 96-54 160 138-100 138 100-54-160z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32"/></svg>
+							{/if}
+						</div>
+					</button>
+				</div>
 			</div>
 			<div class="level-right">
 				<div class="level-item">

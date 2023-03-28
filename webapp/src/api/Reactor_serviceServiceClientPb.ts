@@ -150,6 +150,49 @@ export class ReactorServiceClient {
     this.methodDescriptorSetDeviceHidden);
   }
 
+  methodDescriptorSetDeviceFavourite = new grpcWeb.MethodDescriptor(
+    '/woodhouse.api.ReactorService/SetDeviceFavourite',
+    grpcWeb.MethodType.UNARY,
+    reactor_service_pb.SetDeviceFavouriteRequest,
+    reactor_service_pb.SetDeviceFavouriteResponse,
+    (request: reactor_service_pb.SetDeviceFavouriteRequest) => {
+      return request.serializeBinary();
+    },
+    reactor_service_pb.SetDeviceFavouriteResponse.deserializeBinary
+  );
+
+  setDeviceFavourite(
+    request: reactor_service_pb.SetDeviceFavouriteRequest,
+    metadata: grpcWeb.Metadata | null): Promise<reactor_service_pb.SetDeviceFavouriteResponse>;
+
+  setDeviceFavourite(
+    request: reactor_service_pb.SetDeviceFavouriteRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: reactor_service_pb.SetDeviceFavouriteResponse) => void): grpcWeb.ClientReadableStream<reactor_service_pb.SetDeviceFavouriteResponse>;
+
+  setDeviceFavourite(
+    request: reactor_service_pb.SetDeviceFavouriteRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: reactor_service_pb.SetDeviceFavouriteResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/woodhouse.api.ReactorService/SetDeviceFavourite',
+        request,
+        metadata || {},
+        this.methodDescriptorSetDeviceFavourite,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/woodhouse.api.ReactorService/SetDeviceFavourite',
+    request,
+    metadata || {},
+    this.methodDescriptorSetDeviceFavourite);
+  }
+
   methodDescriptorSendDeviceRequest = new grpcWeb.MethodDescriptor(
     '/woodhouse.api.ReactorService/SendDeviceRequest',
     grpcWeb.MethodType.UNARY,

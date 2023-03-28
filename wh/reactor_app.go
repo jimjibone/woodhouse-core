@@ -6,18 +6,39 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
+	api "github.com/jimjibone/woodhouse-4/api/go"
+	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/urfave/cli/v2"
 )
 
 type ReactorApp struct {
-	Name     string        // The name of the program. Defaults to path.Base(os.Args[0])
-	Usage    string        // Description of the program.
-	Flags    []cli.Flag    // Additional list of flags to parse.
-	Reactors []ReactorFunc // Reactor functions to be called once the reactor starts.
+	BridgeID    string        // A unique bridge ID for this reactor.
+	Name        string        // The name of the program. Defaults to path.Base(os.Args[0])
+	Description string        // A description for this reactor.
+	Flags       []cli.Flag    // Additional list of flags to parse.
+	Reactors    []ReactorFunc // Reactor functions to be called once the reactor starts.
+	bridge      *Bridge
 }
 
 type ReactorFunc func(args *cli.Context, ctx context.Context, reactor *Reactor) error
+
+func (ra *ReactorApp) createBridge() {
+	ra.bridge = NewBridge(&api.BridgeInfo{
+		BridgeId:    ra.BridgeID,
+		Name:        ra.Name,
+		Description: ra.Description,
+		BootTime:    apitools.TimeToTimestamp(time.Now()),
+	})
+}
+
+func (ra *ReactorApp) AddDevice(deviceID string, device Device) {
+	if ra.bridge == nil {
+		ra.createBridge()
+	}
+	ra.bridge.AddDevice(deviceID, device)
+}
 
 func (ra *ReactorApp) Run(arguments []string) error {
 	flags := append([]cli.Flag{
@@ -28,7 +49,7 @@ func (ra *ReactorApp) Run(arguments []string) error {
 	}, ra.Flags...)
 	app := &cli.App{
 		Name:                 ra.Name,
-		Usage:                ra.Usage,
+		Usage:                ra.Description,
 		EnableBashCompletion: true,
 		Flags:                flags,
 		Action: func(args *cli.Context) error {
@@ -47,12 +68,17 @@ func (ra *ReactorApp) Run(arguments []string) error {
 				}
 			}()
 
+			// Create the bridge if not done already.
+			if ra.bridge == nil {
+				ra.createBridge()
+			}
+
 			// Create the reactor.
 			reactor := NewReactor()
 
 			// Collect errors from goroutines.
 			var wg sync.WaitGroup
-			errs := make(chan error, 1)
+			errs := make(chan error, len(ra.Reactors)+1)
 
 			// Run the reactor stuff.
 			for _, reactFunc := range ra.Reactors {
@@ -69,7 +95,8 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			// Run the connection stuff.
 			wg.Add(1)
 			go func() {
-				connector := NewConnector(reactor.Run)
+				// connector := NewConnector(reactor.Run)
+				connector := NewConnector(ra.bridge.Run, reactor.Run)
 				err := connector.Run(ctx)
 				if err != nil {
 					errs <- err

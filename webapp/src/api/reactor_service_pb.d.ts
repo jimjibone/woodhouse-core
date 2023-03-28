@@ -86,3 +86,43 @@ export namespace SetDeviceHiddenResponse {
   }
 }
 
+export class SetDeviceFavouriteRequest extends jspb.Message {
+  getBridgeId(): string;
+  setBridgeId(value: string): SetDeviceFavouriteRequest;
+
+  getDeviceId(): string;
+  setDeviceId(value: string): SetDeviceFavouriteRequest;
+
+  getFavourite(): boolean;
+  setFavourite(value: boolean): SetDeviceFavouriteRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetDeviceFavouriteRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SetDeviceFavouriteRequest): SetDeviceFavouriteRequest.AsObject;
+  static serializeBinaryToWriter(message: SetDeviceFavouriteRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SetDeviceFavouriteRequest;
+  static deserializeBinaryFromReader(message: SetDeviceFavouriteRequest, reader: jspb.BinaryReader): SetDeviceFavouriteRequest;
+}
+
+export namespace SetDeviceFavouriteRequest {
+  export type AsObject = {
+    bridgeId: string,
+    deviceId: string,
+    favourite: boolean,
+  }
+}
+
+export class SetDeviceFavouriteResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetDeviceFavouriteResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SetDeviceFavouriteResponse): SetDeviceFavouriteResponse.AsObject;
+  static serializeBinaryToWriter(message: SetDeviceFavouriteResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SetDeviceFavouriteResponse;
+  static deserializeBinaryFromReader(message: SetDeviceFavouriteResponse, reader: jspb.BinaryReader): SetDeviceFavouriteResponse;
+}
+
+export namespace SetDeviceFavouriteResponse {
+  export type AsObject = {
+  }
+}
+

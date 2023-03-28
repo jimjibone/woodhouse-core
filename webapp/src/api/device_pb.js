@@ -444,7 +444,8 @@ proto.woodhouse.api.DeviceExtendedInfo.toObject = function(includeInstance, msg)
     name: jspb.Message.getFieldWithDefault(msg, 3, ""),
     description: jspb.Message.getFieldWithDefault(msg, 4, ""),
     url: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    hidden: jspb.Message.getBooleanFieldWithDefault(msg, 6, false)
+    hidden: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
+    favourite: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -504,6 +505,10 @@ proto.woodhouse.api.DeviceExtendedInfo.deserializeBinaryFromReader = function(ms
     case 6:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setHidden(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFavourite(value);
       break;
     default:
       reader.skipField();
@@ -573,6 +578,13 @@ proto.woodhouse.api.DeviceExtendedInfo.serializeBinaryToWriter = function(messag
   if (f) {
     writer.writeBool(
       6,
+      f
+    );
+  }
+  f = message.getFavourite();
+  if (f) {
+    writer.writeBool(
+      7,
       f
     );
   }
@@ -684,6 +696,24 @@ proto.woodhouse.api.DeviceExtendedInfo.prototype.getHidden = function() {
  */
 proto.woodhouse.api.DeviceExtendedInfo.prototype.setHidden = function(value) {
   return jspb.Message.setProto3BooleanField(this, 6, value);
+};
+
+
+/**
+ * optional bool favourite = 7;
+ * @return {boolean}
+ */
+proto.woodhouse.api.DeviceExtendedInfo.prototype.getFavourite = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.woodhouse.api.DeviceExtendedInfo} returns this
+ */
+proto.woodhouse.api.DeviceExtendedInfo.prototype.setFavourite = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 

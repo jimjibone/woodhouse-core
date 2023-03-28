@@ -3,7 +3,7 @@ import type * as grpcWeb from 'grpc-web';
 import type { DeviceExtendedInfo, DeviceResponse, DeviceState } from '../api/device_pb';
 import type { DeviceRequest } from '../api/device_pb';
 import { ReactorServiceClient } from '../api/Reactor_serviceServiceClientPb';
-import { GetDeviceInfosRequest, GetDeviceStatesRequest, SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
+import { GetDeviceInfosRequest, GetDeviceStatesRequest, SetDeviceFavouriteRequest, SetDeviceFavouriteResponse, SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
 import { defaultMinBackoffMs, defaultMaxBackoffMs, createBackoffWithHeartbeat } from './utils';
 
 const reactorClient = new ReactorServiceClient('/api');
@@ -264,13 +264,17 @@ function createDevicesStream(name: string, debug: boolean) {
 	}
 
 	return {
-		subscribeData: dataWriter.subscribe,
+		subscribe: dataWriter.subscribe,
 		subscribeConnected: connectedWriter.subscribe,
 	};
 }
 
 export function setDeviceHidden(req: SetDeviceHiddenRequest) : Promise<SetDeviceHiddenResponse> {
 	return reactorClient.setDeviceHidden(req, null); //, {"authorization": getAccessToken()});
+}
+
+export function setDeviceFavourite(req: SetDeviceFavouriteRequest) : Promise<SetDeviceFavouriteResponse> {
+	return reactorClient.setDeviceFavourite(req, null); //, {"authorization": getAccessToken()});
 }
 
 export function sendDeviceRequest(req: DeviceRequest) : Promise<DeviceResponse> {

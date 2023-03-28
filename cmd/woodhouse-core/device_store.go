@@ -1,12 +1,18 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"io/fs"
 	"log"
+	"os"
+	"sort"
 	"sync"
+	"time"
 
 	"github.com/jimjibone/queue/v2"
 	api "github.com/jimjibone/woodhouse-4/api/go"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/jsonfile"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -15,7 +21,11 @@ var (
 )
 
 type DeviceStore struct {
+	wg         sync.WaitGroup
+	close      func()
 	mu         sync.RWMutex
+	changed    bool
+	filename   string
 	bridges    map[string]*api.BridgeInfo
 	infos      map[string]*api.DeviceExtendedInfo
 	states     map[string]*api.DeviceState
@@ -24,8 +34,11 @@ type DeviceStore struct {
 	statesPub  *queue.Pub[*api.DeviceState]
 }
 
-func NewDeviceStore() *DeviceStore {
-	return &DeviceStore{
+func NewDeviceStore(storeFilename string) (*DeviceStore, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	ds := &DeviceStore{
+		close:      cancel,
+		filename:   storeFilename,
 		bridges:    make(map[string]*api.BridgeInfo),
 		infos:      make(map[string]*api.DeviceExtendedInfo),
 		states:     make(map[string]*api.DeviceState),
@@ -33,11 +46,114 @@ func NewDeviceStore() *DeviceStore {
 		infosPub:   queue.NewPub[*api.DeviceExtendedInfo](),
 		statesPub:  queue.NewPub[*api.DeviceState](),
 	}
+
+	// Load the previous store from file.
+	err := ds.loadStore(storeFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	// Save an empty version of the store if the file doesn't exist.
+	if _, err := os.Stat(storeFilename); errors.Is(err, fs.ErrNotExist) {
+		err = ds.saveStore(storeFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Periodically save the store if it has changed.
+	ds.wg.Add(1)
+	go func() {
+		defer ds.wg.Done()
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				ds.mu.RLock()
+				if ds.changed {
+					ds.changed = false
+					err := ds.saveStore(storeFilename)
+					if err != nil {
+						log.Fatalf("failed to save device store: %s", err)
+					}
+				}
+				ds.mu.RUnlock()
+			}
+		}
+	}()
+
+	return ds, nil
+}
+
+func (ds *DeviceStore) Close() error {
+	ds.close()
+	ds.wg.Wait()
+	return ds.saveStore(ds.filename)
+}
+
+func (ds *DeviceStore) loadStore(filename string) error {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	store := struct {
+		Info  []*api.DeviceExtendedInfo `json:"info"`
+		State []*api.DeviceState        `json:"state"`
+	}{}
+
+	err := jsonfile.LoadFile(&store, filename)
+	if err != nil {
+		return err
+	}
+
+	for _, info := range store.Info {
+		fullID := info.BridgeId + "." + info.DeviceId
+		ds.infos[fullID] = info
+	}
+
+	for _, state := range store.State {
+		fullID := state.BridgeId + "." + state.DeviceId
+		ds.states[fullID] = state
+	}
+
+	return nil
+}
+
+func (ds *DeviceStore) saveStore(filename string) error {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	store := struct {
+		Info  []*api.DeviceExtendedInfo `json:"info"`
+		State []*api.DeviceState        `json:"state"`
+	}{}
+
+	for _, info := range ds.infos {
+		store.Info = append(store.Info, info)
+	}
+	sort.Slice(store.Info, func(i, j int) bool {
+		iid := store.Info[i].BridgeId + "." + store.Info[i].DeviceId
+		jid := store.Info[j].BridgeId + "." + store.Info[j].DeviceId
+		return iid < jid
+	})
+
+	for _, state := range ds.states {
+		store.State = append(store.State, state)
+	}
+	sort.Slice(store.State, func(i, j int) bool {
+		iid := store.State[i].BridgeId + "." + store.State[i].DeviceId
+		jid := store.State[j].BridgeId + "." + store.State[j].DeviceId
+		return iid < jid
+	})
+
+	return jsonfile.SaveFile(store, filename)
 }
 
 func (ds *DeviceStore) SetBridgeInfo(in *api.BridgeInfo) error {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+	ds.changed = true
+
 	if prev, found := ds.bridges[in.BridgeId]; found {
 		log.Printf("SetBridgeInfo updated %s", in)
 		prev.Name = in.Name
@@ -56,6 +172,8 @@ func (ds *DeviceStore) SetBridgeInfo(in *api.BridgeInfo) error {
 func (ds *DeviceStore) SetDeviceInfo(in *api.DeviceInfo) error {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+	ds.changed = true
+
 	fullID := in.BridgeId + "." + in.DeviceId
 	if prev, found := ds.infos[fullID]; found {
 		log.Printf("SetDeviceInfo updated %s", in)
@@ -82,6 +200,8 @@ func (ds *DeviceStore) SetDeviceInfo(in *api.DeviceInfo) error {
 func (ds *DeviceStore) SetDeviceHidden(bridgeID, deviceID string, hidden bool) error {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+	ds.changed = true
+
 	fullID := bridgeID + "." + deviceID
 	if prev, found := ds.infos[fullID]; found {
 		log.Printf("SetDeviceHidden %q hidden set to %t", fullID, hidden)
@@ -95,9 +215,29 @@ func (ds *DeviceStore) SetDeviceHidden(bridgeID, deviceID string, hidden bool) e
 	return nil
 }
 
+func (ds *DeviceStore) SetDeviceFavourite(bridgeID, deviceID string, favourite bool) error {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.changed = true
+
+	fullID := bridgeID + "." + deviceID
+	if prev, found := ds.infos[fullID]; found {
+		log.Printf("SetDeviceFavourite %q favourite set to %t", fullID, favourite)
+		prev.Favourite = favourite
+	} else {
+		return ErrDeviceNotFound
+	}
+
+	// Publish the new version.
+	ds.infosPub.Pub(proto.Clone(ds.infos[fullID]).(*api.DeviceExtendedInfo))
+	return nil
+}
+
 func (ds *DeviceStore) SetDeviceState(in *api.DeviceState) error {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
+	ds.changed = true
+
 	fullID := in.BridgeId + "." + in.DeviceId
 	if prev, found := ds.states[fullID]; found {
 		log.Printf("SetDeviceState updated %s", in)

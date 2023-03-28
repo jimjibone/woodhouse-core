@@ -80,8 +80,14 @@ func main() {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
 			}
 
-			// Create store.
-			deviceStore := NewDeviceStore()
+			// Create device store.
+			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStorePath)
+			if err != nil {
+				return fmt.Errorf("failed to create device store: %s", err)
+			}
+			defer deviceStore.Close()
+
+			// Create history store.
 			historyStore := NewHistoryStore(deviceStore)
 			defer historyStore.Close()
 

@@ -5,6 +5,7 @@
 	import Toast from './components/Toast.svelte';
 	import DevicesPage from './pages/DevicesPage.svelte';
 	import BridgesPage from './pages/BridgesPage.svelte';
+    import FavouritesPage from './pages/FavouritesPage.svelte';
 
 	export let url = "";
 
@@ -50,7 +51,8 @@
 
 			<div class={navbarMenuClasses}>
 				<div class="navbar-start">
-					<NavLink to="/">Devices</NavLink>
+					<NavLink to="/">Favourites</NavLink>
+					<NavLink to="/devices">Devices</NavLink>
 					<NavLink to="/bridges">Bridges</NavLink>
 					<!-- <button on:click={toggleDarkMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
 						Dark Mode
@@ -59,7 +61,8 @@
 			</div>
 		</nav>
 		<div>
-			<Route path="/" component="{DevicesPage}" />
+			<Route path="/" component="{FavouritesPage}" />
+			<Route path="/devices" component="{DevicesPage}" />
 			<Route path="/bridges" component="{BridgesPage}" />
 		</div>
 	</Router>

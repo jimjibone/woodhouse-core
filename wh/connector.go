@@ -22,15 +22,15 @@ type Connector struct {
 	lastBackoff      time.Time
 	lastRestart      time.Time
 	backoffDuration  time.Duration
-	onConnected      ConnectionHandler
+	handlers         []ConnectionHandler
 }
 
 type ConnectionHandler func(ctx context.Context, conn *grpc.ClientConn) error
 
 // Create a new connector.
-func NewConnector(onConnected ConnectionHandler) *Connector {
+func NewConnector(handler ConnectionHandler, handlers ...ConnectionHandler) *Connector {
 	return &Connector{
-		onConnected: onConnected,
+		handlers: append([]ConnectionHandler{handler}, handlers...),
 	}
 }
 
@@ -155,8 +155,32 @@ func (c *Connector) backoff(ctx context.Context) {
 func (c *Connector) run(ctx context.Context, conn *grpc.ClientConn) error {
 	log.Printf("connected!")
 
-	if c.onConnected != nil {
-		return c.onConnected(ctx, conn)
+	if len(c.handlers) == 0 {
+		return fmt.Errorf("no connection handler")
 	}
-	return fmt.Errorf("no connection handler")
+
+	if len(c.handlers) == 1 {
+		return c.handlers[0](ctx, conn)
+	}
+
+	errs := make(chan error, len(c.handlers))
+	runctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	for _, handler := range c.handlers {
+		go func(handler ConnectionHandler) {
+			err := handler(runctx, conn)
+			if err != nil {
+				errs <- err
+			}
+		}(handler)
+	}
+
+	select {
+	case <-ctx.Done():
+		return nil
+
+	case err := <-errs:
+		return err
+	}
 }
