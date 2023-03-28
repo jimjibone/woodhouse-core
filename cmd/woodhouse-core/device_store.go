@@ -95,8 +95,6 @@ func (ds *DeviceStore) Close() error {
 }
 
 func (ds *DeviceStore) loadStore(filename string) error {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
 	store := struct {
 		Info  []*api.DeviceExtendedInfo `json:"info"`
 		State []*api.DeviceState        `json:"state"`
@@ -121,8 +119,6 @@ func (ds *DeviceStore) loadStore(filename string) error {
 }
 
 func (ds *DeviceStore) saveStore(filename string) error {
-	ds.mu.Lock()
-	defer ds.mu.Unlock()
 	store := struct {
 		Info  []*api.DeviceExtendedInfo `json:"info"`
 		State []*api.DeviceState        `json:"state"`
