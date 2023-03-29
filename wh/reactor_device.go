@@ -14,6 +14,7 @@ type ReactorDevice struct {
 	reactor       *Reactor
 	bridgeID      string
 	deviceID      string
+	name          string
 	valuesMu      sync.RWMutex
 	values        map[string]*api.DeviceValue
 	handlersMu    sync.RWMutex
@@ -38,6 +39,7 @@ func (rd *ReactorDevice) handleInfo(info *api.DeviceExtendedInfo) {
 	rd.valuesMu.Lock()
 	defer rd.valuesMu.Unlock()
 	rd.bridgeID = info.BridgeId
+	rd.name = info.Name
 }
 
 func (rd *ReactorDevice) handleState(state *api.DeviceState) {
@@ -71,6 +73,14 @@ func (rd *ReactorDevice) originalValueName(name string) string {
 		return value.Name
 	}
 	return name
+}
+
+func (rd *ReactorDevice) DeviceID() string {
+	return rd.deviceID
+}
+
+func (rd *ReactorDevice) Name() string {
+	return rd.name
 }
 
 func (rd *ReactorDevice) OnState(handler func(values []*api.DeviceValue)) {
