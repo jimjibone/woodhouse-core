@@ -19,10 +19,19 @@ type ReactorApp struct {
 	Description string        // A description for this reactor.
 	Flags       []cli.Flag    // Additional list of flags to parse.
 	Reactors    []ReactorFunc // Reactor functions to be called once the reactor starts.
+	reactor     *Reactor
 	bridge      *Bridge
 }
 
 type ReactorFunc func(args *cli.Context, ctx context.Context, reactor *Reactor) error
+
+// Return the reactor.
+func (ra *ReactorApp) Reactor() *Reactor {
+	if ra.reactor == nil {
+		ra.reactor = NewReactor()
+	}
+	return ra.reactor
+}
 
 func (ra *ReactorApp) createBridge() {
 	ra.bridge = NewBridge(&api.BridgeInfo{
@@ -74,7 +83,7 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			}
 
 			// Create the reactor.
-			reactor := NewReactor()
+			ra.Reactor()
 
 			// Collect errors from goroutines.
 			var wg sync.WaitGroup
@@ -84,7 +93,7 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			for _, reactFunc := range ra.Reactors {
 				wg.Add(1)
 				go func(reactFunc ReactorFunc) {
-					err := reactFunc(args, ctx, reactor)
+					err := reactFunc(args, ctx, ra.reactor)
 					if err != nil {
 						errs <- err
 					}
@@ -96,7 +105,7 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			wg.Add(1)
 			go func() {
 				// connector := NewConnector(reactor.Run)
-				connector := NewConnector(ra.bridge.Run, reactor.Run)
+				connector := NewConnector(ra.bridge.Run, ra.reactor.Run)
 				err := connector.Run(ctx)
 				if err != nil {
 					errs <- err
