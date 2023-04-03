@@ -2,12 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-.is-inline-spacing > div:not(:first-child) {
-    padding-left: 1rem;
+.is-inline-spacing {
+    display: flex;
+    column-gap: 1rem;
 }
 
-.is-inline-spacing > div:not(:last-child) {
-    padding-right: 1rem;
+@media screen and (max-width: 768px) {
+    .is-inline-spacing > div {
+        flex-basis: 100%;
+    }
 }
 
 a.navbar-item.is-active, .navbar-link.is-active {
