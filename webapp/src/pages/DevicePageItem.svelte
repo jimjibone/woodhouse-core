@@ -82,7 +82,8 @@
 			</p>
 		</div> -->
 
-		<div class="level">
+		<!-- title: desktop -->
+		<div class="level is-hidden-mobile">
 			<div class="level-left">
 				<div class="level-item">
 					<p class="title is-5">{device.info != null ? device.info.getName() : "<no device info>"}</p>
@@ -141,6 +142,21 @@
 							<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><title>Open</title><path d="M384 224v184a40 40 0 01-40 40H104a40 40 0 01-40-40V168a40 40 0 0140-40h167.48M336 64h112v112M224 288L440 72" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/></svg>
 						</div>
 					</a>
+				</div>
+				{/if}
+			</div>
+		</div>
+		<!-- title: mobile -->
+		<div class="level is-hidden-tablet is-mobile">
+			<div class="level-left">
+				<div class="level-item">
+					<p class="title is-5">{device.info != null ? device.info.getName() : "<no device info>"}</p>
+				</div>
+			</div>
+			<div class="level-right">
+				{#if !online}
+				<div class="level-item">
+					<p class="tag is-danger">offline</p>
 				</div>
 				{/if}
 			</div>
