@@ -62,6 +62,9 @@ func (r *Reactor) Request(request *api.DeviceRequest) error {
 }
 
 func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
+	log.Printf("reactor started")
+	defer log.Printf("reactor finished")
+
 	ctx, cancel := context.WithCancel(appctx)
 	defer cancel()
 
@@ -96,6 +99,13 @@ func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
 	go func() {
 		defer cancel()
 		for {
+			// Exit if the context is done.
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
 			// Receive the next device info.
 			info, err := infos.Recv()
 			if err != nil {
@@ -103,13 +113,6 @@ func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
 				return
 			}
 			// log.Printf("received device info: %s", info)
-
-			// Exit if the context is done.
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
 
 			r.devicesMu.RLock()
 			if device, found := r.devices[info.DeviceId]; found {
@@ -123,6 +126,13 @@ func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
 	go func() {
 		defer cancel()
 		for {
+			// Exit if the context is done.
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
 			// Receive the next device state.
 			state, err := states.Recv()
 			if err != nil {
@@ -130,13 +140,6 @@ func (r *Reactor) Run(appctx context.Context, conn *grpc.ClientConn) error {
 				return
 			}
 			// log.Printf("received device state: %s", state)
-
-			// Exit if the context is done.
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
 
 			r.devicesMu.RLock()
 			if device, found := r.devices[state.DeviceId]; found {

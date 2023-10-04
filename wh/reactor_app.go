@@ -93,10 +93,7 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			for _, reactFunc := range ra.Reactors {
 				wg.Add(1)
 				go func(reactFunc ReactorFunc) {
-					err := reactFunc(args, ctx, ra.reactor)
-					if err != nil {
-						errs <- err
-					}
+					errs <- reactFunc(args, ctx, ra.reactor)
 					wg.Done()
 				}(reactFunc)
 			}
@@ -104,24 +101,25 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			// Run the connection stuff.
 			wg.Add(1)
 			go func() {
-				// connector := NewConnector(reactor.Run)
 				connector := NewConnector(ra.bridge.Run, ra.reactor.Run)
-				err := connector.Run(ctx)
-				if err != nil {
-					errs <- err
-				}
+				errs <- connector.Run(ctx)
 				wg.Done()
 			}()
 
 			// Wait for program exit...
+			var finalErr error
 			select {
 			case <-ctx.Done():
 			case err := <-errs:
-				return err
+				// Eventually return this error if things are not ok.
+				if err != nil {
+					finalErr = err
+				}
 			}
+			// Tell the other goroutines to cancel.
 			cancel()
 			wg.Wait()
-			return nil
+			return finalErr
 		},
 	}
 

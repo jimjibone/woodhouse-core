@@ -153,7 +153,8 @@ func (c *Connector) backoff(ctx context.Context) {
 }
 
 func (c *Connector) run(ctx context.Context, conn *grpc.ClientConn) error {
-	log.Printf("connected!")
+	log.Printf("connector run started")
+	defer log.Printf("connector run finished")
 
 	if len(c.handlers) == 0 {
 		return fmt.Errorf("no connection handler")
@@ -169,10 +170,7 @@ func (c *Connector) run(ctx context.Context, conn *grpc.ClientConn) error {
 
 	for _, handler := range c.handlers {
 		go func(handler ConnectionHandler) {
-			err := handler(runctx, conn)
-			if err != nil {
-				errs <- err
-			}
+			errs <- handler(runctx, conn)
 		}(handler)
 	}
 
