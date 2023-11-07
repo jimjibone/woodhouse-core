@@ -8,7 +8,11 @@
 		const isActive = href === '/' ? isCurrent : isPartiallyCurrent || isCurrent;
 
 		const classes = classnames('navbar-item', {
-			'is-active': isActive
+			'font-medium': isActive,
+			'text-slate-600': isActive,
+			'dark:text-slate-300': isActive,
+			'text-slate-500': !isActive,
+			'dark:text-slate-400': !isActive
 		});
 
 		return { class: classes };

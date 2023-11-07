@@ -20,7 +20,7 @@
 </script>
 
 <div class="field">
-	<label class="label" for="{id}">{value.getName()}</label>
+	<label class="label text-slate-500 dark:text-slate-400" for="{id}">{value.getName()}</label>
 	<div class="control">
 		{#if value.hasBool()}
 		<BoolValue value={value.getBool()} writable={writable} writer={onRequest} />

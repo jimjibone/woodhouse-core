@@ -15,7 +15,7 @@ module.exports = {
 		},
 		extensions: ['.mjs', '.js', '.ts', '.svelte'],
 		mainFields: ['svelte', 'browser', 'module', 'main'],
-		conditionNames: ['svelte']
+		conditionNames: ['require', 'node', 'svelte']
 	},
 	output: {
 		path: path.join(__dirname, '/public'),
@@ -44,7 +44,7 @@ module.exports = {
 				}
 			},
 			{
-				test: /\.css$/,
+				test: /\.css|postcss$/,
 				use: [
 					MiniCssExtractPlugin.loader,
 					'css-loader',
@@ -53,7 +53,7 @@ module.exports = {
 			},
 			{
 				// required to prevent errors from Svelte on Webpack 5+
-				test: /node_modules\/svelte\/.*\.mjs$/,
+				test: /node_modules\/svelte\/.*\.mjs|js$/,
 				resolve: {
 					fullySpecified: false
 				}

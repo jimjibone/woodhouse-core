@@ -88,7 +88,7 @@
 		<div class="level is-hidden-mobile">
 			<div class="level-left">
 				<div class="level-item">
-					<p class="title is-5">{device.info != null ? device.info.getName() : "<no device info>"}</p>
+					<p class="title is-5 text-slate-500 dark:text-slate-400">{device.info != null ? device.info.getName() : "<no device info>"}</p>
 				</div>
 				{#if !online}
 				<div class="level-item">

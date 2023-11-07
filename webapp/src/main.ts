@@ -1,5 +1,6 @@
 import 'bulma/css/bulma.css';
-import './global.css';
+// import './global.css';
+import './app.postcss';
 
 import App from './App.svelte';
 

@@ -51,9 +51,9 @@
 
 <main>
 	<Router url="{url}">
-		<nav class="navbar is-light" aria-label="main navigation">
+		<nav class="navbar dark:bg-slate-800 text-slate-500 dark:text-slate-300" aria-label="main navigation">
 			<div class="navbar-brand">
-				<Link to="/" class="navbar-item">
+				<Link to="/" class="navbar-item text-slate-500 dark:text-slate-400">
 					Woodhouse
 				</Link>
 
@@ -69,13 +69,13 @@
 					<NavLink to="/">Favourites</NavLink>
 					<NavLink to="/devices">Devices</NavLink>
 					<NavLink to="/bridges">Bridges</NavLink>
-					<button on:click={setDarkMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+					<button on:click={setDarkMode} class="hover:bg-gray-700 hover:text-white px-3 py-2 text-sm font-medium">
 						Dark Mode
 					</button>
-					<button on:click={setLightMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+					<button on:click={setLightMode} class="hover:bg-gray-700 hover:text-white px-3 py-2 text-sm font-medium">
 						Light Mode
 					</button>
-					<button on:click={setAutoMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+					<button on:click={setAutoMode} class="hover:bg-gray-700 hover:text-white px-3 py-2 text-sm font-medium">
 						Auto Mode
 					</button>
 				</div>
