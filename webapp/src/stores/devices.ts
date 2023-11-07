@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import type * as grpcWeb from 'grpc-web';
-import type { DeviceExtendedInfo, DeviceResponse, DeviceState } from '../api/device_pb';
+import { DeviceState, type DeviceExtendedInfo, type DeviceResponse } from '../api/device_pb';
 import type { DeviceRequest } from '../api/device_pb';
 import { ReactorServiceClient } from '../api/Reactor_serviceServiceClientPb';
 import { GetDeviceInfosRequest, GetDeviceStatesRequest, SetDeviceFavouriteRequest, SetDeviceFavouriteResponse, SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
@@ -13,7 +13,7 @@ export const deviceInfosStream = createDeviceInfosStream("getDeviceInfos", debug
 function createDeviceInfosStream(name: string, debug: boolean) {
 	let data: DeviceExtendedInfo[] = [];
 	let connected: boolean = false;
-	let stream: grpcWeb.ClientReadableStream<DeviceExtendedInfo> = null;
+	let stream: grpcWeb.ClientReadableStream<DeviceExtendedInfo>|null = null;
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 
@@ -80,7 +80,7 @@ export const deviceStatesStream = createDeviceStatesStream("getDeviceStates", de
 function createDeviceStatesStream(name: string, debug: boolean) {
 	let data: DeviceState[] = [];
 	let connected: boolean = false;
-	let stream: grpcWeb.ClientReadableStream<DeviceState> = null;
+	let stream: grpcWeb.ClientReadableStream<DeviceState>|null = null;
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 
@@ -145,8 +145,8 @@ function createDeviceStatesStream(name: string, debug: boolean) {
 
 export type DeviceInfoState = {
 	fullId: string,
-	info: DeviceExtendedInfo,
-	state: DeviceState,
+	info: DeviceExtendedInfo|null,
+	state: DeviceState|null,
 }
 
 export const devicesStream = createDevicesStream("deviceStream", debug);
@@ -156,8 +156,8 @@ function createDevicesStream(name: string, debug: boolean) {
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 
-	let infoStream: grpcWeb.ClientReadableStream<DeviceExtendedInfo> = null;
-	let stateStream: grpcWeb.ClientReadableStream<DeviceState> = null;
+	let infoStream: grpcWeb.ClientReadableStream<DeviceExtendedInfo>|null = null;
+	let stateStream: grpcWeb.ClientReadableStream<DeviceState>|null = null;
 
 	const backoff = createBackoffWithHeartbeat(name, defaultMinBackoffMs, defaultMaxBackoffMs, 60000, run, stop);
 
@@ -186,8 +186,8 @@ function createDevicesStream(name: string, debug: boolean) {
 		infoStream.on("error", (err: grpcWeb.RpcError) => {
 			console.error(`${name}: unexpected info stream error: code = ${err.code}` + `, message = "${err.message}"`);
 			connectedWriter.set(false);
-			infoStream.cancel();
-			stateStream.cancel();
+			if (infoStream) infoStream.cancel();
+			if (stateStream) stateStream.cancel();
 			restartConnection();
 		});
 		infoStream.on("data", (response: DeviceExtendedInfo) => {
@@ -217,8 +217,8 @@ function createDevicesStream(name: string, debug: boolean) {
 		infoStream.on("end", () => {
 			if (debug) console.log(`${name}: info done`);
 			connectedWriter.set(false);
-			infoStream.cancel();
-			stateStream.cancel();
+			if (infoStream) infoStream.cancel();
+			if (stateStream) stateStream.cancel();
 			restartConnection();
 		});
 		// DeviceState
@@ -226,8 +226,8 @@ function createDevicesStream(name: string, debug: boolean) {
 		stateStream.on("error", (err: grpcWeb.RpcError) => {
 			console.error(`${name}: unexpected state stream error: code = ${err.code}` + `, message = "${err.message}"`);
 			connectedWriter.set(false);
-			infoStream.cancel();
-			stateStream.cancel();
+			if (infoStream) infoStream.cancel();
+			if (stateStream) stateStream.cancel();
 			restartConnection();
 		});
 		stateStream.on("data", (response: DeviceState) => {
@@ -257,8 +257,8 @@ function createDevicesStream(name: string, debug: boolean) {
 		stateStream.on("end", () => {
 			if (debug) console.log(`${name}: state done`);
 			connectedWriter.set(false);
-			infoStream.cancel();
-			stateStream.cancel();
+			if (infoStream) infoStream.cancel();
+			if (stateStream) stateStream.cancel();
 			restartConnection();
 		});
 	}

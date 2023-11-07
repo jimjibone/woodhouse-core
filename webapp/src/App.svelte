@@ -25,7 +25,22 @@
 		} else if (localStorage.theme === 'light') {
 			localStorage.removeItem('theme');
 		}
+		updateLightDarkMode();
+	}
 
+	function setDarkMode() {
+		localStorage.theme = 'dark';
+		updateLightDarkMode();
+	}
+	function setLightMode() {
+		localStorage.theme = 'light';
+		updateLightDarkMode();
+	}
+	function setAutoMode() {
+		localStorage.removeItem('theme');
+		updateLightDarkMode();
+	}
+	function updateLightDarkMode() {
 		if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
 			document.documentElement.classList.add('dark');
 		} else {
@@ -54,9 +69,15 @@
 					<NavLink to="/">Favourites</NavLink>
 					<NavLink to="/devices">Devices</NavLink>
 					<NavLink to="/bridges">Bridges</NavLink>
-					<!-- <button on:click={toggleDarkMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+					<button on:click={setDarkMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
 						Dark Mode
-					</button> -->
+					</button>
+					<button on:click={setLightMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+						Light Mode
+					</button>
+					<button on:click={setAutoMode} class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+						Auto Mode
+					</button>
 				</div>
 			</div>
 		</nav>

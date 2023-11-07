@@ -2,10 +2,11 @@
     import { formatISO9075, fromUnixTime } from 'date-fns';
 	import DeviceValue from '../components/DeviceValue.svelte';
 	import { DeviceRequest, DeviceResponse, DeviceValue as DeviceValueType } from '../api/device_pb';
-	import { DeviceInfoState, sendDeviceRequest, setDeviceFavourite, setDeviceHidden } from '../stores/devices';
+	import { sendDeviceRequest, setDeviceFavourite, setDeviceHidden } from '../stores/devices';
+	import type { DeviceInfoState } from '../stores/devices';
     import { SetDeviceFavouriteRequest, SetDeviceFavouriteResponse, SetDeviceHiddenRequest, SetDeviceHiddenResponse } from '../api/reactor_service_pb';
 
-	export let device: DeviceInfoState = null;
+	export let device: DeviceInfoState;
 	export let showHidden: boolean = true;
 	$: values = device.state ? device.state.getValuesList().sort((a, b) => {
 		const aName = a.getName()
@@ -17,14 +18,15 @@
 	$: deviceID = device.info ? device.info.getDeviceId() : (device.state ? device.state.getDeviceId() : "<no device id>");
 	$: url = device.info ? device.info.getUrl() : "";
 	$: online = device.state ? device.state.getOnline() : false;
+	// @ts-ignore: device.state.getLastSeen() may be undefined
 	$: lastSeen = device.state ? (device.state.hasLastSeen() ? formatISO9075(fromUnixTime(device.state.getLastSeen().getSeconds())) : "<no time>") : "<no time>";
 	$: hidden = device.info ? device.info.getHidden() : false;
 	$: favourite = device.info ? device.info.getFavourite() : false;
 
 	function toggleHidden() : void {
 		const req = new SetDeviceHiddenRequest();
-		req.setBridgeId(device.info.getBridgeId());
-		req.setDeviceId(device.info.getDeviceId());
+		req.setBridgeId(bridgeID);
+		req.setDeviceId(deviceID);
 		req.setHidden(!hidden);
 		console.log(`${device.fullId} request:`, req.toObject());
 		setDeviceHidden(req)
@@ -37,8 +39,8 @@
 
 	function toggleFavourite() : void {
 		const req = new SetDeviceFavouriteRequest();
-		req.setBridgeId(device.info.getBridgeId());
-		req.setDeviceId(device.info.getDeviceId());
+		req.setBridgeId(bridgeID);
+		req.setDeviceId(deviceID);
 		req.setFavourite(!favourite);
 		console.log(`${device.fullId} request:`, req.toObject());
 		setDeviceFavourite(req)
@@ -51,8 +53,8 @@
 
 	function onRequest(v: DeviceValueType) : void {
 		const req = new DeviceRequest();
-		req.setBridgeId(device.info.getBridgeId());
-		req.setDeviceId(device.info.getDeviceId());
+		req.setBridgeId(bridgeID);
+		req.setDeviceId(deviceID);
 		req.setValuesList([v]);
 		console.log(`${device.fullId} request:`, req.toObject());
 		sendDeviceRequest(req)

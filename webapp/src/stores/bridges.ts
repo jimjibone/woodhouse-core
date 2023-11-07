@@ -12,7 +12,7 @@ export const bridgeInfosStream = createBridgeInfosStream("getBridgeInfos", debug
 function createBridgeInfosStream(name: string, debug: boolean) {
 	let data: BridgeInfo[] = [];
 	let connected: boolean = false;
-	let stream: grpcWeb.ClientReadableStream<BridgeInfo> = null;
+	let stream: grpcWeb.ClientReadableStream<BridgeInfo>|null = null;
 	const dataWriter = writable(data, start);
 	const connectedWriter = writable(connected);
 

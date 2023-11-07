@@ -64,7 +64,7 @@ export function createBackoffWithHeartbeat(debug: string, minBackoffMs: number, 
 	let lastBackoffTime = new Date();
 	let lastRestartTime = new Date();
 	let running = false;
-	let interval: number = 0;
+	let interval: NodeJS.Timeout|null;
 	let lastHeartbeatTime = new Date();
 
 	function doStart() {
@@ -76,9 +76,9 @@ export function createBackoffWithHeartbeat(debug: string, minBackoffMs: number, 
 
 	function doStop() {
 		running = false;
-		if (interval != 0) {
+		if (interval) {
 			clearInterval(interval);
-			interval = 0;
+			interval = null;
 		}
 		stopper();
 	}

@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte/internal';
+	import { onMount, onDestroy } from 'svelte';
 	import type { Unsubscriber } from 'svelte/store';
-	import { devicesStream, DeviceInfoState } from '../stores/devices';
+	import { devicesStream } from '../stores/devices';
+	import type { DeviceInfoState } from '../stores/devices';
 	import DevicePageItem from './DevicePageItem.svelte';
 
 	let devices: DeviceInfoState[] = [];
 	let connected: boolean = false;
-	let unsubscribeDevices: Unsubscriber = null;
-	let unsubscribeConnected: Unsubscriber = null;
+	let unsubscribeDevices: Unsubscriber;
+	let unsubscribeConnected: Unsubscriber;
 
 	// $: devices = derived([devicesStream], ([$devices]) => {
 	// 	$devices = $devices.sort((a, b) => {
