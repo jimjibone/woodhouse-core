@@ -1,17 +1,23 @@
 <script lang="ts">
-	import { Router, Route, Link } from 'svelte-routing';
-	import classnames from 'classnames';
-	import NavLink from './components/NavLink.svelte';
-	import Toast from './components/Toast.svelte';
-	import DevicesPage from './pages/DevicesPage.svelte';
-	import BridgesPage from './pages/BridgesPage.svelte';
-    import FavouritesPage from './pages/FavouritesPage.svelte';
+	import { Router, Route, Link } from "svelte-routing";
+	import classnames from "classnames";
+	import NavLink from "./components/NavLink.svelte";
+	import Toast from "./components/Toast.svelte";
+	import DevicesPage from "./pages/DevicesPage.svelte";
+	import BridgesPage from "./pages/BridgesPage.svelte";
+	import FavouritesPage from "./pages/FavouritesPage.svelte";
+
+	import { Button } from "$lib/components/ui/button";
+	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import { Sun, Moon } from 'lucide-svelte';
 
 	export let url = "";
 
 	let navOpen = false;
-	$: navbarBurgerClasses = classnames('navbar-burger', {'is-active': navOpen});
-	$: navbarMenuClasses = classnames('navbar-menu', {'is-active': navOpen});
+	$: navbarBurgerClasses = classnames("navbar-burger", {
+		"is-active": navOpen,
+	});
+	$: navbarMenuClasses = classnames("navbar-menu", { "is-active": navOpen });
 
 	function toggleNavOpen() {
 		navOpen = !navOpen;
@@ -28,6 +34,8 @@
 		updateLightDarkMode();
 	}
 
+	let darkMode = (localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches));
+
 	function setDarkMode() {
 		localStorage.theme = 'dark';
 		updateLightDarkMode();
@@ -43,44 +51,57 @@
 	function updateLightDarkMode() {
 		if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
 			document.documentElement.classList.add('dark');
+			darkMode = true;
 		} else {
 			document.documentElement.classList.remove('dark');
+			darkMode = false;
 		}
 	}
 </script>
 
 <main>
-	<Router url="{url}">
-		<nav class="navbar dark:bg-slate-800 text-slate-500 dark:text-slate-300" aria-label="main navigation">
-			<div class="navbar-brand">
-				<Link to="/" class="navbar-item text-slate-500 dark:text-slate-400">
-					Woodhouse
-				</Link>
-
-				<button class={navbarBurgerClasses} aria-label="menu" aria-expanded="false" data-target="navbarBasicExample" on:click={toggleNavOpen}>
-					<span aria-hidden="true"></span>
-					<span aria-hidden="true"></span>
-					<span aria-hidden="true"></span>
-				</button>
-			</div>
-
-			<div class={navbarMenuClasses}>
-				<div class="navbar-start">
-					<NavLink to="/">Favourites</NavLink>
-					<NavLink to="/devices">Devices</NavLink>
-					<NavLink to="/bridges">Bridges</NavLink>
-					<button on:click={setDarkMode} class="hover:bg-gray-700 hover:text-white px-3 py-2 text-sm font-medium">
-						Dark Mode
-					</button>
-					<button on:click={setLightMode} class="hover:bg-gray-700 hover:text-white px-3 py-2 text-sm font-medium">
-						Light Mode
-					</button>
-					<button on:click={setAutoMode} class="hover:bg-gray-700 hover:text-white px-3 py-2 text-sm font-medium">
-						Auto Mode
-					</button>
+	<Router {url}>
+		<header class="supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b bg-background/95 shadow-sm backdrop-blur">
+			<div class="container flex h-14 items-center">
+				<div class="mr-4 md:flex">
+					<Link to="/" class="mr-6 flex items-center space-x-2">
+						<span class="font-bold sm:inline-block text-[15px] lg:text-base">Woodhouse</span>
+					</Link>
+					<nav class="flex items-center space-x-6 text-sm font-medium">
+						<NavLink to="/">Favourites</NavLink>
+						<NavLink to="/devices">Devices</NavLink>
+						<NavLink to="/bridges">Bridges</NavLink>
+					</nav>
+				</div>
+				<div class="flex flex-1 items-center justify-between space-x-2 sm:space-x-4 md:justify-end">
+					<nav class="flex items-center">
+						<DropdownMenu.Root preventScroll={false}>
+							<DropdownMenu.Trigger asChild let:builder>
+								<Button builders={[builder]} variant="ghost" size="sm">
+									{#if darkMode}
+										<Moon size={18} />
+									{:else}
+										<Sun size={18} />
+									{/if}
+								</Button>
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Content class="w-56">
+								<DropdownMenu.Item on:click={setLightMode}>
+									<span>Light</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item on:click={setDarkMode}>
+									<span>Dark</span>
+								</DropdownMenu.Item>
+								<DropdownMenu.Item on:click={setAutoMode}>
+									<span>System</span>
+								</DropdownMenu.Item>
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
+					</nav>
 				</div>
 			</div>
-		</nav>
+		</header>
+
 		<div>
 			<Route path="/" component="{FavouritesPage}" />
 			<Route path="/devices" component="{DevicesPage}" />

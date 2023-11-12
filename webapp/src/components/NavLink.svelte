@@ -7,12 +7,9 @@
 	function getProps({ location, href, isPartiallyCurrent, isCurrent }) {
 		const isActive = href === '/' ? isCurrent : isPartiallyCurrent || isCurrent;
 
-		const classes = classnames('navbar-item', {
-			'font-medium': isActive,
-			'text-slate-600': isActive,
-			'dark:text-slate-300': isActive,
-			'text-slate-500': !isActive,
-			'dark:text-slate-400': !isActive
+		const classes = classnames('transition-colors', 'hover:text-foreground/80', {
+			'text-foreground': isActive,
+			'text-foreground/60': !isActive,
 		});
 
 		return { class: classes };
@@ -22,10 +19,3 @@
 <Link to="{to}" getProps="{getProps}">
 	<slot />
 </Link>
-
-<!-- svelte-ignore css-unused-selector -->
-<style>
-	.is-active {
-		font-weight: 700;
-	}
-</style>
