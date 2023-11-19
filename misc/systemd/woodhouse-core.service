@@ -1,0 +1,9 @@
+[Unit]
+Description=woodhouse-core
+After=network-online.target
+
+[Service]
+ExecStart=/home/user/woodhouse/woodhouse-core --config /home/user/woodhouse/woodhouse.yaml
+
+[Install]
+WantedBy=default.target

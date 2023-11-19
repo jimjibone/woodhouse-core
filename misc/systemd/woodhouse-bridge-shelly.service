@@ -1,0 +1,9 @@
+[Unit]
+Description=woodhouse-bridge-shelly
+After=network-online.target
+
+[Service]
+ExecStart=/home/user/woodhouse/woodhouse-bridge-shelly
+
+[Install]
+WantedBy=default.target
