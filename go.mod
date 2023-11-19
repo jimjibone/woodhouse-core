@@ -26,6 +26,7 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
 	github.com/miekg/dns v1.1.27 // indirect
+	github.com/nathan-osman/go-sunrise v1.1.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
