@@ -153,9 +153,34 @@
 				</div>
 				{#if url !== ""}
 				<div class="level-item">
-					<Button size="sm" variant="outline" href="{url}" target="_blank" rel="noopener noreferrer">
-						<ExternalLink size={16} />
-					</Button>
+					<DropdownMenu.Root preventScroll={false}>
+						<DropdownMenu.Trigger asChild let:builder>
+							<Button builders={[builder]} variant="ghost" size="sm">
+								<MoreVertical size={18} />
+							</Button>
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content class="w-56">
+							<DropdownMenu.Item on:click={toggleHidden}>
+								{#if hidden}
+								<span>Un-hide</span>
+								{:else}
+								<span>Hide</span>
+								{/if}
+							</DropdownMenu.Item>
+							<DropdownMenu.Item on:click={toggleFavourite}>
+								{#if favourite}
+								<span>Un-favourite</span>
+								{:else}
+								<span>Favourite</span>
+								{/if}
+							</DropdownMenu.Item>
+							{#if url !== ""}
+							<DropdownMenu.Item href="{url}" target="_blank" rel="noopener noreferrer">
+								<span>Open Page</span>
+							</DropdownMenu.Item>
+							{/if}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
 				</div>
 				{/if}
 			</div>
