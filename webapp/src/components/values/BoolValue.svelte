@@ -48,16 +48,6 @@
 
 {#if writable}
 	<span class="field has-addons">
-		<!-- <span class="control">
-			<button class={onClasses} on:click={onClicked}>
-				On
-			</button>
-		</span>
-		<span class="control">
-			<button class={offClasses} on:click={offClicked}>
-				Off
-			</button>
-		</span> -->
 		<Switch checked={value.getValue()} onCheckedChange={onToggle} />
 	</span>
 {:else}

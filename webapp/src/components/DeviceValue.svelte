@@ -3,11 +3,13 @@
 	import type { DeviceValue } from '../api/device_pb';
 	import BoolValue from './values/BoolValue.svelte';
 	import NumberValue from './values/NumberValue.svelte';
+	import { Label } from "$lib/components/ui/label";
+	import { Input } from "$lib/components/ui/input";
 
-	export let id = null;
-	export let value: DeviceValue = null;
+	export let id: string;
+	export let value: DeviceValue;
 	export let writable: boolean = false;
-	export let writer: (value: DeviceValue) => void = null;
+	export let writer: ((value: DeviceValue) => void) | undefined;
 
 	id = id || `wh-${uid(5)}`;
 
@@ -19,17 +21,15 @@
 	}
 </script>
 
-<div class="field">
-	<label class="label text-slate-500 dark:text-slate-400" for="{id}">{value.getName()}</label>
-	<div class="control">
-		{#if value.hasBool()}
+<div class="flex flex-col  gap-1.5">
+	<Label for="{id}">{value.getName()}</Label>
+	{#if value.hasBool()}
 		<BoolValue value={value.getBool()} writable={writable} writer={onRequest} />
-		{:else if value.hasNumber()}
+	{:else if value.hasNumber()}
 		<NumberValue value={value.getNumber()} writable={writable} writer={onRequest} />
-		{:else if value.hasText()}
-		<p>Text: {value.getText().getValue()}</p>
-		{:else if value.hasColor()}
+	{:else if value.hasText()}
+		<Input type="text" id="{id}" disabled value={value.getText().getValue()} />
+	{:else if value.hasColor()}
 		<p>Color: Hue: {value.getColor().getHue()}, Sat: {value.getColor().getSat()}</p>
-		{/if}
-	</div>
+	{/if}
 </div>
