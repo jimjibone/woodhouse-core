@@ -35,7 +35,7 @@ var defaultConfig = CoreConfig{
 		WebAddr: "localhost:4080",
 	},
 	Stores: StoresConfig{
-		DeviceStorePath: "devices.json",
+		DeviceStorePath: "",
 	},
 	InfluxDB: InfluxDBConfig{
 		Enabled: false,

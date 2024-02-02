@@ -21,6 +21,8 @@
 
 	$: bridgeID = device.info ? device.info.getBridgeId() : (device.state ? device.state.getBridgeId() : "<no bridge id>");
 	$: deviceID = device.info ? device.info.getDeviceId() : (device.state ? device.state.getDeviceId() : "<no device id>");
+	$: deviceName = device.info ? (device.info.getName() !== "" ? device.info.getName() : "<no device name>") : (device.state ? device.state.getDeviceId() : "<no device info>");
+	$: hasDeviceName = device.info ? device.info.getName() !== "" : false;
 	$: url = device.info ? device.info.getUrl() : "";
 	$: online = device.state ? device.state.getOnline() : false;
 	// @ts-ignore: device.state.getLastSeen() may be undefined
@@ -93,7 +95,7 @@
 		<div class="level is-hidden-mobile">
 			<div class="level-left">
 				<div class="level-item">
-					<h3 class="text-xl font-semibold tracking-tight">{device.info != null ? device.info.getName() : "<no device info>"}</h3>
+					<h3 class="text-xl font-semibold tracking-tight">{deviceName}</h3>
 				</div>
 				{#if online}
 				<Badge variant="outline">online</Badge>
@@ -138,7 +140,7 @@
 			</div>
 		</div>
 		<!-- title: mobile -->
-		<p class="title is-5 is-hidden-tablet">{device.info != null ? device.info.getName() : "<no device info>"}</p>
+		<p class="title is-5 is-hidden-tablet">{deviceName}</p>
 		<div class="level is-hidden-tablet is-mobile">
 			<div class="level-left">
 				<div class="level-item">

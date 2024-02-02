@@ -1551,6 +1551,7 @@ proto.woodhouse.api.DeviceValue.prototype.toObject = function(opt_includeInstanc
 proto.woodhouse.api.DeviceValue.toObject = function(includeInstance, msg) {
   var f, obj = {
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    readOnly: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     bool: (f = msg.getBool()) && value_pb.BoolValue.toObject(includeInstance, f),
     number: (f = msg.getNumber()) && value_pb.NumberValue.toObject(includeInstance, f),
     text: (f = msg.getText()) && value_pb.TextValue.toObject(includeInstance, f),
@@ -1594,6 +1595,10 @@ proto.woodhouse.api.DeviceValue.deserializeBinaryFromReader = function(msg, read
     case 1:
       var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
+      break;
+    case 6:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setReadOnly(value);
       break;
     case 2:
       var value = new value_pb.BoolValue;
@@ -1651,6 +1656,13 @@ proto.woodhouse.api.DeviceValue.serializeBinaryToWriter = function(message, writ
       f
     );
   }
+  f = message.getReadOnly();
+  if (f) {
+    writer.writeBool(
+      6,
+      f
+    );
+  }
   f = message.getBool();
   if (f != null) {
     writer.writeMessage(
@@ -1701,6 +1713,24 @@ proto.woodhouse.api.DeviceValue.prototype.getName = function() {
  */
 proto.woodhouse.api.DeviceValue.prototype.setName = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool read_only = 6;
+ * @return {boolean}
+ */
+proto.woodhouse.api.DeviceValue.prototype.getReadOnly = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 6, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.woodhouse.api.DeviceValue} returns this
+ */
+proto.woodhouse.api.DeviceValue.prototype.setReadOnly = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 6, value);
 };
 
 

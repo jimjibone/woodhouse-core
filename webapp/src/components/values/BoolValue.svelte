@@ -5,7 +5,7 @@
 	import { Switch } from "../../lib/components/ui/switch";
 
 	export let value: BoolValue = null;
-	export let writable: boolean = false;
+	export let disabled: boolean = false;
 	export let writer: (value: DeviceValue) => void = null;
 
 	$: onClasses = classNames({
@@ -18,7 +18,7 @@
 	});
 
 	function onToggle() {
-		if (writable) {
+		if (!disabled && writer) {
 			const vv = new BoolValue();
 			vv.setValue(!value.getValue());
 			const v = new DeviceValue();
@@ -27,7 +27,7 @@
 		}
 	}
 	function onClicked() {
-		if (writable) {
+		if (!disabled && writer) {
 			const vv = new BoolValue();
 			vv.setValue(true);
 			const v = new DeviceValue();
@@ -36,7 +36,7 @@
 		}
 	}
 	function offClicked() {
-		if (writable) {
+		if (!disabled && writer) {
 			const vv = new BoolValue();
 			vv.setValue(false);
 			const v = new DeviceValue();
@@ -46,10 +46,6 @@
 	}
 </script>
 
-{#if writable}
-	<span class="field has-addons">
-		<Switch checked={value.getValue()} onCheckedChange={onToggle} />
-	</span>
-{:else}
-	<span>{value.getValue() ? "True" : "False"}</span>
-{/if}
+<span class="field has-addons">
+	<Switch checked={value.getValue()} onCheckedChange={onToggle} disabled={disabled} />
+</span>

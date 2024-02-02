@@ -199,6 +199,9 @@ export class DeviceValue extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  getReadOnly(): boolean;
+  setReadOnly(value: boolean): void;
+
   hasBool(): boolean;
   clearBool(): void;
   getBool(): value_pb.BoolValue | undefined;
@@ -232,6 +235,7 @@ export class DeviceValue extends jspb.Message {
 export namespace DeviceValue {
   export type AsObject = {
     name: string,
+    readOnly: boolean,
     bool?: value_pb.BoolValue.AsObject,
     number?: value_pb.NumberValue.AsObject,
     text?: value_pb.TextValue.AsObject,

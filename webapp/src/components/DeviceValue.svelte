@@ -8,7 +8,6 @@
 
 	export let id: string;
 	export let value: DeviceValue;
-	export let writable: boolean = false;
 	export let writer: ((value: DeviceValue) => void) | undefined;
 
 	id = id || `wh-${uid(5)}`;
@@ -24,9 +23,9 @@
 <div class="flex flex-col  gap-1.5">
 	<Label for="{id}">{value.getName()}</Label>
 	{#if value.hasBool()}
-		<BoolValue value={value.getBool()} writable={writable} writer={onRequest} />
+		<BoolValue value={value.getBool()} disabled={value.getReadOnly()} writer={onRequest} />
 	{:else if value.hasNumber()}
-		<NumberValue value={value.getNumber()} writable={writable} writer={onRequest} />
+		<NumberValue value={value.getNumber()} disabled={value.getReadOnly()} writer={onRequest} />
 	{:else if value.hasText()}
 		<Input type="text" id="{id}" disabled value={value.getText().getValue()} />
 	{:else if value.hasColor()}

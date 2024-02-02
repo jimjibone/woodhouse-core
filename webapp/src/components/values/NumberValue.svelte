@@ -6,7 +6,7 @@
 	import { Send, Trash2 } from 'lucide-svelte';
 
 	export let value: DeviceValue;
-	export let writable: boolean = false;
+	export let disabled: boolean = false;
 	export let writer: ((value: DeviceValue) => void) | undefined;
 	$: value_ = value;
 
@@ -14,7 +14,7 @@
 	let edit = 0;
 
 	function sendClicked() {
-		if (writable && writer) {
+		if (!disabled && writer) {
 			const vv = new NumberValue();
 			vv.setValue(edit);
 			const v = new DeviceValue();
@@ -24,7 +24,7 @@
 	}
 </script>
 
-{#if writable}
+{#if !disabled}
 	<form class="flex w-full max-w-sm items-center space-x-2">
 		<Input
 			type="number"
@@ -37,5 +37,11 @@
 		<Button on:click={() => { editing = false; }} disabled={!editing}><Trash2 size={18}/></Button>
 	</form>
 {:else}
-	<span>{value.getValue()}</span>
+	<form class="flex w-full max-w-sm items-center space-x-2">
+		<Input
+			type="number"
+			value={editing ? edit : value.getValue()}
+			disabled
+		/>
+	</form>
 {/if}
