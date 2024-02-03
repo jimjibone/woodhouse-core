@@ -140,7 +140,7 @@
 			</div>
 		</div>
 		<!-- title: mobile -->
-		<p class="title is-5 is-hidden-tablet">{deviceName}</p>
+		<h3 class="text-xl font-semibold tracking-tight pb-3 is-hidden-tablet">{deviceName}</h3>
 		<div class="level is-hidden-tablet is-mobile">
 			<div class="level-left">
 				<div class="level-item">
