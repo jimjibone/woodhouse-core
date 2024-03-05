@@ -25,9 +25,12 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/miekg/dns v1.1.27 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/cors v1.8.3 // indirect
