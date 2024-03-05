@@ -11,71 +11,122 @@ import (
 var DefaultLogger *Logger = NewLogger()
 
 type Logger struct {
-	Level      Level
-	Out        *os.File
-	TimeFormat string
+	minLevel    Level
+	out         *os.File
+	timeFormat  string
+	exitOnFatal bool
 }
 
 type LoggerOpt func(l *Logger)
 
 func NewLogger(opts ...LoggerOpt) *Logger {
 	l := &Logger{
-		Level:      DebugLevel,
-		Out:        os.Stderr,
-		TimeFormat: "15:04:05.000",
+		minLevel:    DebugLevel,
+		out:         os.Stderr,
+		timeFormat:  "15:04:05.000",
+		exitOnFatal: true,
 	}
+	l.SetOptions(opts...)
+	return l
+}
+
+func (l *Logger) SetOptions(opts ...LoggerOpt) {
 	for _, opt := range opts {
 		opt(l)
 	}
-	return l
 }
 
 func WithMinLevel(level Level) LoggerOpt {
 	return func(l *Logger) {
-		l.Level = level
+		l.minLevel = level
 	}
 }
 
 func WithOut(out *os.File) LoggerOpt {
 	return func(l *Logger) {
-		l.Out = out
+		l.out = out
 	}
 }
 
 func WithTimeFormat(format string) LoggerOpt {
 	return func(l *Logger) {
-		l.TimeFormat = format
+		l.timeFormat = format
 	}
 }
 
-func (l *Logger) printf(level Level, format string, args []any) {
-	if l.Out != nil {
-		// 15:04:05.000 DEBU message
-		args = append([]any{
-			color.HiBlackString(time.Now().Format(l.TimeFormat)),
-			level.String(),
-		}, args...)
-		fmt.Fprintf(l.Out, "%s %s "+format+"\n", args...)
+func WithExitOnFatal(exitOnFatal bool) LoggerOpt {
+	return func(l *Logger) {
+		l.exitOnFatal = exitOnFatal
 	}
 }
 
-func (l *Logger) Debug(format string, args ...any) {
-	l.printf(DebugLevel, format, args)
+func (l *Logger) printf(level Level, format string, args ...any) {
+	if level >= l.minLevel {
+		if l.out != nil {
+			// 15:04:05.000 DEBU message
+			args = append([]any{
+				color.HiBlackString(time.Now().Format(l.timeFormat)),
+				level.String(),
+			}, args...)
+			fmt.Fprintf(l.out, "%s %s "+format+"\n", args...)
+		}
+	}
 }
 
-func (l *Logger) Info(format string, args ...any) {
-	l.printf(InfoLevel, format, args)
+func (l *Logger) println(level Level, args ...any) {
+	if level >= l.minLevel {
+		if l.out != nil {
+			// 15:04:05.000 DEBU message
+			args = append([]any{
+				fmt.Sprintf("%s %s", color.HiBlackString(time.Now().Format(l.timeFormat)), level.String()),
+			}, args...)
+			fmt.Fprintln(l.out, args...)
+		}
+	}
 }
 
-func (l *Logger) Warn(format string, args ...any) {
-	l.printf(WarnLevel, format, args)
+func (l *Logger) Debugf(format string, args ...any) {
+	l.printf(DebugLevel, format, args...)
 }
 
-func (l *Logger) Error(format string, args ...any) {
-	l.printf(ErrorLevel, format, args)
+func (l *Logger) Infof(format string, args ...any) {
+	l.printf(InfoLevel, format, args...)
 }
 
-func (l *Logger) Fatal(format string, args ...any) {
-	l.printf(FatalLevel, format, args)
-	os.Exit(1)
+func (l *Logger) Warnf(format string, args ...any) {
+	l.printf(WarnLevel, format, args...)
+}
+
+func (l *Logger) Errorf(format string, args ...any) {
+	l.printf(ErrorLevel, format, args...)
+}
+
+func (l *Logger) Fatalf(format string, args ...any) {
+	l.printf(FatalLevel, format, args...)
+	if l.exitOnFatal {
+		os.Exit(1)
+	}
+}
+
+func (l *Logger) Debugln(args ...any) {
+	l.println(DebugLevel, args...)
+}
+
+func (l *Logger) Infoln(args ...any) {
+	l.println(InfoLevel, args...)
+}
+
+func (l *Logger) Warnln(args ...any) {
+	l.println(WarnLevel, args...)
+}
+
+func (l *Logger) Errorln(args ...any) {
+	l.println(ErrorLevel, args...)
+}
+
+func (l *Logger) Fatalln(args ...any) {
+	l.println(FatalLevel, args...)
+	if l.exitOnFatal {
+		os.Exit(1)
+	}
 }

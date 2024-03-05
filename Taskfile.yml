@@ -23,7 +23,6 @@ tasks:
   proto:
     deps:
       - api:proto-go
-      - webapp:proto
 
   proto-all:
     deps:
@@ -61,6 +60,19 @@ tasks:
       - build-core
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
+
+  build-client:
+    deps:
+      - proto
+      - build-dir
+    cmds:
+      - go build -o {{.BUILD_DIR}}/woodhouse-client{{exeExt}} ./cmd/woodhouse-client
+
+  run-client:
+    deps:
+      - build-client
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
 
   build-bridge-shelly:
     deps:
