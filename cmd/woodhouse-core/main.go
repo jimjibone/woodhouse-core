@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"mime"
 	"net"
 	"net/http"
@@ -19,6 +18,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
+	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
@@ -38,18 +38,30 @@ func main() {
 				Value:     "woodhouse.yaml",
 				TakesFile: true,
 			},
+			&cli.BoolFlag{
+				Name:    "debug",
+				Aliases: []string{"v"},
+				Usage:   "Enable debug logging",
+			},
 		},
 		Before: func(args *cli.Context) error {
+			// Setup logging.
+			if args.Bool("debug") {
+				log.SetOptions(log.WithMinLevel(log.DebugLevel))
+			} else {
+				log.SetOptions(log.WithMinLevel(log.InfoLevel))
+			}
+
 			// Load the config.
 			configPath := internal.AbsPathify(args.String("config"))
 			if _, err := os.Stat(configPath); !os.IsNotExist(err) {
-				log.Printf("loading config from %s", configPath)
+				log.Infof("loading config from %s", configPath)
 				err := yamlfile.LoadFile(&config.LoadedConfig, configPath)
 				if err != nil {
 					return fmt.Errorf("failed to load config: %w", err)
 				}
 			} else {
-				log.Printf("using default config")
+				log.Infof("using default config")
 				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
 				if err != nil {
 					return fmt.Errorf("failed to save config: %w", err)
@@ -60,7 +72,7 @@ func main() {
 		After: func(args *cli.Context) error {
 			// Save the config if it has changed.
 			configPath := internal.AbsPathify(args.String("config"))
-			log.Printf("saving config to %s", configPath)
+			log.Infof("saving config to %s", configPath)
 			if config.LoadedConfig.Changed {
 				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
 				if err != nil {
@@ -117,7 +129,7 @@ func main() {
 			// Run the gRPC server.
 			serverErr := make(chan error, 1)
 			go func() {
-				log.Printf("api server ready at grpc://%s", apiLis.Addr())
+				log.Infof("api server ready at grpc://%s", apiLis.Addr())
 				if err := server.Serve(apiLis); err != nil {
 					serverErr <- fmt.Errorf("grpc server: %w", err)
 				}
@@ -156,7 +168,7 @@ func main() {
 				httpServer := &http.Server{
 					Handler: mux,
 				}
-				log.Printf("web server ready at http://%s", webLis.Addr())
+				log.Infof("web server ready at http://%s", webLis.Addr())
 				if err := httpServer.Serve(webLis); err != nil {
 					webServerErr <- fmt.Errorf("web server: %w", err)
 				}
@@ -171,7 +183,7 @@ func main() {
 			case err := <-webServerErr:
 				return err
 			case <-sig:
-				log.Printf("Exiting...")
+				log.Infof("Exiting...")
 			}
 
 			return nil
