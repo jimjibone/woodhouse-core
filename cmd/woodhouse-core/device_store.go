@@ -24,6 +24,7 @@ type DeviceStore struct {
 	wg         sync.WaitGroup
 	close      func()
 	mu         sync.RWMutex
+	enabled    bool
 	changed    bool
 	filename   string
 	bridges    map[string]*api.BridgeInfo
@@ -34,10 +35,11 @@ type DeviceStore struct {
 	statesPub  *queue.Pub[*api.DeviceState]
 }
 
-func NewDeviceStore(storeFilename string) (*DeviceStore, error) {
+func NewDeviceStore(enabled bool, storeFilename string) (*DeviceStore, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ds := &DeviceStore{
 		close:      cancel,
+		enabled:    enabled,
 		filename:   storeFilename,
 		bridges:    make(map[string]*api.BridgeInfo),
 		infos:      make(map[string]*api.DeviceExtendedInfo),
@@ -95,54 +97,59 @@ func (ds *DeviceStore) Close() error {
 }
 
 func (ds *DeviceStore) loadStore(filename string) error {
-	store := struct {
-		Info  []*api.DeviceExtendedInfo `json:"info"`
-		State []*api.DeviceState        `json:"state"`
-	}{}
+	if ds.enabled {
+		store := struct {
+			Info  []*api.DeviceExtendedInfo `json:"info"`
+			State []*api.DeviceState        `json:"state"`
+		}{}
 
-	err := jsonfile.LoadFile(&store, filename)
-	if err != nil {
-		return err
-	}
+		err := jsonfile.LoadFile(&store, filename)
+		if err != nil {
+			return err
+		}
 
-	for _, info := range store.Info {
-		fullID := info.BridgeId + "." + info.DeviceId
-		ds.infos[fullID] = info
-	}
+		for _, info := range store.Info {
+			fullID := info.BridgeId + "." + info.DeviceId
+			ds.infos[fullID] = info
+		}
 
-	for _, state := range store.State {
-		fullID := state.BridgeId + "." + state.DeviceId
-		ds.states[fullID] = state
+		for _, state := range store.State {
+			fullID := state.BridgeId + "." + state.DeviceId
+			ds.states[fullID] = state
+		}
 	}
 
 	return nil
 }
 
 func (ds *DeviceStore) saveStore(filename string) error {
-	store := struct {
-		Info  []*api.DeviceExtendedInfo `json:"info"`
-		State []*api.DeviceState        `json:"state"`
-	}{}
+	if ds.enabled {
+		store := struct {
+			Info  []*api.DeviceExtendedInfo `json:"info"`
+			State []*api.DeviceState        `json:"state"`
+		}{}
 
-	for _, info := range ds.infos {
-		store.Info = append(store.Info, info)
+		for _, info := range ds.infos {
+			store.Info = append(store.Info, info)
+		}
+		sort.Slice(store.Info, func(i, j int) bool {
+			iid := store.Info[i].BridgeId + "." + store.Info[i].DeviceId
+			jid := store.Info[j].BridgeId + "." + store.Info[j].DeviceId
+			return iid < jid
+		})
+
+		for _, state := range ds.states {
+			store.State = append(store.State, state)
+		}
+		sort.Slice(store.State, func(i, j int) bool {
+			iid := store.State[i].BridgeId + "." + store.State[i].DeviceId
+			jid := store.State[j].BridgeId + "." + store.State[j].DeviceId
+			return iid < jid
+		})
+
+		return jsonfile.SaveFile(store, filename)
 	}
-	sort.Slice(store.Info, func(i, j int) bool {
-		iid := store.Info[i].BridgeId + "." + store.Info[i].DeviceId
-		jid := store.Info[j].BridgeId + "." + store.Info[j].DeviceId
-		return iid < jid
-	})
-
-	for _, state := range ds.states {
-		store.State = append(store.State, state)
-	}
-	sort.Slice(store.State, func(i, j int) bool {
-		iid := store.State[i].BridgeId + "." + store.State[i].DeviceId
-		jid := store.State[j].BridgeId + "." + store.State[j].DeviceId
-		return iid < jid
-	})
-
-	return jsonfile.SaveFile(store, filename)
+	return nil
 }
 
 func (ds *DeviceStore) SetBridgeInfo(in *api.BridgeInfo) error {

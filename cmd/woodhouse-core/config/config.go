@@ -15,8 +15,8 @@ type ServerConfig struct {
 }
 
 type StoresConfig struct {
-	Enabled         bool   `yaml:"enabled"`
-	DeviceStorePath string `yaml:"device-store-path"`
+	DeviceStoreEnabled bool   `yaml:"device-store-enabled"`
+	DeviceStorePath    string `yaml:"device-store-path"`
 }
 
 type InfluxDBConfig struct {
@@ -35,7 +35,8 @@ var defaultConfig = CoreConfig{
 		WebAddr: "localhost:4080",
 	},
 	Stores: StoresConfig{
-		DeviceStorePath: "",
+		DeviceStoreEnabled: false,
+		DeviceStorePath:    "woodhouse-devices.json",
 	},
 	InfluxDB: InfluxDBConfig{
 		Enabled: false,

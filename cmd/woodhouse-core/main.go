@@ -81,7 +81,7 @@ func main() {
 			}
 
 			// Create device store.
-			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStorePath)
+			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStoreEnabled, config.LoadedConfig.Stores.DeviceStorePath)
 			if err != nil {
 				return fmt.Errorf("failed to create device store: %s", err)
 			}
