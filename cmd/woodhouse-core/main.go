@@ -27,7 +27,7 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:                 "woodhouse",
+		Name:                 "woodhouse-core",
 		Usage:                "Runs the woodhouse core",
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
@@ -104,6 +104,7 @@ func main() {
 			defer historyStore.Close()
 
 			// Create services.
+			secBridgeService := NewSecBridgeService()
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
 
@@ -122,6 +123,7 @@ func main() {
 			server := grpc.NewServer(
 			// grpc.Creds(creds),
 			)
+			api.RegisterSecBridgeServiceServer(server, secBridgeService)
 			api.RegisterBridgeServiceServer(server, bridgeService)
 			api.RegisterReactorServiceServer(server, reactorService)
 			reflection.Register(server)

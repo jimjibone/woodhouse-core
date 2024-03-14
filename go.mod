@@ -13,6 +13,7 @@ require (
 	github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/schollz/mnemonicode v1.0.1
+	github.com/schollz/pake/v3 v3.0.5
 	github.com/urfave/cli/v2 v2.16.3
 	google.golang.org/grpc v1.49.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
@@ -35,6 +36,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/cors v1.8.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/tscholl2/siec v0.0.0-20210707234609-9bdfc483d499 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
