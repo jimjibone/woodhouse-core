@@ -5,9 +5,10 @@ import (
 	"time"
 
 	api "github.com/jimjibone/woodhouse-4/api/go"
-	"github.com/jimjibone/woodhouse-4/auth/crypt"
-	"github.com/jimjibone/woodhouse-4/auth/random"
 	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/cert"
+	"github.com/jimjibone/woodhouse-4/shared/crypt"
+	"github.com/jimjibone/woodhouse-4/shared/random"
 	"github.com/schollz/pake/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,10 +16,13 @@ import (
 
 type SecBridgeService struct {
 	api.SecBridgeServiceServer
+	cm *cert.CertManager
 }
 
-func NewSecBridgeService() *SecBridgeService {
-	return &SecBridgeService{}
+func NewSecBridgeService(cm *cert.CertManager) *SecBridgeService {
+	return &SecBridgeService{
+		cm: cm,
+	}
 }
 
 func (ps *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServer) error {
@@ -120,8 +124,7 @@ func (ps *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 	}
 	log.Debugf("pairing client %q sending test", clientID)
 	err = server.Send(&api.DoPairingResponse{
-		State: api.DoPairingResponse_Test,
-		Data:  encrypted,
+		Data: encrypted,
 	})
 	if err != nil {
 		log.Warnf("pairing client %q failed to send test: %s", clientID, err)
@@ -142,26 +145,42 @@ func (ps *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 	}
 	slices.Reverse(decrypted)
 	decryptedTest := string(decrypted)
-	log.Debugf("pairing client %q test reply was: %s", clientID, decryptedTest)
+	log.Debugf("pairing client %q test reply was valid", clientID)
 	if test != decryptedTest {
-		log.Warnf("pairing client %q received incorrect test response: %s", clientID, decryptedTest)
+		log.Warnf("pairing client %q received invalid test response", clientID)
 		return status.Errorf(codes.PermissionDenied, "incorrect test response")
 	}
 
-	// 8. Finally send done.
+	// 8. Send the server's certificate.
+	encrypted, err = crypt.Encrypt(ps.cm.CertPEM(), key)
+	if err != nil {
+		log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
+		return status.Errorf(codes.PermissionDenied, "failed to encrypt cert")
+	}
+	log.Debugf("pairing client %q sending cert", clientID)
 	err = server.Send(&api.DoPairingResponse{
-		State: api.DoPairingResponse_Done,
+		Data: encrypted,
 	})
 	if err != nil {
-		log.Warnf("pairing client %q error when sending done: %s", clientID, err)
-		return status.Errorf(codes.Internal, "failed to send done")
+		log.Warnf("pairing client %q error when sending cert: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to send cert")
 	}
 
-	// 9. Send the server's certificate.
-
-	// 10. Generate auth tokens for the client and send them.
-
-	// 11. Finish the pairing process.
+	// 9. Generate auth tokens for the client and send them.
+	// TODO: generate token
+	encrypted, err = crypt.Encrypt(ps.cm.CertPEM(), key)
+	if err != nil {
+		log.Warnf("pairing client %q failed to encrypt token: %s", clientID, err)
+		return status.Errorf(codes.PermissionDenied, "failed to encrypt token")
+	}
+	log.Debugf("pairing client %q sending token", clientID)
+	err = server.Send(&api.DoPairingResponse{
+		Data: encrypted,
+	})
+	if err != nil {
+		log.Warnf("pairing client %q error when sending token: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to send token")
+	}
 
 	log.Infof("pairing client %q finished", clientID)
 	return nil

@@ -15,10 +15,11 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	api "github.com/jimjibone/woodhouse-4/api/go"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/cert"
+	"github.com/jimjibone/woodhouse-4/shared/paths"
 	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
@@ -53,7 +54,7 @@ func main() {
 			}
 
 			// Load the config.
-			configPath := internal.AbsPathify(args.String("config"))
+			configPath := paths.AbsPathify(args.String("config"))
 			if _, err := os.Stat(configPath); !os.IsNotExist(err) {
 				log.Infof("loading config from %s", configPath)
 				err := yamlfile.LoadFile(&config.LoadedConfig, configPath)
@@ -67,13 +68,16 @@ func main() {
 					return fmt.Errorf("failed to save config: %w", err)
 				}
 			}
+			if err := config.LoadedConfig.Verify(); err != nil {
+				return fmt.Errorf("failed to load config: %w", err)
+			}
 			return nil
 		},
 		After: func(args *cli.Context) error {
 			// Save the config if it has changed.
-			configPath := internal.AbsPathify(args.String("config"))
-			log.Infof("saving config to %s", configPath)
+			configPath := paths.AbsPathify(args.String("config"))
 			if config.LoadedConfig.Changed {
+				log.Infof("saving config to %s", configPath)
 				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
 				if err != nil {
 					return fmt.Errorf("failed to save config: %w", err)
@@ -92,6 +96,12 @@ func main() {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
 			}
 
+			// Create cert manager.
+			certManager, err := cert.NewCertManager(config.LoadedConfig.Server.CertPath, config.LoadedConfig.Server.KeyPath)
+			if err != nil {
+				return fmt.Errorf("failed to create cert manager: %s", err)
+			}
+
 			// Create device store.
 			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStoreEnabled, config.LoadedConfig.Stores.DeviceStorePath)
 			if err != nil {
@@ -104,7 +114,7 @@ func main() {
 			defer historyStore.Close()
 
 			// Create services.
-			secBridgeService := NewSecBridgeService()
+			secBridgeService := NewSecBridgeService(certManager)
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
 

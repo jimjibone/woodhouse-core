@@ -8,12 +8,14 @@ import (
 	"time"
 
 	api "github.com/jimjibone/woodhouse-4/api/go"
-	"github.com/jimjibone/woodhouse-4/auth/crypt"
 	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/crypt"
 	"github.com/schollz/pake/v3"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -95,16 +97,18 @@ func main() {
 			for pending {
 				res, err = pairingClient.Recv()
 				if err != nil {
+					code := status.Code(err)
+					if code == codes.PermissionDenied {
+						return fmt.Errorf("pairing denied")
+					}
 					return fmt.Errorf("failed to receive message: %s", err)
 				}
 				switch res.State {
 				case api.DoPairingResponse_Handshake:
-					log.Infof("pairing handshake started...")
+					log.Infof("pairing: handshake started...")
 					pending = false
 				case api.DoPairingResponse_Pending:
-					log.Debugf("pairing pending...")
-				case api.DoPairingResponse_Denied:
-					return fmt.Errorf("pairing denied")
+					log.Debugf("pairing: pending...")
 				default:
 					return fmt.Errorf("received unexpected state: %s", res.State)
 				}
@@ -145,12 +149,11 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("failed to get session key: %s", err)
 			}
-			log.Debugf("pairing: got key")
 			decrypted, err := crypt.Decrypt(res.Data, key)
 			if err != nil {
 				return fmt.Errorf("failed to decrypt test: %v", err)
 			}
-			log.Debugf("pairing test was %s", decrypted)
+			log.Debugf("pairing: received test")
 
 			// 7. Reverse the bytes, then re-encrypt and send back the test.
 			slices.Reverse(decrypted)
@@ -165,24 +168,27 @@ func main() {
 				return fmt.Errorf("failed to send test: %s", err)
 			}
 
-			// 8. Finally wait for the all ok...
+			// 8. Receive the server's certificate and save it.
 			res, err = pairingClient.Recv()
 			if err != nil {
-				return fmt.Errorf("failed to receive ok: %s", err)
+				return fmt.Errorf("failed to receive cert: %s", err)
 			}
-			switch res.State {
-			case api.DoPairingResponse_Done:
-			case api.DoPairingResponse_Denied:
-				return fmt.Errorf("pairing denied")
-			default:
-				return fmt.Errorf("received unexpected state: %s", res.State)
+			decrypted, err = crypt.Decrypt(res.Data, key)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt cert: %v", err)
 			}
+			log.Debugf("pairing: server cert is %s", decrypted)
 
-			// 9. Receive the server's certificate and save it.
-
-			// 10. Receive our new auth tokens and save them.
-
-			// 11. Finish the pairing process.
+			// 9. Receive our new auth tokens and save them.
+			res, err = pairingClient.Recv()
+			if err != nil {
+				return fmt.Errorf("failed to receive token: %s", err)
+			}
+			decrypted, err = crypt.Decrypt(res.Data, key)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt token: %v", err)
+			}
+			log.Debugf("pairing: client token is %s", decrypted)
 
 			log.Infof("pairing complete!")
 			return nil

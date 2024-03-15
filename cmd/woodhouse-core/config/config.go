@@ -10,8 +10,10 @@ type CoreConfig struct {
 }
 
 type ServerConfig struct {
-	ApiAddr string `yaml:"api-addr"`
-	WebAddr string `yaml:"web-addr"`
+	ApiAddr  string `yaml:"api-addr"`
+	WebAddr  string `yaml:"web-addr"`
+	CertPath string `yaml:"cert-path"`
+	KeyPath  string `yaml:"key-path"`
 }
 
 type StoresConfig struct {
@@ -31,8 +33,10 @@ var LoadedConfig CoreConfig = defaultConfig
 
 var defaultConfig = CoreConfig{
 	Server: ServerConfig{
-		ApiAddr: "localhost:4000",
-		WebAddr: "localhost:4080",
+		ApiAddr:  "localhost:4000",
+		WebAddr:  "localhost:4080",
+		CertPath: "",
+		KeyPath:  "",
 	},
 	Stores: StoresConfig{
 		DeviceStoreEnabled: false,
@@ -69,13 +73,21 @@ func (c ServerConfig) Verify() error {
 	if c.WebAddr == "" {
 		return fmt.Errorf("server.web-addr must be defined")
 	}
+	if c.CertPath == "" {
+		return fmt.Errorf("server.cert-path must be defined")
+	}
+	if c.KeyPath == "" {
+		return fmt.Errorf("server.key-path must be defined")
+	}
 	return nil
 }
 
 // Returns an error if the config is not valid.
 func (c StoresConfig) Verify() error {
-	if c.DeviceStorePath == "" {
-		return fmt.Errorf("stores.device-store-path must be defined")
+	if c.DeviceStoreEnabled {
+		if c.DeviceStorePath == "" {
+			return fmt.Errorf("stores.device-store-path must be defined")
+		}
 	}
 	return nil
 }
