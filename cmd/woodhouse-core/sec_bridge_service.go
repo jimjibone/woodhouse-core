@@ -5,6 +5,7 @@ import (
 	"time"
 
 	api "github.com/jimjibone/woodhouse-4/api/go"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/crypt"
@@ -17,15 +18,17 @@ import (
 type SecBridgeService struct {
 	api.SecBridgeServiceServer
 	cm *cert.CertManager
+	ba *auth.BridgeAuth
 }
 
-func NewSecBridgeService(cm *cert.CertManager) *SecBridgeService {
+func NewSecBridgeService(cm *cert.CertManager, ba *auth.BridgeAuth) *SecBridgeService {
 	return &SecBridgeService{
 		cm: cm,
+		ba: ba,
 	}
 }
 
-func (ps *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServer) error {
+func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServer) error {
 	// 1. Get the client ID from the client.
 	req, err := server.Recv()
 	if err != nil {
@@ -152,7 +155,7 @@ func (ps *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 	}
 
 	// 8. Send the server's certificate.
-	encrypted, err = crypt.Encrypt(ps.cm.CertPEM(), key)
+	encrypted, err = crypt.Encrypt(bs.cm.CertPEM(), key)
 	if err != nil {
 		log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt cert")
@@ -166,9 +169,13 @@ func (ps *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.Internal, "failed to send cert")
 	}
 
-	// 9. Generate auth tokens for the client and send them.
-	// TODO: generate token
-	encrypted, err = crypt.Encrypt(ps.cm.CertPEM(), key)
+	// 9. Generate refresh auth token for the client and send it.
+	tokens, err := bs.ba.GenerateTokens(clientID)
+	if err != nil {
+		log.Warnf("pairing client %q failed to generate token: %s", clientID, err)
+		return status.Errorf(codes.PermissionDenied, "failed to generate token")
+	}
+	encrypted, err = crypt.Encrypt([]byte(tokens.RefreshToken), key)
 	if err != nil {
 		log.Warnf("pairing client %q failed to encrypt token: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt token")

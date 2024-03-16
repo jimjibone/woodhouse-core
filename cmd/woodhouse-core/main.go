@@ -15,6 +15,7 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	api "github.com/jimjibone/woodhouse-4/api/go"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -102,6 +103,13 @@ func main() {
 				return fmt.Errorf("failed to create cert manager: %s", err)
 			}
 
+			// Create bridge auth.
+			bridgeAuth, err := auth.NewBridgeAuth(config.LoadedConfig.Stores.BridgeStoreEnabled, config.LoadedConfig.Stores.BridgeStorePath)
+			if err != nil {
+				return fmt.Errorf("failed to create bridge auth: %s", err)
+			}
+			defer bridgeAuth.Close()
+
 			// Create device store.
 			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStoreEnabled, config.LoadedConfig.Stores.DeviceStorePath)
 			if err != nil {
@@ -114,7 +122,7 @@ func main() {
 			defer historyStore.Close()
 
 			// Create services.
-			secBridgeService := NewSecBridgeService(certManager)
+			secBridgeService := NewSecBridgeService(certManager, bridgeAuth)
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
 

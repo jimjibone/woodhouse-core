@@ -6,6 +6,8 @@ require (
 	github.com/a-h/templ v0.2.543
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/fatih/color v1.16.0
+	github.com/gofrs/uuid/v5 v5.0.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/improbable-eng/grpc-web v0.15.0
