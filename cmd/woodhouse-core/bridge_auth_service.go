@@ -16,20 +16,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type SecBridgeService struct {
+type BridgeAuthService struct {
 	api.BridgeAuthServiceServer
 	cm *cert.CertManager
 	ba *auth.BridgeAuth
 }
 
-func NewSecBridgeService(cm *cert.CertManager, ba *auth.BridgeAuth) *SecBridgeService {
-	return &SecBridgeService{
+func NewBridgeAuthService(cm *cert.CertManager, ba *auth.BridgeAuth) *BridgeAuthService {
+	return &BridgeAuthService{
 		cm: cm,
 		ba: ba,
 	}
 }
 
-func (bs *SecBridgeService) Pair(server api.BridgeAuthService_PairServer) error {
+func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error {
 	// 1. Get the client ID from the client.
 	req, err := server.Recv()
 	if err != nil {
@@ -194,7 +194,7 @@ func (bs *SecBridgeService) Pair(server api.BridgeAuthService_PairServer) error 
 	return nil
 }
 
-func (bs *SecBridgeService) RefreshTokens(ctx context.Context, req *api.BridgeRefreshRequest) (*api.BridgeRefreshResponse, error) {
+func (bs *BridgeAuthService) RefreshTokens(ctx context.Context, req *api.BridgeRefreshRequest) (*api.BridgeRefreshResponse, error) {
 	claims, err := bs.ba.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid")

@@ -125,7 +125,7 @@ func main() {
 			defer historyStore.Close()
 
 			// Create services.
-			secBridgeService := NewSecBridgeService(certManager, bridgeAuth)
+			secBridgeService := NewBridgeAuthService(certManager, bridgeAuth)
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
 
