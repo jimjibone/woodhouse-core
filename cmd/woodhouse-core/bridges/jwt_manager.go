@@ -1,4 +1,4 @@
-package auth
+package bridges
 
 import (
 	"context"
@@ -22,7 +22,7 @@ const (
 	accessTokenDuration  = 15 * time.Minute
 )
 
-type BridgeAuth struct {
+type JWTManager struct {
 	wg             sync.WaitGroup
 	close          func()
 	mu             sync.RWMutex
@@ -33,11 +33,11 @@ type BridgeAuth struct {
 	changed        bool
 }
 
-func NewBridgeAuth(storageEnabled bool, storagePath string) (*BridgeAuth, error) {
+func NewJWTManager(storageEnabled bool, storagePath string) (*JWTManager, error) {
 	storagePath = paths.AbsPathify(storagePath)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ba := &BridgeAuth{
+	ba := &JWTManager{
 		close:          cancel,
 		storageEnabled: storageEnabled,
 		storagePath:    storagePath,
@@ -102,13 +102,13 @@ func NewBridgeAuth(storageEnabled bool, storagePath string) (*BridgeAuth, error)
 	return ba, nil
 }
 
-func (ba *BridgeAuth) Close() error {
+func (ba *JWTManager) Close() error {
 	ba.close()
 	ba.wg.Wait()
 	return ba.saveStore(ba.storagePath)
 }
 
-func (ba *BridgeAuth) loadStore(filename string) error {
+func (ba *JWTManager) loadStore(filename string) error {
 	if ba.storageEnabled {
 		store := struct {
 			RefreshSecret string `json:"refresh-secret"`
@@ -127,7 +127,7 @@ func (ba *BridgeAuth) loadStore(filename string) error {
 	return nil
 }
 
-func (ba *BridgeAuth) saveStore(filename string) error {
+func (ba *JWTManager) saveStore(filename string) error {
 	if ba.storageEnabled {
 		store := struct {
 			RefreshSecret string `json:"refresh-secret"`
@@ -169,7 +169,7 @@ type AccessTokenClaims struct {
 
 var AccessTokenClaimsType struct{}
 
-func (manager *BridgeAuth) GenerateTokens(id string) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -239,7 +239,7 @@ func (manager *BridgeAuth) GenerateTokens(id string) (*TokenDetails, error) {
 // 	return token.SignedString([]byte(manager.accessSecretKey))
 // }
 
-func (manager *BridgeAuth) VerifyRefreshToken(refreshToken string) (*RefreshTokenClaims, error) {
+func (manager *JWTManager) VerifyRefreshToken(refreshToken string) (*RefreshTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		refreshToken,
 		&RefreshTokenClaims{},
@@ -270,7 +270,7 @@ func (manager *BridgeAuth) VerifyRefreshToken(refreshToken string) (*RefreshToke
 	return claims, nil
 }
 
-func (manager *BridgeAuth) VerifyAccessToken(accessToken string) (*AccessTokenClaims, error) {
+func (manager *JWTManager) VerifyAccessToken(accessToken string) (*AccessTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		accessToken,
 		&AccessTokenClaims{},

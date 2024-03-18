@@ -14,6 +14,7 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	api "github.com/jimjibone/woodhouse-4/api/go"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/bridges"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
@@ -104,7 +105,7 @@ func main() {
 			}
 
 			// Create bridge auth.
-			bridgeAuth, err := auth.NewBridgeAuth(config.LoadedConfig.Stores.ClientStoreEnabled, config.LoadedConfig.Stores.ClientStorePath)
+			bridgeAuth, err := bridges.NewJWTManager(config.LoadedConfig.Stores.ClientStoreEnabled, config.LoadedConfig.Stores.ClientStorePath)
 			if err != nil {
 				return fmt.Errorf("failed to create bridge auth: %s", err)
 			}

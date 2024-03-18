@@ -6,7 +6,7 @@ import (
 	"time"
 
 	api "github.com/jimjibone/woodhouse-4/api/go"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/bridges"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/crypt"
@@ -19,10 +19,10 @@ import (
 type BridgeAuthService struct {
 	api.BridgeAuthServiceServer
 	cm *cert.CertManager
-	ba *auth.BridgeAuth
+	ba *bridges.JWTManager
 }
 
-func NewBridgeAuthService(cm *cert.CertManager, ba *auth.BridgeAuth) *BridgeAuthService {
+func NewBridgeAuthService(cm *cert.CertManager, ba *bridges.JWTManager) *BridgeAuthService {
 	return &BridgeAuthService{
 		cm: cm,
 		ba: ba,
