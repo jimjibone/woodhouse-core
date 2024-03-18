@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"slices"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 )
 
 type SecBridgeService struct {
-	api.SecBridgeServiceServer
+	api.BridgeAuthServiceServer
 	cm *cert.CertManager
 	ba *auth.BridgeAuth
 }
@@ -28,7 +29,7 @@ func NewSecBridgeService(cm *cert.CertManager, ba *auth.BridgeAuth) *SecBridgeSe
 	}
 }
 
-func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServer) error {
+func (bs *SecBridgeService) Pair(server api.BridgeAuthService_PairServer) error {
 	// 1. Get the client ID from the client.
 	req, err := server.Recv()
 	if err != nil {
@@ -52,8 +53,8 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		select {
 		case <-ticker.C:
 			log.Debugf("pairing client %q pending...", clientID)
-			err = server.Send(&api.DoPairingResponse{
-				State: api.DoPairingResponse_Pending,
+			err = server.Send(&api.BridgePairResponse{
+				State: api.BridgePairResponse_Pending,
 			})
 			if err != nil {
 				code := status.Code(err)
@@ -74,7 +75,7 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		}
 	}
 
-	// 3. Start the PAKE handshake using the key provided by the user.
+	// Start the PAKE handshake using the key provided by the user.
 	log.Debugf("pairing client %q initialising pake", clientID)
 	pakep, err := pake.InitCurve([]byte("redacted"), 0, "p521")
 	if err != nil {
@@ -82,10 +83,10 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.Internal, "failed to init pake: %s", err)
 	}
 
-	// 4. Send the first handshake blob to the client.
+	// 3. Send the first PAKE handshake blob to the client.
 	log.Debugf("pairing client %q sending first handshake blob", clientID)
-	err = server.Send(&api.DoPairingResponse{
-		State: api.DoPairingResponse_Handshake,
+	err = server.Send(&api.BridgePairResponse{
+		State: api.BridgePairResponse_Handshake,
 		Data:  pakep.Bytes(),
 	})
 	if err != nil {
@@ -93,7 +94,7 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.Internal, "failed to send handshake")
 	}
 
-	// 5. Receive the second handshake blob from the client.
+	// 4. Receive the second handshake blob from the client.
 	log.Debugf("pairing client %q waiting for second handshake blob", clientID)
 	req, err = server.Recv()
 	if err != nil {
@@ -107,14 +108,14 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.PermissionDenied, "failed to update handshake")
 	}
 
-	// 6. We should now have the session key. Let's confirm this by sending a
+	// 5. We should now have the session key. Let's confirm this by sending a
 	// test (an encrypted blob of random bytes).
 	key, err := pakep.SessionKey()
 	if err != nil {
 		log.Warnf("pairing client %q failed to get session key: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to prepare test")
 	}
-	log.Debugf("pairing client %q generated key", clientID)
+	log.Debugf("pairing client %q generated key: [%d] %x", clientID, len(key), key)
 	test, err := random.GenerateRandomString(128)
 	if err != nil {
 		log.Warnf("pairing client %q failed to generate test: %s", clientID, err)
@@ -126,7 +127,7 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt test")
 	}
 	log.Debugf("pairing client %q sending test", clientID)
-	err = server.Send(&api.DoPairingResponse{
+	err = server.Send(&api.BridgePairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
@@ -134,7 +135,7 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.PermissionDenied, "failed to send test")
 	}
 
-	// 7. Receive the test back.
+	// 6. Receive the test back.
 	log.Debugf("pairing client %q waiting for test reply", clientID)
 	req, err = server.Recv()
 	if err != nil {
@@ -154,14 +155,14 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.PermissionDenied, "incorrect test response")
 	}
 
-	// 8. Send the server's certificate.
+	// 7. Send the server's certificate.
 	encrypted, err = crypt.Encrypt(bs.cm.CertPEM(), key)
 	if err != nil {
 		log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt cert")
 	}
 	log.Debugf("pairing client %q sending cert", clientID)
-	err = server.Send(&api.DoPairingResponse{
+	err = server.Send(&api.BridgePairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
@@ -169,7 +170,7 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.Internal, "failed to send cert")
 	}
 
-	// 9. Generate refresh auth token for the client and send it.
+	// 8. Generate refresh auth token for the client and send it.
 	tokens, err := bs.ba.GenerateTokens(clientID)
 	if err != nil {
 		log.Warnf("pairing client %q failed to generate token: %s", clientID, err)
@@ -181,7 +182,7 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt token")
 	}
 	log.Debugf("pairing client %q sending token", clientID)
-	err = server.Send(&api.DoPairingResponse{
+	err = server.Send(&api.BridgePairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
@@ -191,4 +192,47 @@ func (bs *SecBridgeService) DoPairing(server api.SecBridgeService_DoPairingServe
 
 	log.Infof("pairing client %q finished", clientID)
 	return nil
+}
+
+func (bs *SecBridgeService) RefreshTokens(ctx context.Context, req *api.BridgeRefreshRequest) (*api.BridgeRefreshResponse, error) {
+	claims, err := bs.ba.VerifyRefreshToken(req.RefreshToken)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid")
+	}
+
+	// valid, err := s.bridgeStore.HasBridgeToken(claims.BridgeID, claims.RefreshUUID)
+	// if err != nil || !valid {
+	// 	return nil, status.Errorf(codes.Unauthenticated, "refresh token revoked")
+	// }
+
+	// bridge := s.bridgeStore.Find(claims.BridgeID)
+	// if bridge == nil {
+	// 	return nil, status.Errorf(codes.Internal, "cannot find bridge")
+	// }
+
+	tokens, err := bs.ba.GenerateTokens(claims.BridgeID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate refresh token")
+	}
+
+	// // How many days has the refresh token got left before expiry?
+	// exp := claims.ExpiresAt.Time
+	// rem := time.Now().Sub(exp).Hours() / 24.0
+
+	// // If requested, don't revoke or replace the refresh token.
+	// if req.RenewThreshold != 0 && rem < float64(req.RenewThreshold) {
+	// 	_ = s.bridgeStore.RevokeBridgeToken(bridge.ID, claims.RefreshUUID)
+	// 	tokens.RefreshToken = req.RefreshToken
+	// 	tokens.RefreshUUID = claims.RefreshUUID
+	// 	tokens.RefreshExpires = exp
+	// }
+
+	// s.bridgeStore.AddBridgeToken(bridge.ID, tokens.RefreshUUID, tokens.RefreshExpires)
+
+	res := &api.BridgeRefreshResponse{
+		RefreshToken: tokens.RefreshToken,
+		AccessToken:  tokens.AccessToken,
+	}
+
+	return res, nil
 }

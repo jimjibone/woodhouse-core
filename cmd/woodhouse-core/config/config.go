@@ -19,8 +19,8 @@ type ServerConfig struct {
 type StoresConfig struct {
 	DeviceStoreEnabled bool   `yaml:"device-store-enabled"`
 	DeviceStorePath    string `yaml:"device-store-path"`
-	BridgeStoreEnabled bool   `yaml:"bridge-store-enabled"`
-	BridgeStorePath    string `yaml:"bridge-store-path"`
+	ClientStoreEnabled bool   `yaml:"client-store-enabled"`
+	ClientStorePath    string `yaml:"client-store-path"`
 }
 
 type InfluxDBConfig struct {
@@ -43,8 +43,8 @@ var defaultConfig = CoreConfig{
 	Stores: StoresConfig{
 		DeviceStoreEnabled: true,
 		DeviceStorePath:    "woodhouse-devices.json",
-		BridgeStoreEnabled: true,
-		BridgeStorePath:    "woodhouse-bridges.json",
+		ClientStoreEnabled: true,
+		ClientStorePath:    "woodhouse-clients.json",
 	},
 	InfluxDB: InfluxDBConfig{
 		Enabled: false,
@@ -93,9 +93,9 @@ func (c StoresConfig) Verify() error {
 			return fmt.Errorf("stores.device-store-path must be defined")
 		}
 	}
-	if c.BridgeStoreEnabled {
-		if c.BridgeStorePath == "" {
-			return fmt.Errorf("stores.bridge-store-path must be defined")
+	if c.ClientStoreEnabled {
+		if c.ClientStorePath == "" {
+			return fmt.Errorf("stores.client-store-path must be defined")
 		}
 	}
 	return nil

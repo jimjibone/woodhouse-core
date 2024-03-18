@@ -23,7 +23,7 @@ func NewLogger(opts ...LoggerOpt) *Logger {
 	l := &Logger{
 		minLevel:    DebugLevel,
 		out:         os.Stderr,
-		timeFormat:  "15:04:05.000",
+		timeFormat:  "06/01/02 15:04:05.000",
 		exitOnFatal: true,
 	}
 	l.SetOptions(opts...)

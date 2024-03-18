@@ -35,7 +35,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:      "config",
-				Usage:     "Load configuration from `DIR`",
+				Usage:     "Load configuration from `FILE`",
 				EnvVars:   []string{"WOODHOUSE_CONFIG"},
 				Value:     "woodhouse.yaml",
 				TakesFile: true,
@@ -104,11 +104,14 @@ func main() {
 			}
 
 			// Create bridge auth.
-			bridgeAuth, err := auth.NewBridgeAuth(config.LoadedConfig.Stores.BridgeStoreEnabled, config.LoadedConfig.Stores.BridgeStorePath)
+			bridgeAuth, err := auth.NewBridgeAuth(config.LoadedConfig.Stores.ClientStoreEnabled, config.LoadedConfig.Stores.ClientStorePath)
 			if err != nil {
 				return fmt.Errorf("failed to create bridge auth: %s", err)
 			}
 			defer bridgeAuth.Close()
+
+			// Create auth interceptor.
+			authInterceptor := auth.NewAuthInterceptor(bridgeAuth)
 
 			// Create device store.
 			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStoreEnabled, config.LoadedConfig.Stores.DeviceStorePath)
@@ -139,9 +142,11 @@ func main() {
 			// 	InsecureSkipVerify: true,
 			// })
 			server := grpc.NewServer(
-			// grpc.Creds(creds),
+				// grpc.Creds(creds),
+				grpc.UnaryInterceptor(authInterceptor.Unary()),
+				grpc.StreamInterceptor(authInterceptor.Stream()),
 			)
-			api.RegisterSecBridgeServiceServer(server, secBridgeService)
+			api.RegisterBridgeAuthServiceServer(server, secBridgeService)
 			api.RegisterBridgeServiceServer(server, bridgeService)
 			api.RegisterReactorServiceServer(server, reactorService)
 			reflection.Register(server)
