@@ -14,13 +14,10 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	api "github.com/jimjibone/woodhouse-4/api/go"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/bridges"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/paths"
 	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
@@ -98,22 +95,6 @@ func main() {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
 			}
 
-			// Create cert manager.
-			certManager, err := cert.NewCertManager(config.LoadedConfig.Server.CertPath, config.LoadedConfig.Server.KeyPath)
-			if err != nil {
-				return fmt.Errorf("failed to create cert manager: %s", err)
-			}
-
-			// Create bridge auth.
-			bridgeAuth, err := bridges.NewJWTManager(config.LoadedConfig.Stores.ClientStoreEnabled, config.LoadedConfig.Stores.ClientStorePath)
-			if err != nil {
-				return fmt.Errorf("failed to create bridge auth: %s", err)
-			}
-			defer bridgeAuth.Close()
-
-			// Create auth interceptor.
-			authInterceptor := auth.NewAuthInterceptor(bridgeAuth)
-
 			// Create device store.
 			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStoreEnabled, config.LoadedConfig.Stores.DeviceStorePath)
 			if err != nil {
@@ -126,7 +107,6 @@ func main() {
 			defer historyStore.Close()
 
 			// Create services.
-			secBridgeService := NewBridgeAuthService(certManager, bridgeAuth)
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
 
@@ -143,11 +123,8 @@ func main() {
 			// 	InsecureSkipVerify: true,
 			// })
 			server := grpc.NewServer(
-				// grpc.Creds(creds),
-				grpc.UnaryInterceptor(authInterceptor.Unary()),
-				grpc.StreamInterceptor(authInterceptor.Stream()),
+			// grpc.Creds(creds),
 			)
-			api.RegisterBridgeAuthServiceServer(server, secBridgeService)
 			api.RegisterBridgeServiceServer(server, bridgeService)
 			api.RegisterReactorServiceServer(server, reactorService)
 			reflection.Register(server)

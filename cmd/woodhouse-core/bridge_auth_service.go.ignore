@@ -5,8 +5,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/jimjibone/woodhouse-3/cmd/woodhouse/bridges"
 	api "github.com/jimjibone/woodhouse-4/api/go"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/bridges"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/crypt"
