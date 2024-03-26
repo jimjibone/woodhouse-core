@@ -7,7 +7,7 @@ import (
 )
 
 func TestLogger(t *testing.T) {
-	logger := log.NewLogger(log.WithExitOnFatal(false), log.WithMinLevel(log.InfoLevel))
+	logger := log.NewLogger(log.WithExitOnFatal(false), log.WithMinLevel(log.DebugLevel))
 
 	logger.Debugf("debug format %d %f 0x%x", 1, 2.3, 25)
 	logger.Infof("info format %d %f 0x%x", 1, 2.3, 25)
@@ -20,4 +20,21 @@ func TestLogger(t *testing.T) {
 	logger.Warnln("warn line", 1, 2.3, 25)
 	logger.Errorln("error line", 1, 2.3, 25)
 	logger.Fatalln("fatal line", 1, 2.3, 25)
+}
+
+func TestContext(t *testing.T) {
+	logger := log.NewLogger(log.WithExitOnFatal(false), log.WithMinLevel(log.DebugLevel))
+	ctx := log.NewContext(logger, "Test", log.InfoLevel)
+
+	ctx.Debugf("debug format %d %f 0x%x", 1, 2.3, 25)
+	ctx.Infof("info format %d %f 0x%x", 1, 2.3, 25)
+	ctx.Warnf("warn format %d %f 0x%x", 1, 2.3, 25)
+	ctx.Errorf("error format %d %f 0x%x", 1, 2.3, 25)
+	ctx.Fatalf("fatal format %d %f 0x%x", 1, 2.3, 25)
+
+	ctx.Debugln("debug line", 1, 2.3, 25)
+	ctx.Infoln("info line", 1, 2.3, 25)
+	ctx.Warnln("warn line", 1, 2.3, 25)
+	ctx.Errorln("error line", 1, 2.3, 25)
+	ctx.Fatalln("fatal line", 1, 2.3, 25)
 }

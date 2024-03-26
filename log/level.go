@@ -19,7 +19,7 @@ const (
 func (l Level) String() string {
 	switch l {
 	case DebugLevel:
-		return color.GreenString("DEBU")
+		return color.HiBlackString("DEBU")
 	case InfoLevel:
 		return color.BlueString("INFO")
 	case WarnLevel:
