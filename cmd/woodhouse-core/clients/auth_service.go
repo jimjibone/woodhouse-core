@@ -1,12 +1,11 @@
-package main
+package clients
 
 import (
 	"context"
 	"slices"
 	"time"
 
-	"github.com/jimjibone/woodhouse-3/cmd/woodhouse/bridges"
-	api "github.com/jimjibone/woodhouse-4/api/go"
+	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/crypt"
@@ -16,20 +15,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type BridgeAuthService struct {
-	api.BridgeAuthServiceServer
-	cm *cert.CertManager
-	ba *bridges.JWTManager
+type AuthService struct {
+	clientsapi.AuthServiceServer
+	cm  *cert.CertManager
+	jwt *JWTManager
 }
 
-func NewBridgeAuthService(cm *cert.CertManager, ba *bridges.JWTManager) *BridgeAuthService {
-	return &BridgeAuthService{
-		cm: cm,
-		ba: ba,
+func NewAuthService(cm *cert.CertManager, ba *JWTManager) *AuthService {
+	return &AuthService{
+		cm:  cm,
+		jwt: ba,
 	}
 }
 
-func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error {
+func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	// 1. Get the client ID from the client.
 	req, err := server.Recv()
 	if err != nil {
@@ -53,8 +52,8 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 		select {
 		case <-ticker.C:
 			log.Debugf("pairing client %q pending...", clientID)
-			err = server.Send(&api.BridgePairResponse{
-				State: api.BridgePairResponse_Pending,
+			err = server.Send(&clientsapi.PairResponse{
+				State: clientsapi.PairResponse_Pending,
 			})
 			if err != nil {
 				code := status.Code(err)
@@ -85,8 +84,8 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 
 	// 3. Send the first PAKE handshake blob to the client.
 	log.Debugf("pairing client %q sending first handshake blob", clientID)
-	err = server.Send(&api.BridgePairResponse{
-		State: api.BridgePairResponse_Handshake,
+	err = server.Send(&clientsapi.PairResponse{
+		State: clientsapi.PairResponse_Handshake,
 		Data:  pakep.Bytes(),
 	})
 	if err != nil {
@@ -127,7 +126,7 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt test")
 	}
 	log.Debugf("pairing client %q sending test", clientID)
-	err = server.Send(&api.BridgePairResponse{
+	err = server.Send(&clientsapi.PairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
@@ -156,13 +155,13 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 	}
 
 	// 7. Send the server's certificate.
-	encrypted, err = crypt.Encrypt(bs.cm.CertPEM(), key)
+	encrypted, err = crypt.Encrypt(as.cm.CertPEM(), key)
 	if err != nil {
 		log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt cert")
 	}
 	log.Debugf("pairing client %q sending cert", clientID)
-	err = server.Send(&api.BridgePairResponse{
+	err = server.Send(&clientsapi.PairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
@@ -171,7 +170,7 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 	}
 
 	// 8. Generate refresh auth token for the client and send it.
-	tokens, err := bs.ba.GenerateTokens(clientID)
+	tokens, err := as.jwt.GenerateTokens(clientID)
 	if err != nil {
 		log.Warnf("pairing client %q failed to generate token: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to generate token")
@@ -182,7 +181,7 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt token")
 	}
 	log.Debugf("pairing client %q sending token", clientID)
-	err = server.Send(&api.BridgePairResponse{
+	err = server.Send(&clientsapi.PairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
@@ -194,8 +193,8 @@ func (bs *BridgeAuthService) Pair(server api.BridgeAuthService_PairServer) error
 	return nil
 }
 
-func (bs *BridgeAuthService) RefreshTokens(ctx context.Context, req *api.BridgeRefreshRequest) (*api.BridgeRefreshResponse, error) {
-	claims, err := bs.ba.VerifyRefreshToken(req.RefreshToken)
+func (as *AuthService) RefreshTokens(ctx context.Context, req *clientsapi.RefreshRequest) (*clientsapi.RefreshResponse, error) {
+	claims, err := as.jwt.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid")
 	}
@@ -210,7 +209,7 @@ func (bs *BridgeAuthService) RefreshTokens(ctx context.Context, req *api.BridgeR
 	// 	return nil, status.Errorf(codes.Internal, "cannot find bridge")
 	// }
 
-	tokens, err := bs.ba.GenerateTokens(claims.BridgeID)
+	tokens, err := as.jwt.GenerateTokens(claims.ClientID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate refresh token")
 	}
@@ -229,7 +228,7 @@ func (bs *BridgeAuthService) RefreshTokens(ctx context.Context, req *api.BridgeR
 
 	// s.bridgeStore.AddBridgeToken(bridge.ID, tokens.RefreshUUID, tokens.RefreshExpires)
 
-	res := &api.BridgeRefreshResponse{
+	res := &clientsapi.RefreshResponse{
 		RefreshToken: tokens.RefreshToken,
 		AccessToken:  tokens.AccessToken,
 	}

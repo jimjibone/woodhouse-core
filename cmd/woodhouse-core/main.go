@@ -14,11 +14,15 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	api "github.com/jimjibone/woodhouse-4/api/go"
+	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/paths"
+	"github.com/jimjibone/woodhouse-4/shared/stores"
 	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
@@ -36,6 +40,13 @@ func main() {
 				Usage:     "Load configuration from `FILE`",
 				EnvVars:   []string{"WOODHOUSE_CONFIG"},
 				Value:     "woodhouse.yaml",
+				TakesFile: true,
+			},
+			&cli.StringFlag{
+				Name:      "config-dir",
+				Usage:     "Configuration directory",
+				EnvVars:   []string{"WOODHOUSE_CONFIG_DIR"},
+				Value:     "woodhouse.db",
 				TakesFile: true,
 			},
 			&cli.BoolFlag{
@@ -106,9 +117,23 @@ func main() {
 			historyStore := NewHistoryStore(deviceStore)
 			defer historyStore.Close()
 
+			// Create the config store.
+			store := stores.NewFSStore(args.Path("config-dir"))
+
 			// Create services.
 			reactorService := NewReactorService(deviceStore)
 			bridgeService := NewBridgeService(deviceStore, reactorService)
+
+			certManager, err := cert.NewCertManager(config.LoadedConfig.Server.CertPath, config.LoadedConfig.Server.KeyPath)
+			if err != nil {
+				return fmt.Errorf("failed to create cert manager: %s", err)
+			}
+			clientJwtManager, err := clients.NewJWTManager(store)
+			if err != nil {
+				return fmt.Errorf("failed to create jwt manager: %s", err)
+			}
+			defer clientJwtManager.Close()
+			clientAuthService := clients.NewAuthService(certManager, clientJwtManager)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())
@@ -127,6 +152,7 @@ func main() {
 			)
 			api.RegisterBridgeServiceServer(server, bridgeService)
 			api.RegisterReactorServiceServer(server, reactorService)
+			clientsapi.RegisterAuthServiceServer(server, clientAuthService)
 			reflection.Register(server)
 
 			// Run the gRPC server.

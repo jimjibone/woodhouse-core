@@ -23,6 +23,7 @@ tasks:
   proto:
     deps:
       - api:proto-go
+      - api:proto-go-v1
 
   proto-all:
     deps:
