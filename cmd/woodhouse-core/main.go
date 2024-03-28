@@ -26,6 +26,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -101,6 +102,10 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("failed to listen on api addr: %w", err)
 			}
+			insecureApiLis, err := net.Listen("tcp", config.LoadedConfig.Server.InsecureApiAddr)
+			if err != nil {
+				return fmt.Errorf("failed to listen on insecure api addr: %w", err)
+			}
 			webLis, err := net.Listen("tcp", config.LoadedConfig.Server.WebAddr)
 			if err != nil {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
@@ -143,17 +148,21 @@ func main() {
 			defer broadcaster.Shutdown()
 
 			// Create the gRPC server.
-			// TODO: require valid certs
-			// creds := credentials.NewTLS(&tls.Config{
-			// 	InsecureSkipVerify: true,
-			// })
+			creds := credentials.NewServerTLSFromCert(certManager.Cert())
 			server := grpc.NewServer(
-			// grpc.Creds(creds),
+				grpc.Creds(creds),
 			)
+			insecureServer := grpc.NewServer()
+
+			// Register services.
 			api.RegisterBridgeServiceServer(server, bridgeService)
 			api.RegisterReactorServiceServer(server, reactorService)
 			clientsapi.RegisterAuthServiceServer(server, clientAuthService)
 			reflection.Register(server)
+			api.RegisterBridgeServiceServer(insecureServer, bridgeService)
+			api.RegisterReactorServiceServer(insecureServer, reactorService)
+			clientsapi.RegisterAuthServiceServer(insecureServer, clientAuthService)
+			reflection.Register(insecureServer)
 
 			// Run the gRPC server.
 			serverErr := make(chan error, 1)
@@ -163,11 +172,17 @@ func main() {
 					serverErr <- fmt.Errorf("grpc server: %w", err)
 				}
 			}()
+			go func() {
+				log.Infof("insecure api server ready at grpc://%s", insecureApiLis.Addr())
+				if err := insecureServer.Serve(insecureApiLis); err != nil {
+					serverErr <- fmt.Errorf("grpc insecure server: %w", err)
+				}
+			}()
 
 			// Run the web server with grpc-web support.
 			webServerErr := make(chan error, 1)
 			go func() {
-				wrappedServer := grpcweb.WrapServer(server)
+				wrappedServer := grpcweb.WrapServer(insecureServer)
 				mux := http.NewServeMux()
 				publicfs, err := fs.Sub(webapp.Content, "public")
 				if err != nil {
