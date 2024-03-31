@@ -193,7 +193,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	return nil
 }
 
-func (as *AuthService) RefreshTokens(ctx context.Context, req *clientsapi.RefreshRequest) (*clientsapi.RefreshResponse, error) {
+func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshRequest) (*clientsapi.RefreshResponse, error) {
 	claims, err := as.jwt.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid")
@@ -234,4 +234,15 @@ func (as *AuthService) RefreshTokens(ctx context.Context, req *clientsapi.Refres
 	}
 
 	return res, nil
+}
+
+func (as *AuthService) Logout(ctx context.Context, req *clientsapi.LogoutRequest) (*clientsapi.LogoutResponse, error) {
+	claims, err := as.jwt.VerifyRefreshToken(req.RefreshToken)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid")
+	}
+
+	as.jwt.RevokeToken(claims.RefreshUUID)
+
+	return &clientsapi.LogoutResponse{}, nil
 }
