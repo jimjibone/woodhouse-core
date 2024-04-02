@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/shared/stores"
 	"github.com/jimjibone/woodhouse-4/wh/v1"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -46,7 +48,9 @@ func main() {
 			store := stores.NewFSStore(args.String("store"))
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"))
+			client := wh.NewClient(store, args.String("addr"), wh.WithConnectionHandler(func(ctx context.Context, conn *grpc.ClientConn) {
+				log.Infof("client connected and waiting for more code!")
+			}))
 
 			err := client.Run()
 			if err != nil {
