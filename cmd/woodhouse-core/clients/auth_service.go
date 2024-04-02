@@ -196,7 +196,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshRequest) (*clientsapi.RefreshResponse, error) {
 	claims, err := as.jwt.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid")
+		return nil, status.Errorf(codes.Unauthenticated, "%s", err)
 	}
 
 	// valid, err := s.bridgeStore.HasBridgeToken(claims.BridgeID, claims.RefreshUUID)

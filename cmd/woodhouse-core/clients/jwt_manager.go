@@ -68,18 +68,15 @@ func NewJWTManager(store stores.Store) (*JWTManager, error) {
 	}
 
 	// Save the config if changed.
-	if manager.changed {
-		err := manager.save()
-		if err != nil {
-			return nil, fmt.Errorf("failed to save config: %s", err)
-		}
-		manager.changed = false
+	err = manager.saveIfChanged()
+	if err != nil {
+		return nil, fmt.Errorf("failed to save config: %s", err)
 	}
 
 	// Fire up a goroutine to save the config if it changes.
 	manager.wg.Add(1)
 	go func() {
-		manager.wg.Done()
+		defer manager.wg.Done()
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 		for {
@@ -303,10 +300,10 @@ func (manager *JWTManager) VerifyRefreshToken(refreshToken string) (*RefreshToke
 
 	// Check that the refresh UUID is in the allocated (allowed) list.
 	manager.mu.RLock()
+	defer manager.mu.RUnlock()
 	if _, found := manager.tokenAllocations[claims.RefreshUUID]; !found {
 		return nil, fmt.Errorf("refresh token revoked")
 	}
-	manager.mu.RUnlock()
 
 	return claims, nil
 }
