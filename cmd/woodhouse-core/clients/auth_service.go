@@ -16,7 +16,7 @@ import (
 )
 
 type AuthService struct {
-	clientsapi.AuthServiceServer
+	clientsapi.UnimplementedAuthServiceServer
 	cm  *cert.CertManager
 	jwt *JWTManager
 }
@@ -245,4 +245,8 @@ func (as *AuthService) Logout(ctx context.Context, req *clientsapi.LogoutRequest
 	as.jwt.RevokeToken(claims.RefreshUUID)
 
 	return &clientsapi.LogoutResponse{}, nil
+}
+
+func (as *AuthService) Ping(ctx context.Context, req *clientsapi.PingRequest) (*clientsapi.PingResponse, error) {
+	return &clientsapi.PingResponse{}, nil
 }

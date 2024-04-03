@@ -50,6 +50,8 @@ func main() {
 			// Create the client.
 			client := wh.NewClient(store, args.String("addr"), wh.WithConnectionHandler(func(ctx context.Context, conn *grpc.ClientConn) {
 				log.Infof("client connected and waiting for more code!")
+				<-ctx.Done()
+				log.Infof("client finishing!")
 			}))
 
 			err := client.Run()
