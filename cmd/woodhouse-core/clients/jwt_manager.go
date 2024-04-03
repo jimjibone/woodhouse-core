@@ -138,6 +138,11 @@ func (manager *JWTManager) load() error {
 		manager.refreshSecret = config.RefreshSecret
 		manager.accessSecret = config.AccessSecret
 		manager.tokenAllocations = config.TokenAllocations
+
+		// Maps may be nil after reading an empty list from the file. Why?
+		if manager.tokenAllocations == nil {
+			manager.tokenAllocations = make(map[string]TokenAllocation)
+		}
 	}
 	return nil
 }
@@ -257,7 +262,7 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 
 	// Add the new token allocation.
 	manager.mu.Lock()
-	manager.log.Debugf("generated token for %s", id)
+	manager.log.Debugf("generated tokens for %s", id)
 	manager.changed = true
 	manager.tokenAllocations[td.RefreshUUID] = TokenAllocation{
 		ClientID: id,
@@ -266,6 +271,35 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 	manager.mu.Unlock()
 
 	return td, nil
+}
+
+func (manager *JWTManager) GenerateAccessToken(id string) (string, error) {
+	u1, err := uuid.NewV4()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate UUID: %v", err)
+	}
+
+	accessExpires := time.Now().Add(accessTokenDuration)
+	accessUUID := u1.String()
+
+	// Create Access Token
+	atClaims := AccessTokenClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(accessExpires),
+		},
+		AccessUUID: accessUUID,
+		ClientID:   id,
+		// Perms:      perms,
+	}
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
+	accessToken, err := at.SignedString([]byte(manager.accessSecret))
+	if err != nil {
+		return "", err
+	}
+
+	manager.log.Debugf("generated access token for %s", id)
+
+	return accessToken, nil
 }
 
 func (manager *JWTManager) RevokeToken(refreshUUID string) {

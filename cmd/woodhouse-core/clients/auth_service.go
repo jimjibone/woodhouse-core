@@ -199,38 +199,35 @@ func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshReque
 		return nil, status.Errorf(codes.Unauthenticated, "%s", err)
 	}
 
-	// valid, err := s.bridgeStore.HasBridgeToken(claims.BridgeID, claims.RefreshUUID)
-	// if err != nil || !valid {
-	// 	return nil, status.Errorf(codes.Unauthenticated, "refresh token revoked")
-	// }
+	// How many days has the refresh token got left before expiry?
+	exp := claims.ExpiresAt.Time
+	remainingDays := time.Until(exp).Hours() / 24.0
+	renewDays := (refreshTokenDuration / 2).Hours() / 24.0
 
-	// bridge := s.bridgeStore.Find(claims.BridgeID)
-	// if bridge == nil {
-	// 	return nil, status.Errorf(codes.Internal, "cannot find bridge")
-	// }
-
-	tokens, err := as.jwt.GenerateTokens(claims.ClientID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to generate refresh token")
+	// If requested, don't revoke or replace the refresh token.
+	refreshToken := ""
+	accessToken := ""
+	if remainingDays < renewDays {
+		// Generate both tokens.
+		tokens, err := as.jwt.GenerateTokens(claims.ClientID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to generate tokens")
+		}
+		refreshToken = tokens.RefreshToken
+		accessToken = tokens.AccessToken
+	} else {
+		// Generate only the access token.
+		token, err := as.jwt.GenerateAccessToken(claims.ClientID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to generate access token")
+		}
+		refreshToken = req.RefreshToken
+		accessToken = token
 	}
 
-	// // How many days has the refresh token got left before expiry?
-	// exp := claims.ExpiresAt.Time
-	// rem := time.Now().Sub(exp).Hours() / 24.0
-
-	// // If requested, don't revoke or replace the refresh token.
-	// if req.RenewThreshold != 0 && rem < float64(req.RenewThreshold) {
-	// 	_ = s.bridgeStore.RevokeBridgeToken(bridge.ID, claims.RefreshUUID)
-	// 	tokens.RefreshToken = req.RefreshToken
-	// 	tokens.RefreshUUID = claims.RefreshUUID
-	// 	tokens.RefreshExpires = exp
-	// }
-
-	// s.bridgeStore.AddBridgeToken(bridge.ID, tokens.RefreshUUID, tokens.RefreshExpires)
-
 	res := &clientsapi.RefreshResponse{
-		RefreshToken: tokens.RefreshToken,
-		AccessToken:  tokens.AccessToken,
+		RefreshToken: refreshToken,
+		AccessToken:  accessToken,
 	}
 
 	return res, nil
