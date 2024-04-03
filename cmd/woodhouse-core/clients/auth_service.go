@@ -17,12 +17,14 @@ import (
 
 type AuthService struct {
 	clientsapi.UnimplementedAuthServiceServer
+	log *log.Context
 	cm  *cert.CertManager
 	jwt *JWTManager
 }
 
 func NewAuthService(cm *cert.CertManager, ba *JWTManager) *AuthService {
 	return &AuthService{
+		log: log.NewContext(log.DefaultLogger, "clients-auth", log.DebugLevel),
 		cm:  cm,
 		jwt: ba,
 	}
@@ -32,7 +34,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	// 1. Get the client ID from the client.
 	req, err := server.Recv()
 	if err != nil {
-		log.Warnf("pairing client failed to receive client id: %s", err)
+		as.log.Warnf("pairing client failed to receive client id: %s", err)
 		return status.Errorf(codes.Unknown, "failed to receive client id")
 	}
 	if req.ClientId == "" {
@@ -40,7 +42,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	}
 
 	clientID := req.ClientId
-	log.Infof("pairing client %q started", clientID)
+	as.log.Infof("pairing client %q started", clientID)
 
 	// 2. Send the pairing state to the client until the user has accepted the
 	// pairing request.
@@ -51,7 +53,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	for pending {
 		select {
 		case <-ticker.C:
-			log.Debugf("pairing client %q pending...", clientID)
+			as.log.Debugf("pairing client %q pending...", clientID)
 			err = server.Send(&clientsapi.PairResponse{
 				State: clientsapi.PairResponse_Pending,
 			})
@@ -59,11 +61,11 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 				code := status.Code(err)
 				switch code {
 				case codes.Unavailable:
-					log.Infof("pairing client %q went offline", clientID)
+					as.log.Infof("pairing client %q went offline", clientID)
 					return status.Errorf(code, "client offline")
 
 				default:
-					log.Warnf("pairing client %q error when sending pending: %s", clientID, err)
+					as.log.Warnf("pairing client %q error when sending pending: %s", clientID, err)
 					return status.Errorf(code, "failed to send pending")
 				}
 			}
@@ -75,35 +77,35 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	}
 
 	// Start the PAKE handshake using the key provided by the user.
-	log.Debugf("pairing client %q initialising pake", clientID)
+	as.log.Debugf("pairing client %q initialising pake", clientID)
 	pakep, err := pake.InitCurve([]byte("redacted"), 0, "p521")
 	if err != nil {
-		log.Warnf("pairing client %q failed to init pake: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to init pake: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to init pake: %s", err)
 	}
 
 	// 3. Send the first PAKE handshake blob to the client.
-	log.Debugf("pairing client %q sending first handshake blob", clientID)
+	as.log.Debugf("pairing client %q sending first handshake blob", clientID)
 	err = server.Send(&clientsapi.PairResponse{
 		State: clientsapi.PairResponse_Handshake,
 		Data:  pakep.Bytes(),
 	})
 	if err != nil {
-		log.Warnf("pairing client %q error when sending handshake start: %s", clientID, err)
+		as.log.Warnf("pairing client %q error when sending handshake start: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send handshake")
 	}
 
 	// 4. Receive the second handshake blob from the client.
-	log.Debugf("pairing client %q waiting for second handshake blob", clientID)
+	as.log.Debugf("pairing client %q waiting for second handshake blob", clientID)
 	req, err = server.Recv()
 	if err != nil {
-		log.Warnf("pairing client %q failed to receive handshake: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to receive handshake: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to receive handshake")
 	}
-	log.Debugf("pairing client %q received second handshake blob", clientID)
+	as.log.Debugf("pairing client %q received second handshake blob", clientID)
 	err = pakep.Update(req.Data)
 	if err != nil {
-		log.Warnf("pairing client %q failed to update handshake: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to update handshake: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to update handshake")
 	}
 
@@ -111,85 +113,85 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	// test (an encrypted blob of random bytes).
 	key, err := pakep.SessionKey()
 	if err != nil {
-		log.Warnf("pairing client %q failed to get session key: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to get session key: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to prepare test")
 	}
-	log.Debugf("pairing client %q generated key: [%d] %x", clientID, len(key), key)
+	as.log.Debugf("pairing client %q generated key: [%d] %x", clientID, len(key), key)
 	test, err := random.GenerateRandomString(128)
 	if err != nil {
-		log.Warnf("pairing client %q failed to generate test: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to generate test: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to generate test")
 	}
 	encrypted, err := crypt.Encrypt([]byte(test), key)
 	if err != nil {
-		log.Warnf("pairing client %q failed to encrypt test: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to encrypt test: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt test")
 	}
-	log.Debugf("pairing client %q sending test", clientID)
+	as.log.Debugf("pairing client %q sending test", clientID)
 	err = server.Send(&clientsapi.PairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
-		log.Warnf("pairing client %q failed to send test: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to send test: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to send test")
 	}
 
 	// 6. Receive the test back.
-	log.Debugf("pairing client %q waiting for test reply", clientID)
+	as.log.Debugf("pairing client %q waiting for test reply", clientID)
 	req, err = server.Recv()
 	if err != nil {
-		log.Warnf("pairing client %q failed to receive test: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to receive test: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to receive test")
 	}
 	decrypted, err := crypt.Decrypt(req.Data, key)
 	if err != nil {
-		log.Warnf("pairing client %q failed to decrypt test: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to decrypt test: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to decrypt test")
 	}
 	slices.Reverse(decrypted)
 	decryptedTest := string(decrypted)
-	log.Debugf("pairing client %q test reply was valid", clientID)
+	as.log.Debugf("pairing client %q test reply was valid", clientID)
 	if test != decryptedTest {
-		log.Warnf("pairing client %q received invalid test response", clientID)
+		as.log.Warnf("pairing client %q received invalid test response", clientID)
 		return status.Errorf(codes.PermissionDenied, "incorrect test response")
 	}
 
 	// 7. Send the server's certificate.
 	encrypted, err = crypt.Encrypt(as.cm.CertPEM(), key)
 	if err != nil {
-		log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt cert")
 	}
-	log.Debugf("pairing client %q sending cert", clientID)
+	as.log.Debugf("pairing client %q sending cert", clientID)
 	err = server.Send(&clientsapi.PairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
-		log.Warnf("pairing client %q error when sending cert: %s", clientID, err)
+		as.log.Warnf("pairing client %q error when sending cert: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send cert")
 	}
 
 	// 8. Generate refresh auth token for the client and send it.
 	tokens, err := as.jwt.GenerateTokens(clientID)
 	if err != nil {
-		log.Warnf("pairing client %q failed to generate token: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to generate token: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to generate token")
 	}
 	encrypted, err = crypt.Encrypt([]byte(tokens.RefreshToken), key)
 	if err != nil {
-		log.Warnf("pairing client %q failed to encrypt token: %s", clientID, err)
+		as.log.Warnf("pairing client %q failed to encrypt token: %s", clientID, err)
 		return status.Errorf(codes.PermissionDenied, "failed to encrypt token")
 	}
-	log.Debugf("pairing client %q sending token", clientID)
+	as.log.Debugf("pairing client %q sending token", clientID)
 	err = server.Send(&clientsapi.PairResponse{
 		Data: encrypted,
 	})
 	if err != nil {
-		log.Warnf("pairing client %q error when sending token: %s", clientID, err)
+		as.log.Warnf("pairing client %q error when sending token: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send token")
 	}
 
-	log.Infof("pairing client %q finished", clientID)
+	as.log.Infof("pairing client %q finished", clientID)
 	return nil
 }
 
