@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/jimjibone/woodhouse-4/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,24 +81,13 @@ func (stream *wrappedStream) Context() context.Context {
 	return stream.ctx
 }
 
-func (interceptor *AuthInterceptor) requiresAuth(method string) bool {
-	switch method {
-	case "/woodhouse.api.v1.clients.AuthService/Pair",
-		"/woodhouse.api.v1.clients.AuthService/Refresh",
-		"/woodhouse.api.v1.clients.AuthService/Ping":
-		return false
-	default:
-		return true
-	}
-}
-
 func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) (context.Context, error) {
 	// gRPC-Web requests don't have a / prefix.
 	if !strings.HasPrefix(method, "/") {
 		method = "/" + method
 	}
 
-	if !interceptor.requiresAuth(method) {
+	if !apitools.RequiresAuth(method) {
 		// everyone can access
 		return ctx, nil
 	}
