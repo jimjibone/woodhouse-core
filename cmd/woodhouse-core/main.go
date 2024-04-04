@@ -140,6 +140,8 @@ func main() {
 			defer clientJwtManager.Close()
 			clientAuthService := clients.NewAuthService(certManager, clientJwtManager)
 
+			authInterceptor := clients.NewAuthInterceptor(clientJwtManager)
+
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())
 			if err != nil {
@@ -151,6 +153,8 @@ func main() {
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
 			server := grpc.NewServer(
 				grpc.Creds(creds),
+				grpc.UnaryInterceptor(authInterceptor.Unary()),
+				grpc.StreamInterceptor(authInterceptor.Stream()),
 			)
 			insecureServer := grpc.NewServer()
 
