@@ -102,7 +102,7 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("failed to listen on api addr: %w", err)
 			}
-			insecureApiLis, err := net.Listen("tcp", config.LoadedConfig.Server.InsecureApiAddr)
+			insecureApiLis, err := net.Listen("tcp", "127.0.0.1:4001")
 			if err != nil {
 				return fmt.Errorf("failed to listen on insecure api addr: %w", err)
 			}

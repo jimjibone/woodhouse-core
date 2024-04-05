@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"strings"
 
 	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -34,16 +33,19 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
+		if apitools.RequiresAuth(info.FullMethod) {
+			clientID, ctx2, err := interceptor.authorize(ctx, info.FullMethod)
+			if err != nil {
+				return nil, err
+			}
+			interceptor.log.Debugf("--> unary: %s (authorized %s)", info.FullMethod, clientID)
+			return handler(ctx2, req)
+		}
+
 		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
-			interceptor.log.Debugf("--> unary: %s", info.FullMethod)
+			interceptor.log.Debugf("--> unary: %s (no auth)", info.FullMethod)
 		}
-
-		ctx2, err := interceptor.authorize(ctx, info.FullMethod)
-		if err != nil {
-			return nil, err
-		}
-
-		return handler(ctx2, req)
+		return handler(ctx, req)
 	}
 }
 
@@ -55,16 +57,19 @@ func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
 	) error {
+		if apitools.RequiresAuth(info.FullMethod) {
+			clientID, ctx2, err := interceptor.authorize(stream.Context(), info.FullMethod)
+			if err != nil {
+				return err
+			}
+			interceptor.log.Debugf("--> stream: %s (authorized %s)", info.FullMethod, clientID)
+			return handler(srv, newWrappedStream(stream, ctx2))
+		}
+
 		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
-			interceptor.log.Debugf("--> stream: %s", info.FullMethod)
+			interceptor.log.Debugf("--> stream: %s (no auth)", info.FullMethod)
 		}
-
-		ctx2, err := interceptor.authorize(stream.Context(), info.FullMethod)
-		if err != nil {
-			return err
-		}
-
-		return handler(srv, newWrappedStream(stream, ctx2))
+		return handler(srv, stream)
 	}
 }
 
@@ -81,25 +86,18 @@ func (stream *wrappedStream) Context() context.Context {
 	return stream.ctx
 }
 
-func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) (context.Context, error) {
-	// gRPC-Web requests don't have a / prefix.
-	if !strings.HasPrefix(method, "/") {
-		method = "/" + method
-	}
-
-	if !apitools.RequiresAuth(method) {
-		// everyone can access
-		return ctx, nil
-	}
-
+// authorize extracts the authorization token from the request context and
+// checks that the access token is still authorized. Returns the client id,
+// context containing the access token claims, or possibly an error.
+func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) (string, context.Context, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
+		return "", nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
 	}
 
 	values := md["authorization"]
 	if len(values) == 0 || len(values[0]) == 0 {
-		return nil, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+		return "", nil, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
 	}
 
 	// if accessibleMethod.IsUserMethod() {
@@ -118,13 +116,13 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 	accessToken := values[0]
 	claims, err := interceptor.jwt.VerifyAccessToken(accessToken)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
+		return "", nil, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
 	}
 
 	// for _, perm := range accessibleMethod.Perms {
 	// 	for _, claimPerm := range claims.Perms {
 	// 		if perm == perms.Perm(claimPerm) {
-	return context.WithValue(ctx, "claims", claims), nil
+	return claims.ClientID, context.WithValue(ctx, "claims", claims), nil
 	// 			}
 	// 		}
 	// 	}

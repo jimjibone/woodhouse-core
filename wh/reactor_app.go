@@ -10,7 +10,11 @@ import (
 
 	api "github.com/jimjibone/woodhouse-4/api/go"
 	"github.com/jimjibone/woodhouse-4/apitools"
+	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/stores"
+	whv1 "github.com/jimjibone/woodhouse-4/wh/v1"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc"
 )
 
 type ReactorApp struct {
@@ -51,9 +55,20 @@ func (ra *ReactorApp) AddDevice(deviceID string, device Device) {
 
 func (ra *ReactorApp) Run(arguments []string) error {
 	flags := append([]cli.Flag{
+		&cli.PathFlag{
+			Name:     "store",
+			Usage:    "path to config storage location",
+			Required: true,
+		},
 		&cli.StringFlag{
-			Name:  "addr",
-			Usage: "woodhouse-core server address (disables automatic discovery)",
+			Name:     "addr",
+			Usage:    "woodhouse-core server address",
+			Required: true,
+		},
+		&cli.BoolFlag{
+			Name:    "debug",
+			Aliases: []string{"v"},
+			Usage:   "enable debug logging",
 		},
 	}, ra.Flags...)
 	app := &cli.App{
@@ -62,6 +77,10 @@ func (ra *ReactorApp) Run(arguments []string) error {
 		EnableBashCompletion: true,
 		Flags:                flags,
 		Action: func(args *cli.Context) error {
+			if args.Bool("debug") {
+				log.SetOptions(log.WithMinLevel(log.DebugLevel))
+			}
+
 			// Create the main app context.
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -76,6 +95,9 @@ func (ra *ReactorApp) Run(arguments []string) error {
 					cancel()
 				}
 			}()
+
+			// Create the store.
+			store := stores.NewFSStore(args.String("store"))
 
 			// Create the bridge if not done already.
 			if ra.bridge == nil {
@@ -101,8 +123,24 @@ func (ra *ReactorApp) Run(arguments []string) error {
 			// Run the connection stuff.
 			wg.Add(1)
 			go func() {
-				connector := NewConnector(ra.bridge.Run, ra.reactor.Run)
-				errs <- connector.Run(ctx)
+				client := whv1.NewClient(store, args.String("addr"), whv1.WithClientID(ra.BridgeID),
+					whv1.WithConnectionHandler(func(ctx context.Context, conn *grpc.ClientConn) {
+						err := ra.bridge.Run(ctx, conn)
+						if err != nil {
+							log.Errorf("bridge run failed: %s", err)
+						}
+					}),
+					whv1.WithConnectionHandler(func(ctx context.Context, conn *grpc.ClientConn) {
+						err := ra.reactor.Run(ctx, conn)
+						if err != nil {
+							log.Errorf("reactor run failed: %s", err)
+						}
+					}),
+				)
+				err := client.Run()
+				if err != nil {
+					errs <- err
+				}
 				wg.Done()
 			}()
 

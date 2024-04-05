@@ -10,11 +10,10 @@ type CoreConfig struct {
 }
 
 type ServerConfig struct {
-	ApiAddr         string `yaml:"api-addr"`
-	InsecureApiAddr string `yaml:"insecure-api-addr"`
-	WebAddr         string `yaml:"web-addr"`
-	CertPath        string `yaml:"cert-path"`
-	KeyPath         string `yaml:"key-path"`
+	ApiAddr  string `yaml:"api-addr"`
+	WebAddr  string `yaml:"web-addr"`
+	CertPath string `yaml:"cert-path"`
+	KeyPath  string `yaml:"key-path"`
 }
 
 type StoresConfig struct {
