@@ -64,6 +64,8 @@ func main() {
 				log.SetOptions(log.WithMinLevel(log.InfoLevel))
 			}
 
+			log.Infof("woodhouse is starting")
+
 			// Load the config.
 			configPath := paths.AbsPathify(args.String("config"))
 			if _, err := os.Stat(configPath); !os.IsNotExist(err) {
@@ -94,6 +96,9 @@ func main() {
 					return fmt.Errorf("failed to save config: %w", err)
 				}
 			}
+
+			log.Infof("woodhouse finished")
+
 			return nil
 		},
 		Action: func(args *cli.Context) error {
@@ -231,7 +236,7 @@ func main() {
 			case err := <-webServerErr:
 				return err
 			case <-sig:
-				log.Infof("Exiting...")
+				log.Infof("exiting...")
 			}
 
 			return nil
