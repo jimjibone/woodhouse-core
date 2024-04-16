@@ -17,6 +17,7 @@ import (
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -147,6 +148,14 @@ func main() {
 
 			authInterceptor := clients.NewAuthInterceptor(clientJwtManager)
 
+			deviceManager, err := core.NewDeviceManager(store)
+			if err != nil {
+				return fmt.Errorf("failed to create device manager: %s", err)
+			}
+			defer deviceManager.Close()
+
+			clientService := clients.NewClientService(deviceManager)
+
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())
 			if err != nil {
@@ -167,6 +176,7 @@ func main() {
 			api.RegisterBridgeServiceServer(server, bridgeService)
 			api.RegisterReactorServiceServer(server, reactorService)
 			clientsapi.RegisterAuthServiceServer(server, clientAuthService)
+			clientsapi.RegisterClientServiceServer(server, clientService)
 			reflection.Register(server)
 			api.RegisterBridgeServiceServer(insecureServer, bridgeService)
 			api.RegisterReactorServiceServer(insecureServer, reactorService)
