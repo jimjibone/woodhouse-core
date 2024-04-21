@@ -18,7 +18,7 @@ type ClientService struct {
 
 func NewClientService(deviceManager *core.DeviceManager) *ClientService {
 	service := &ClientService{
-		log:           log.NewContext(log.DefaultLogger, "clients-service", log.DebugLevel),
+		log:           log.NewContext(log.DefaultLogger, "client-service", log.DebugLevel),
 		deviceManager: deviceManager,
 	}
 	return service
@@ -30,8 +30,8 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 		return status.Errorf(codes.Internal, "invalid claims")
 	}
 
-	service.log.Infof("%q status stream started", claims.ClientID)
-	defer service.log.Infof("%q status stream finished", claims.ClientID)
+	service.log.Debugf("%q status stream started", claims.ClientID)
+	defer service.log.Debugf("%q status stream finished", claims.ClientID)
 
 	defer service.deviceManager.SetClientOffline(claims.ClientID)
 
@@ -57,6 +57,9 @@ func (service *ClientService) ActionStream(server clientsapi.ClientService_Actio
 		return status.Errorf(codes.Internal, "invalid claims")
 	}
 
+	service.log.Debugf("%q action stream started", claims.ClientID)
+	defer service.log.Debugf("%q action stream finished", claims.ClientID)
+
 	defer service.deviceManager.PushActionResponse(claims.ClientID, nil, true)
 
 	requests := service.deviceManager.GetActionRequests()
@@ -74,7 +77,6 @@ func (service *ClientService) ActionStream(server clientsapi.ClientService_Actio
 				if code != codes.Canceled {
 					service.log.Errorf("%q action stream error: %s", claims.ClientID, err)
 				}
-				service.log.Warnf("%q action stream recv err: %s", claims.ClientID, err)
 				return
 			}
 
@@ -82,7 +84,7 @@ func (service *ClientService) ActionStream(server clientsapi.ClientService_Actio
 
 			select {
 			case <-ctx.Done():
-				service.log.Warnf("%q action stream recv done", claims.ClientID)
+				service.log.Debugf("%q action stream recv done", claims.ClientID)
 				return
 			default:
 			}
@@ -105,7 +107,7 @@ func (service *ClientService) ActionStream(server clientsapi.ClientService_Actio
 			}
 
 		case <-ctx.Done():
-			service.log.Warnf("%q action stream send done", claims.ClientID)
+			service.log.Debugf("%q action stream send done", claims.ClientID)
 			return nil
 		}
 	}

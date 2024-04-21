@@ -53,6 +53,13 @@ type ActionResponse struct {
 	Offline  bool
 }
 
+func (ar ActionResponse) String() string {
+	if ar.Response != nil {
+		return fmt.Sprintf("client_id:%q response:{%s}", ar.ClientID, ar.Response)
+	}
+	return fmt.Sprintf("client_id:%q offline:%t", ar.ClientID, ar.Offline)
+}
+
 func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &DeviceManager{
@@ -310,7 +317,7 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 				manager.log.Warnf("device updated has empty device ID: %s", update)
 			}
 		} else if update.Offline {
-			manager.log.Debugf("client %q has gone offline", update.ClientID)
+			manager.log.Infof("client %q has gone offline", update.ClientID)
 			for _, dev := range manager.devices {
 				if dev.ClientID == update.ClientID {
 					offlineUpdate := dev.setOffline(manager.log)

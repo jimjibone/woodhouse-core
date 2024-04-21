@@ -65,11 +65,15 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 				if update.Response != nil {
 					if update.Response.GetActionId() == actionID {
 						// Push the update out to the user.
-						server.Send(&clientsapi.ActionResponse{
+						err := server.Send(&clientsapi.ActionResponse{
 							ActionId: actionID,
 							Status:   update.Response.Status,
 							Details:  update.Response.Details,
 						})
+						if err != nil {
+							service.log.Warnf("action %q send err: %s", actionID, err)
+							return status.Errorf(codes.Unknown, "failed to send")
+						}
 
 						// If status is final then return.
 						if update.Response.Status >= clientsapi.ActionResponse_COMPLETE {
@@ -78,16 +82,18 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 					}
 				} else if update.Offline {
 					// Push the update out to the user.
-					server.Send(&clientsapi.ActionResponse{
+					err := server.Send(&clientsapi.ActionResponse{
 						ActionId: actionID,
 						Status:   clientsapi.ActionResponse_CANCELED,
 						Details:  "client went offline",
 					})
+					if err != nil {
+						service.log.Warnf("action %q send err: %s", actionID, err)
+						return status.Errorf(codes.Unknown, "failed to send")
+					}
 					return nil
 				}
 			}
 		}
 	}
-
-	return nil
 }
