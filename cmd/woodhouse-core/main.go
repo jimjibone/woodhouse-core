@@ -19,6 +19,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/yamlfile"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-4/discovery"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
@@ -155,6 +156,7 @@ func main() {
 			defer deviceManager.Close()
 
 			clientService := clients.NewClientService(deviceManager)
+			userService := users.NewUserService(deviceManager)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())
@@ -177,6 +179,7 @@ func main() {
 			api.RegisterReactorServiceServer(server, reactorService)
 			clientsapi.RegisterAuthServiceServer(server, clientAuthService)
 			clientsapi.RegisterClientServiceServer(server, clientService)
+			clientsapi.RegisterUserServiceServer(insecureServer, userService)
 			reflection.Register(server)
 			api.RegisterBridgeServiceServer(insecureServer, bridgeService)
 			api.RegisterReactorServiceServer(insecureServer, reactorService)

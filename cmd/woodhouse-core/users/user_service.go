@@ -1,0 +1,93 @@
+package users
+
+import (
+	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
+	"github.com/jimjibone/woodhouse-4/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type UserService struct {
+	clientsapi.UnimplementedUserServiceServer
+	log           *log.Context
+	deviceManager *core.DeviceManager
+}
+
+func NewUserService(deviceManager *core.DeviceManager) *UserService {
+	service := &UserService{
+		log:           log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
+		deviceManager: deviceManager,
+	}
+	return service
+}
+
+func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server clientsapi.UserService_GetDevicesServer) error {
+	devices := service.deviceManager.GetDevices()
+	for dev := range devices {
+		err := server.Send(dev)
+		if err != nil {
+			service.log.Errorf("failed to send devices: %s", err)
+			return status.Errorf(codes.Internal, "failed to send devices")
+		}
+	}
+	return nil
+}
+
+func (service *UserService) SendAction(req *clientsapi.ActionRequest, server clientsapi.UserService_SendActionServer) error {
+	if req.DeviceId == "" {
+		return status.Error(codes.InvalidArgument, "device_id required")
+	}
+	if req.ServiceId == "" {
+		return status.Error(codes.InvalidArgument, "service_id required")
+	}
+
+	actionID, clientID, err := service.deviceManager.PrepAction(req.GetDeviceId())
+	if err != nil {
+		return err
+	}
+
+	service.log.Infof("action %q started: %s", actionID, req)
+	defer service.log.Infof("action %q finished", actionID)
+
+	req.ActionId = actionID
+
+	sub := service.deviceManager.GetActionResponses()
+	defer sub.Close()
+
+	service.deviceManager.PushActionRequest(clientID, req)
+
+	for {
+		select {
+		case update := <-sub.Sub():
+			service.log.Infof("action %q update: %s", actionID, update)
+			if update.ClientID == clientID {
+				if update.Response != nil {
+					if update.Response.GetActionId() == actionID {
+						// Push the update out to the user.
+						server.Send(&clientsapi.ActionResponse{
+							ActionId: actionID,
+							Status:   update.Response.Status,
+							Details:  update.Response.Details,
+						})
+
+						// If status is final then return.
+						if update.Response.Status >= clientsapi.ActionResponse_COMPLETE {
+							return nil
+						}
+					}
+				} else if update.Offline {
+					// Push the update out to the user.
+					server.Send(&clientsapi.ActionResponse{
+						ActionId: actionID,
+						Status:   clientsapi.ActionResponse_CANCELED,
+						Details:  "client went offline",
+					})
+					return nil
+				}
+			}
+		}
+	}
+
+	return nil
+}

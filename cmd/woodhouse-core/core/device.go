@@ -52,6 +52,19 @@ func (dev *Device) pb() *clientsapi.Device {
 	return pb
 }
 
+func (dev *Device) isOnline() bool {
+	for _, srv := range dev.Services {
+		if srv.Typ == clientsapi.Service_ONLINE {
+			for _, attr := range srv.Attrs {
+				if attr.GetId() == "online" && attr.GetBool() != nil {
+					return attr.Bool.Value
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (dev *Device) setOffline(log *log.Context) *clientsapi.Device {
 	for _, srv := range dev.Services {
 		if srv.Typ == clientsapi.Service_ONLINE {

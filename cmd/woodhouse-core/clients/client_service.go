@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"context"
+
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -50,5 +52,61 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 }
 
 func (service *ClientService) ActionStream(server clientsapi.ClientService_ActionStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method ActionStream not implemented")
+	claims, ok := server.Context().Value("claims").(*AccessTokenClaims)
+	if !ok {
+		return status.Errorf(codes.Internal, "invalid claims")
+	}
+
+	defer service.deviceManager.PushActionResponse(claims.ClientID, nil, true)
+
+	requests := service.deviceManager.GetActionRequests()
+	defer requests.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		defer cancel()
+		for {
+			res, err := server.Recv()
+			if err != nil {
+				code := status.Code(err)
+				if code != codes.Canceled {
+					service.log.Errorf("%q action stream error: %s", claims.ClientID, err)
+				}
+				service.log.Warnf("%q action stream recv err: %s", claims.ClientID, err)
+				return
+			}
+
+			service.deviceManager.PushActionResponse(claims.ClientID, res, false)
+
+			select {
+			case <-ctx.Done():
+				service.log.Warnf("%q action stream recv done", claims.ClientID)
+				return
+			default:
+			}
+		}
+	}()
+
+	for {
+		select {
+		case req := <-requests.Sub():
+			if req.ClientID == claims.ClientID {
+				err := server.Send(req.Request)
+				if err != nil {
+					code := status.Code(err)
+					if code != codes.Canceled {
+						service.log.Errorf("%q action %q stream error: %s", claims.ClientID, req.Request.GetActionId(), err)
+					}
+					service.log.Warnf("%q action stream send err: %s", claims.ClientID, err)
+					return status.Errorf(codes.InvalidArgument, "send failed")
+				}
+			}
+
+		case <-ctx.Done():
+			service.log.Warnf("%q action stream send done", claims.ClientID)
+			return nil
+		}
+	}
 }

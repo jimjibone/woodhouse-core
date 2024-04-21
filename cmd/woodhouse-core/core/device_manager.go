@@ -14,17 +14,24 @@ import (
 	"github.com/jimjibone/queue/v2"
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/random"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 )
 
 type DeviceManager struct {
 	log             *log.Context
 	wg              sync.WaitGroup
+	mu              sync.RWMutex
+	ctx             context.Context
 	close           func()
 	store           stores.Store
 	rxDeviceUpdates *queue.Queue[deviceUpdate]
 	txDeviceUpdates *queue.Pub[*clientsapi.Device]
+	actionRequests  *queue.Pub[ActionRequest]
+	actionResponses *queue.Pub[ActionResponse]
 	devices         map[string]*Device // key=device id
 	changed         bool
 }
@@ -35,14 +42,28 @@ type deviceUpdate struct {
 	Offline  bool
 }
 
+type ActionRequest struct {
+	ClientID string
+	Request  *clientsapi.ActionRequest
+}
+
+type ActionResponse struct {
+	ClientID string
+	Response *clientsapi.ActionResponse
+	Offline  bool
+}
+
 func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &DeviceManager{
 		log:             log.NewContext(log.DefaultLogger, "device-manager", log.DebugLevel),
+		ctx:             ctx,
 		close:           close,
 		store:           store,
 		rxDeviceUpdates: queue.New[deviceUpdate](),
 		txDeviceUpdates: queue.NewPub[*clientsapi.Device](),
+		actionRequests:  queue.NewPub[ActionRequest](),
+		actionResponses: queue.NewPub[ActionResponse](),
 		devices:         make(map[string]*Device),
 	}
 
@@ -79,6 +100,75 @@ func (manager *DeviceManager) PushDeviceUpdate(clientID string, update *clientsa
 
 func (manager *DeviceManager) SetClientOffline(clientID string) {
 	manager.rxDeviceUpdates.Push(deviceUpdate{ClientID: clientID, Offline: true})
+}
+
+func (manager *DeviceManager) PushActionRequest(clientID string, req *clientsapi.ActionRequest) {
+	manager.actionRequests.Pub(ActionRequest{
+		ClientID: clientID,
+		Request:  req,
+	})
+}
+
+func (manager *DeviceManager) GetActionRequests() *queue.Sub[ActionRequest] {
+	return manager.actionRequests.NewSub()
+}
+
+func (manager *DeviceManager) PushActionResponse(clientID string, res *clientsapi.ActionResponse, offline bool) {
+	manager.actionResponses.Pub(ActionResponse{
+		ClientID: clientID,
+		Response: res,
+		Offline:  offline,
+	})
+}
+
+func (manager *DeviceManager) GetActionResponses() *queue.Sub[ActionResponse] {
+	return manager.actionResponses.NewSub()
+}
+
+func (manager *DeviceManager) GetDevices() <-chan *clientsapi.Device {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	ch := make(chan *clientsapi.Device, len(manager.devices))
+	for _, dev := range manager.devices {
+		ch <- dev.pb()
+	}
+	close(ch)
+
+	return ch
+}
+
+func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID string, err error) {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	// Check that device exists.
+	// Check that device is online and the client is known.
+	// Generate an action ID.
+	// Push the request onto the actionRequest pub queue.
+	// Listen on actionResponse sub queue.
+	// Add option to cancel the request from here.
+
+	dev, found := manager.devices[deviceID]
+	if !found {
+		return "", "", status.Error(codes.NotFound, "device not found")
+	}
+
+	if dev.ClientID == "" {
+		return "", "", status.Error(codes.Unavailable, "device has no client")
+	}
+
+	if !dev.isOnline() {
+		return "", "", status.Error(codes.Unavailable, "device is offline")
+	}
+
+	actionID, err = random.GenerateRandomPin(10)
+	if err != nil {
+		manager.log.Errorf("failed to generate action id: %s", err)
+		return "", "", status.Error(codes.Internal, "failed to generate action id")
+	}
+
+	return actionID, dev.ClientID, nil
 }
 
 func (manager *DeviceManager) load() error {
@@ -123,6 +213,9 @@ func (manager *DeviceManager) load() error {
 }
 
 func (manager *DeviceManager) save() error {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
 	// Convert map to slice.
 	config := struct {
 		Devices []*clientsapi.Device `json:"devices"`
@@ -177,47 +270,7 @@ func (manager *DeviceManager) run(ctx context.Context) {
 			return
 
 		case update := <-manager.rxDeviceUpdates.Pop():
-			if update.ClientID != "" {
-				if update.Update != nil {
-					if update.Update.GetId() != "" {
-						if dev, found := manager.devices[update.Update.GetId()]; found {
-							err := dev.update(manager.log, update.ClientID, update.Update)
-							if err != nil {
-								manager.log.Warnf("failed to update device %q: %s", update.Update.GetId(), err)
-							} else {
-								manager.changed = true
-							}
-						} else {
-							dev, err := newDevice(manager.log, update.ClientID, update.Update)
-							if err != nil {
-								manager.log.Warnf("failed to create device %q: %s", update.Update.GetId(), err)
-							} else {
-								manager.devices[update.Update.GetId()] = dev
-								manager.changed = true
-							}
-						}
-
-						manager.txDeviceUpdates.Pub(update.Update)
-					} else {
-						manager.log.Warnf("device updated has empty device ID: %s", update)
-					}
-				} else if update.Offline {
-					manager.log.Debugf("client %q has gone offline", update.ClientID)
-					for _, dev := range manager.devices {
-						if dev.ClientID == update.ClientID {
-							offlineUpdate := dev.setOffline(manager.log)
-							if offlineUpdate != nil {
-								manager.changed = true
-								manager.txDeviceUpdates.Pub(offlineUpdate)
-							}
-						}
-					}
-				} else {
-					manager.log.Warnf("device update was empty: %s", update)
-				}
-			} else {
-				manager.log.Warnf("device updated has empty client ID: %s", update)
-			}
+			manager.handleDeviceUpdate(update)
 
 		case <-ticker.C:
 			err := manager.saveIfChanged()
@@ -225,5 +278,52 @@ func (manager *DeviceManager) run(ctx context.Context) {
 				manager.log.Fatalf("failed to save state: %s", err)
 			}
 		}
+	}
+}
+
+func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if update.ClientID != "" {
+		if update.Update != nil {
+			if update.Update.GetId() != "" {
+				if dev, found := manager.devices[update.Update.GetId()]; found {
+					err := dev.update(manager.log, update.ClientID, update.Update)
+					if err != nil {
+						manager.log.Warnf("failed to update device %q: %s", update.Update.GetId(), err)
+					} else {
+						manager.changed = true
+					}
+				} else {
+					dev, err := newDevice(manager.log, update.ClientID, update.Update)
+					if err != nil {
+						manager.log.Warnf("failed to create device %q: %s", update.Update.GetId(), err)
+					} else {
+						manager.devices[update.Update.GetId()] = dev
+						manager.changed = true
+					}
+				}
+
+				manager.txDeviceUpdates.Pub(update.Update)
+			} else {
+				manager.log.Warnf("device updated has empty device ID: %s", update)
+			}
+		} else if update.Offline {
+			manager.log.Debugf("client %q has gone offline", update.ClientID)
+			for _, dev := range manager.devices {
+				if dev.ClientID == update.ClientID {
+					offlineUpdate := dev.setOffline(manager.log)
+					if offlineUpdate != nil {
+						manager.changed = true
+						manager.txDeviceUpdates.Pub(offlineUpdate)
+					}
+				}
+			}
+		} else {
+			manager.log.Warnf("device update was empty: %s", update)
+		}
+	} else {
+		manager.log.Warnf("device updated has empty client ID: %s", update)
 	}
 }

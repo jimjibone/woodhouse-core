@@ -62,6 +62,19 @@ tasks:
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
+  build-whctl:
+    deps:
+      - proto
+      - build-dir
+    cmds:
+      - go build -o {{.BUILD_DIR}}/whctl{{exeExt}} ./cmd/whctl
+
+  run-whctl:
+    deps:
+      - build-whctl
+    cmds:
+      - cd {{.BUILD_DIR}} && ./whctl{{exeExt}} {{.CLI_ARGS}}
+
   build-client:
     deps:
       - proto
