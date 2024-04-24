@@ -145,6 +145,10 @@ func (manager *DeviceManager) GetDevices() <-chan *clientsapi.Device {
 	return ch
 }
 
+func (manager *DeviceManager) GetDeviceUpdates() *queue.Sub[*clientsapi.Device] {
+	return manager.txDeviceUpdates.NewSub()
+}
+
 func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID string, err error) {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()

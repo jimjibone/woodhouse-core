@@ -34,6 +34,38 @@ func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server
 	return nil
 }
 
+func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, server clientsapi.UserService_DevicesStreamServer) error {
+	service.log.Infof("device stream started")
+	defer service.log.Infof("device stream finished")
+
+	sub := service.deviceManager.GetDeviceUpdates()
+	defer sub.Close()
+
+	// Start by sending the full list of devices.
+	for dev := range service.deviceManager.GetDevices() {
+		err := server.Send(dev)
+		if err != nil {
+			service.log.Errorf("failed to send device stream: %s", err)
+			return status.Errorf(codes.Internal, "failed to send device")
+		}
+	}
+
+	// Now send updates.
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case update := <-sub.Sub():
+			err := server.Send(update)
+			if err != nil {
+				service.log.Errorf("failed to send device stream update: %s", err)
+				return status.Errorf(codes.Internal, "failed to send device update")
+			}
+		}
+	}
+}
+
 func (service *UserService) SendAction(req *clientsapi.ActionRequest, server clientsapi.UserService_SendActionServer) error {
 	if req.DeviceId == "" {
 		return status.Error(codes.InvalidArgument, "device_id required")
