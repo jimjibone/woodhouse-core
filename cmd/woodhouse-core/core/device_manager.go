@@ -86,6 +86,11 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 		return nil, fmt.Errorf("failed to save state: %s", err)
 	}
 
+	// Set all devices as offline.
+	for _, dev := range manager.devices {
+		dev.setOffline(manager.log)
+	}
+
 	manager.wg.Add(1)
 	go manager.run(ctx)
 	return manager, nil
