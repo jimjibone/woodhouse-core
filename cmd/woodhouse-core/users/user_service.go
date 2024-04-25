@@ -41,12 +41,26 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 	sub := service.deviceManager.GetDeviceUpdates()
 	defer sub.Close()
 
+	isInFilter := func(deviceID string, filter []string) bool {
+		if len(filter) == 0 {
+			return true
+		}
+		for _, id := range filter {
+			if deviceID == id {
+				return true
+			}
+		}
+		return false
+	}
+
 	// Start by sending the full list of devices.
 	for dev := range service.deviceManager.GetDevices() {
-		err := server.Send(dev)
-		if err != nil {
-			service.log.Errorf("failed to send device stream: %s", err)
-			return status.Errorf(codes.Internal, "failed to send device")
+		if isInFilter(dev.GetId(), req.IncludeDeviceIds) {
+			err := server.Send(dev)
+			if err != nil {
+				service.log.Errorf("failed to send device stream: %s", err)
+				return status.Errorf(codes.Internal, "failed to send device")
+			}
 		}
 	}
 
@@ -57,10 +71,12 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 			return status.Errorf(codes.Canceled, "context canceled")
 
 		case update := <-sub.Sub():
-			err := server.Send(update)
-			if err != nil {
-				service.log.Errorf("failed to send device stream update: %s", err)
-				return status.Errorf(codes.Internal, "failed to send device update")
+			if isInFilter(update.GetId(), req.IncludeDeviceIds) {
+				err := server.Send(update)
+				if err != nil {
+					service.log.Errorf("failed to send device stream update: %s", err)
+					return status.Errorf(codes.Internal, "failed to send device update")
+				}
 			}
 		}
 	}
