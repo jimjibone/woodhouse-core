@@ -45,6 +45,31 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 			return status.Errorf(codes.InvalidArgument, "recv failed")
 		}
 
+		// Validate updates.
+		for _, dev := range update.DeviceInfo {
+			// The device ID must be set.
+			if dev.Id == "" {
+				return status.Errorf(codes.InvalidArgument, "device has empty id")
+			}
+
+			// A full device state must contain the Info and Online services.
+			if dev.FullState {
+				foundInfo := false
+				foundOnline := false
+				for _, srv := range dev.Services {
+					switch srv.Typ {
+					case clientsapi.Service_INFO:
+						foundInfo = true
+					case clientsapi.Service_ONLINE:
+						foundOnline = true
+					}
+				}
+				if !foundInfo || !foundOnline {
+					return status.Errorf(codes.InvalidArgument, "device %q does not have info or online services", dev.Id)
+				}
+			}
+		}
+
 		for _, dev := range update.DeviceInfo {
 			service.deviceManager.PushDeviceUpdate(claims.ClientID, dev)
 		}
