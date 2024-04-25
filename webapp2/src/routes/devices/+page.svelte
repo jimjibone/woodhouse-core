@@ -1,13 +1,18 @@
 <script lang="ts">
-	import { createPromiseClient } from '@connectrpc/connect';
+	import { createPromiseClient, ConnectError } from '@connectrpc/connect';
 	import type { Transport } from '@connectrpc/connect';
 	import { UserService } from '$lib/api/v1/clients/user_service_connect';
 	import { DevicesStreamRequest } from '$lib/api/v1/clients/user_service_pb';
-	import { Device, Service } from '$lib/api/v1/clients/client_service_pb';
+	import { ActionRequest, Value, type ActionResponse, BoolValue, Device, Service, Attribute, Service_ServiceType, Device_DeviceType } from '$lib/api/v1/clients/client_service_pb';
 	import { getContext } from 'svelte';
+	import Button from '@/components/ui/button/button.svelte';
+	import * as Card from "$lib/components/ui/card";
+	import DeviceComponent from './Device.svelte';
 	import { getDeviceName } from '$lib/apitools';
+	import { dev } from '$app/environment';
 
 	let devices: Device[] = [];
+	let responses: ActionResponse[] = [];
 
 	const transport: Transport = getContext('transport');
 
@@ -73,17 +78,34 @@
 		}
 	};
 	streamDevices();
+
+	const action = async (deviceID: string, serviceID: string, val: Value) => {
+		const request = new ActionRequest({
+			deviceId: deviceID,
+			serviceId: serviceID,
+			values: [ val ]
+		});
+		console.log("sending action: " + request.toJsonString());
+		try {
+			for await (const response of client.sendAction(request)) {
+				console.log("received action: " + response.toJsonString());
+				responses = [...responses, response];
+			}
+		} catch (err) {
+			if (err instanceof ConnectError) {
+				console.error("error action: " + err.message);
+			}
+		}
+	};
 </script>
 
 <header class="bg-background sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b px-4">
-	<h1 class="text-xl font-semibold">Dashboard</h1>
+	<h1 class="text-xl font-semibold">Devices</h1>
 </header>
-<main class="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
-	<div class="relative flex gap-4 h-full min-h-[50vh] flex-col rounded-xl lg:col-span-3">
+<main class="grid flex-1 gap-4 overflow-auto p-4">
+	<div class="relative flex gap-4 h-full min-h-[50vh] flex-col rounded-xl">
 		{#each devices as dev, i}
-		<div>
-			<p>{dev.toJsonString()}</p>
-		</div>
+		<DeviceComponent device={dev} onAction={action}/>
 		{/each}
 	</div>
 </main>

@@ -909,28 +909,28 @@ export declare class TextValue extends Message<TextValue> {
  */
 export declare class DurationAttribute extends Message<DurationAttribute> {
   /**
-   * nanos.
+   * millis.
    *
    * @generated from field: sint64 value = 1;
    */
   value: bigint;
 
   /**
-   * nanos.
+   * millis.
    *
    * @generated from field: sint64 min = 2;
    */
   min: bigint;
 
   /**
-   * nanos.
+   * millis.
    *
    * @generated from field: sint64 max = 3;
    */
   max: bigint;
 
   /**
-   * nanos.
+   * millis.
    *
    * @generated from field: uint64 step = 4;
    */
@@ -961,7 +961,7 @@ export declare class DurationAttribute extends Message<DurationAttribute> {
  */
 export declare class DurationValue extends Message<DurationValue> {
   /**
-   * nanos.
+   * millis.
    *
    * @generated from field: sint64 value = 1;
    */

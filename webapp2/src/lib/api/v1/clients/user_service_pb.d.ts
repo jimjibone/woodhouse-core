@@ -29,6 +29,13 @@ export declare class GetDevicesRequest extends Message<GetDevicesRequest> {
  * @generated from message woodhouse.api.v1.clients.DevicesStreamRequest
  */
 export declare class DevicesStreamRequest extends Message<DevicesStreamRequest> {
+  /**
+   * A list of device IDs to include in the steam. Sends all devices if empty.
+   *
+   * @generated from field: repeated string include_device_ids = 1;
+   */
+  includeDeviceIds: string[];
+
   constructor(data?: PartialMessage<DevicesStreamRequest>);
 
   static readonly runtime: typeof proto3;

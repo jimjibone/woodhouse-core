@@ -18,6 +18,8 @@ export const GetDevicesRequest = /*@__PURE__*/ proto3.makeMessageType(
  */
 export const DevicesStreamRequest = /*@__PURE__*/ proto3.makeMessageType(
   "woodhouse.api.v1.clients.DevicesStreamRequest",
-  [],
+  () => [
+    { no: 1, name: "include_device_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ],
 );
 
