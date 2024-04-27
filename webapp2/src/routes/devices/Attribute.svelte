@@ -2,7 +2,6 @@
 	import { Attribute, BoolValue, Permissions, Value } from '$lib/api/v1/clients/client_service_pb';
 	// import { getDeviceInfo, getDeviceName } from '$lib/apitools';
 
-	import { Label } from "$lib/components/ui/label/index.js";
 	import * as Card from '$lib/components/ui/card';
 	import AttributeBool from './AttributeBool.svelte';
 	import AttributeInt from './AttributeInt.svelte';

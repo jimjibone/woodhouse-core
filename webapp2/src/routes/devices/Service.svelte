@@ -3,6 +3,7 @@
 	import Attribute from './Attribute.svelte';
 
 	import * as Card from '$lib/components/ui/card';
+	import { Label } from "$lib/components/ui/label/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
 
 	export let online: boolean;
@@ -17,13 +18,12 @@
 </script>
 
 {#if !(service.typ === Service_ServiceType.INFO || service.typ === Service_ServiceType.ONLINE)}
-<Card.Root class={online ? "" : "bg-muted"}>
-	<Card.Header class="pb-3">
-		<Card.Title>{service.id}: {service.alias}: {Service_ServiceType[service.typ]}</Card.Title>
-	</Card.Header>
-	<!-- <Card.Content class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"> -->
-	<Card.Content>
-		<!-- <ScrollArea class="w-auto whitespace-nowrap rounded-md border" orientation="horizontal"> -->
+<div class={online ? "" : "bg-muted"}>
+	<div class="pb-3">
+		<Label class="max-sm:hidden">{service.id}: {service.alias}: {Service_ServiceType[service.typ]}</Label>
+		<Label class="sm:hidden">{service.id}</Label>
+	</div>
+	<div>
 		<ScrollArea class="w-auto whitespace-nowrap" orientation="horizontal">
 			<div class="flex w-auto space-x-4">
 				{#each service.attrs as attr, i}
@@ -31,8 +31,6 @@
 				{/each}
 			</div>
 		</ScrollArea>
-	</Card.Content>
-	<Card.Footer>
-	</Card.Footer>
-</Card.Root>
+	</div>
+</div>
 {/if}

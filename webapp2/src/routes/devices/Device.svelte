@@ -23,7 +23,7 @@
 		<Card.Title>{info.name}</Card.Title>
 	</Card.Header>
 	<Card.Content>
-		<p>{device.id}, {Device_DeviceType[device.typ]}, {info.online ? "online" : "offline"}</p>
+		<p class="max-sm:hidden">{device.id}, {Device_DeviceType[device.typ]}, {info.online ? "online" : "offline"}</p>
 		{#each device.services as srv, i}
 		<Service online={info.online} service={srv} onAction={action}/>
 		{/each}
