@@ -29,8 +29,6 @@
 		{/each}
 	</Card.Content>
 	<Card.Footer>
-		<!-- <Button on:click={() => send(device.id, true)}>On</Button>
-		<Button on:click={() => send(device.id, false)}>Off</Button> -->
 		<Button href="/devices/{device.id}">Open</Button>
 	</Card.Footer>
 </Card.Root>

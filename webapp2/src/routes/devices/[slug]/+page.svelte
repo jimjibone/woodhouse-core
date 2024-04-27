@@ -100,4 +100,5 @@
 	{:else}
 		<p>No device found</p>
 	{/if}
+	</div>
 </main>
