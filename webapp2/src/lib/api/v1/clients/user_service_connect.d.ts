@@ -23,6 +23,11 @@ export declare const UserService: {
       readonly kind: MethodKind.ServerStreaming,
     },
     /**
+     * Get a stream of Device updates. The first batch of replies will be the
+     * current state of the devices, followed by updates when they occur. The
+     * stream also includes a 10 second heartbeat (an empty Device) which should
+     * be ignored, but can be used to monitor the stream for disconnects.
+     *
      * @generated from rpc woodhouse.api.v1.clients.UserService.DevicesStream
      */
     readonly devicesStream: {

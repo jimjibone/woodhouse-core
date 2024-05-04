@@ -115,6 +115,11 @@ export const ClientInfo = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * Device contains either the full or partial (update) state of a device. The id
+ * field must always be set. All devices are required to implement the Info and
+ * Online services, so if full_state is set to true these services must be
+ * included.
+ *
  * @generated from message woodhouse.api.v1.clients.Device
  */
 export const Device = /*@__PURE__*/ proto3.makeMessageType(

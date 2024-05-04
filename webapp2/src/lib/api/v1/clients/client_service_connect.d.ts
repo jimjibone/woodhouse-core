@@ -14,8 +14,10 @@ export declare const ClientService: {
   readonly methods: {
     /**
      * StatusStream allows the client to stream StatusUpdates to the server. The
-     * first StatusUpdate should contain the whole state of the client and any
-     * subsequent update should only contain diffs.
+     * first StatusUpdate should contain the full state of the client and any
+     * subsequent update should only contain diffs - i.e. include the
+     * client_info and all devices. See the Device type for what to include in a
+     * full state update.
      *
      * @generated from rpc woodhouse.api.v1.clients.ClientService.StatusStream
      */
