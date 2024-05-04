@@ -25,7 +25,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/paths"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
-	"github.com/jimjibone/woodhouse-4/webapp"
+	webapp "github.com/jimjibone/woodhouse-4/webapp2"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -206,7 +206,7 @@ func main() {
 			go func() {
 				wrappedServer := grpcweb.WrapServer(insecureServer)
 				mux := http.NewServeMux()
-				publicfs, err := fs.Sub(webapp.Content, "public")
+				buildfs, err := fs.Sub(webapp.Content, "build")
 				if err != nil {
 					panic(err)
 				}
@@ -214,7 +214,7 @@ func main() {
 					// Send all other requests to the index page as we're serving a
 					// single page application.
 					filename := "index.html"
-					f, err := publicfs.Open("index.html")
+					f, err := buildfs.Open("index.html")
 					if err != nil {
 						panic(err)
 					}
@@ -225,8 +225,8 @@ func main() {
 						panic(err)
 					}
 				})
-				mux.Handle("/favicon.png", http.FileServer(http.FS(publicfs)))
-				mux.Handle("/build/", http.FileServer(http.FS(publicfs)))
+				mux.Handle("/favicon.png", http.FileServer(http.FS(buildfs)))
+				mux.Handle("/_app/", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/api/", http.StripPrefix("/api/", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 					wrappedServer.ServeHTTP(res, req)
 				})))
