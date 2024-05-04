@@ -63,13 +63,13 @@ func (b *Bridge) Run(appctx context.Context, conn *grpc.ClientConn) error {
 	// Start receiving requests.
 	requests, err := client.GetDeviceRequests(ctx)
 	if err != nil {
-		log.Printf("ERROR: failed to get device requests: %s", err)
+		return fmt.Errorf("failed to get device requests: %w", err)
 	}
 	err = requests.Send(&api.DeviceResponse{
 		BridgeId: b.info.BridgeId,
 	})
 	if err != nil {
-		log.Printf("ERROR: failed to get device requests: %s", err)
+		return fmt.Errorf("failed to send device response: %w", err)
 	}
 
 	go func() {
