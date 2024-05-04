@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createPromiseClient, ConnectError } from '@connectrpc/connect';
+	import { createPromiseClient, createCallbackClient, ConnectError, Code } from '@connectrpc/connect';
 	import type { Transport } from '@connectrpc/connect';
 	import { UserService } from '$lib/api/v1/clients/user_service_connect';
 	import { DevicesStreamRequest } from '$lib/api/v1/clients/user_service_pb';
@@ -11,6 +11,10 @@
 	import { getDeviceName } from '$lib/apitools';
 	import { dev } from '$app/environment';
 
+	let connected = true;
+	let backoff = 1000;
+	const minBackoff = 1000;
+	const maxBackoff = 16000;
 	let devices: Device[] = [];
 	let responses: ActionResponse[] = [];
 
@@ -60,28 +64,72 @@
 		return prev;
 	}
 
-	const streamDevices = async () => {
+	const streamDevices = async (onFinish: (resetBackoff: boolean) => void) => {
+		// Use a timer to periodically check if the connection has died. If it
+		// has then trigger the abort controller to cancel the stream and then
+		// fire up another one after a backoff delay.
+		let lastrx = Date.now();
+		const controller = new AbortController();
+		const interval = setInterval(() => {
+			const now = Date.now();
+			if (now - lastrx > 11000) {
+				controller.abort();
+			}
+		}, 1000);
 		const request = new DevicesStreamRequest({});
-		for await (const response of client.devicesStream(request)) {
-			// console.log("device: " + response.toJsonString());
-			let foundDevice = false;
-			for (let d = 0; d < devices.length; d++) {
-				if (devices[d].id === response.id) {
-					foundDevice = true;
-					devices[d] = updateDevice(devices[d], response);
-					break;
+		try {
+			for await (const response of client.devicesStream(request, { signal: controller.signal })) {
+				// ID will be empty if this is a keepalive message.
+				if (response.id !== "") {
+					// console.log("device: " + response.toJsonString());
+					let foundDevice = false;
+					for (let d = 0; d < devices.length; d++) {
+						if (devices[d].id === response.id) {
+							foundDevice = true;
+							devices[d] = updateDevice(devices[d], response);
+							break;
+						}
+					}
+					if (!foundDevice) devices = [...devices, response];
+
+					devices = devices.sort((a, b) => {
+						const aName = getDeviceName(a);
+						const bName = getDeviceName(b);
+						return aName > bName ? 1 : (bName > aName ? -1 : 0);
+					})
+				}
+				lastrx = Date.now();
+				connected = true;
+			}
+		} catch (err) {
+			if (err instanceof ConnectError) {
+				if (err.code !== Code.Unknown) {
+					console.error("error stream: (" + err.code + ") " + err.message);
 				}
 			}
-			if (!foundDevice) devices = [...devices, response];
-
-			devices = devices.sort((a, b) => {
-				const aName = getDeviceName(a);
-				const bName = getDeviceName(b);
-				return aName > bName ? 1 : (bName > aName ? -1 : 0);
-			})
+			clearInterval(interval);
+			const resetBackoff = connected;
+			connected = false;
+			onFinish(resetBackoff);
 		}
 	};
-	streamDevices();
+
+	const retryStreamDevices = async () => {
+		streamDevices((resetBackoff: boolean) => {
+			if (resetBackoff) {
+				backoff = minBackoff;
+			} else {
+				backoff = backoff * 2;
+				if (backoff > maxBackoff) {
+					backoff = maxBackoff;
+				}
+			}
+			setTimeout(() => {
+				retryStreamDevices();
+			}, backoff);
+		});
+	};
+	retryStreamDevices();
 
 	const action = async (deviceID: string, serviceID: string, val: Value) => {
 		const request = new ActionRequest({
@@ -104,7 +152,7 @@
 </script>
 
 <header class="bg-background sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b px-4">
-	<h1 class="text-xl font-semibold">Devices</h1>
+	<h1 class="text-xl font-semibold">Devices{connected ? "" : " - Disconnected (backoff=" + backoff + "ms)"}</h1>
 </header>
 <main class="grid flex-1 gap-4 overflow-auto p-4">
 	<div class="relative flex gap-4 h-full min-h-[50vh] flex-col rounded-xl">

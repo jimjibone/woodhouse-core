@@ -1,6 +1,8 @@
 package users
 
 import (
+	"time"
+
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -64,11 +66,22 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 		}
 	}
 
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
 	// Now send updates.
 	for {
 		select {
 		case <-server.Context().Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			// Send an empty Device message as a keepalive for the client.
+			err := server.Send(&clientsapi.Device{})
+			if err != nil {
+				service.log.Errorf("failed to send device stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send device keepalive")
+			}
 
 		case update := <-sub.Sub():
 			if isInFilter(update.GetId(), req.IncludeDeviceIds) {
