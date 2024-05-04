@@ -21,6 +21,10 @@
 
 	const updateDevice = (prev: Device, next: Device): Device => {
 		prev.typ = next.typ;
+		if (next.fullState) {
+			// Remove all services as we're about to receive the complete new set.
+			prev.services = [];
+		}
 		for (let i = 0; i < next.services.length; i++) {
 			let foundService = false;
 			for (let j = 0; j < prev.services.length; j++) {

@@ -116,7 +116,7 @@ func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.
 
 // Garbage collect services no longer reported by this device.
 func (dev *Device) gcServices(log *log.Context, update *clientsapi.Device) error {
-	for srvID, _ := range dev.Services {
+	for srvID, srv := range dev.Services {
 		found := false
 		for _, upd := range update.Services {
 			if upd.GetId() == srvID {
@@ -126,7 +126,7 @@ func (dev *Device) gcServices(log *log.Context, update *clientsapi.Device) error
 		}
 		if !found {
 			if log != nil {
-				log.Debugf("device %q removed service\n%s", dev.ID, prettyService("  ", dev.Services[srvID]))
+				log.Debugf("device %q removed service\n%s", dev.ID, prettyService("  ", srv))
 			}
 			delete(dev.Services, srvID)
 		}
@@ -140,14 +140,38 @@ func (dev *Device) updateService(log *log.Context, fullState bool, update *clien
 		if log != nil {
 			log.Debugf("device %q updated service\n%s", dev.ID, prettyService("  ", update))
 		}
+
+		// Update general service info.
 		srv.Typ = update.GetTyp()
 		srv.Alias = update.GetAlias()
+
+		if fullState {
+			// Remove attributes that are no longer found in the service.
+			var keep []*clientsapi.Attribute
+			for _, attr := range srv.Attrs {
+				found := false
+				for _, upd := range update.Attrs {
+					if attr.GetId() == upd.GetId() {
+						found = true
+						keep = append(keep, attr)
+						break
+					}
+				}
+				if !found {
+					log.Debugf("device %q service %q removed attribute %q", dev.ID, srv.GetId(), attr.GetId())
+				}
+			}
+			srv.Attrs = keep
+		}
+
+		// Update attributes.
 		for _, upd := range update.Attrs {
 			found := false
 			for i, attr := range srv.Attrs {
 				if attr.GetId() == upd.GetId() {
 					found = true
 					srv.Attrs[i] = upd
+					break
 				}
 			}
 			if !found {
@@ -161,17 +185,6 @@ func (dev *Device) updateService(log *log.Context, fullState bool, update *clien
 	}
 	dev.Services[update.GetId()] = update
 	return nil
-}
-
-func prettyServices(pad string, srvs []*clientsapi.Service) string {
-	str := ""
-	for i, srv := range srvs {
-		if i > 0 {
-			str += "\n"
-		}
-		str += prettyService(pad, srv)
-	}
-	return str
 }
 
 func prettyService(pad string, srv *clientsapi.Service) string {
