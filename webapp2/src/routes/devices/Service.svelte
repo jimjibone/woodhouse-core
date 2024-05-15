@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { Service, Service_ServiceType, Value } from '$lib/api/v1/clients/client_service_pb';
-	import Attribute from './Attribute.svelte';
 
-	import * as Card from '$lib/components/ui/card';
-	import { Label } from "$lib/components/ui/label/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
+	import ServiceHeader from './ServiceHeader.svelte';
+	import ServiceRelay from './ServiceRelay.svelte';
+	import ServiceSwitch from './ServiceSwitch.svelte';
+	import BoxedAttribute from './BoxedAttribute.svelte';
 
 	export let online: boolean;
 	export let service: Service;
@@ -18,19 +19,24 @@
 </script>
 
 {#if !(service.typ === Service_ServiceType.INFO || service.typ === Service_ServiceType.ONLINE)}
-<div class={online ? "" : "bg-muted"}>
-	<div class="pb-3">
-		<Label class="max-sm:hidden">{service.id}: {service.alias}: {Service_ServiceType[service.typ]}</Label>
-		<Label class="sm:hidden">{service.id}</Label>
+	{#if service.typ === Service_ServiceType.RELAY}
+	<ServiceRelay online={online} service={service} onAction={onAction} />
+	{:else if service.typ === Service_ServiceType.SWITCH}
+	<ServiceSwitch online={online} service={service} onAction={onAction} />
+	{:else}
+	<div class={online ? "" : "bg-muted"}>
+		<div class="pb-3">
+			<ServiceHeader id={service.id} alias={service.alias}/>
+		</div>
+		<div>
+			<ScrollArea class="w-auto whitespace-nowrap" orientation="horizontal">
+				<div class="flex w-auto space-x-4">
+					{#each service.attrs as attr, i}
+					<BoxedAttribute online={online} attr={attr} onAction={action}/>
+					{/each}
+				</div>
+			</ScrollArea>
+		</div>
 	</div>
-	<div>
-		<ScrollArea class="w-auto whitespace-nowrap" orientation="horizontal">
-			<div class="flex w-auto space-x-4">
-				{#each service.attrs as attr, i}
-				<Attribute online={online} attr={attr} onAction={action}/>
-				{/each}
-			</div>
-		</ScrollArea>
-	</div>
-</div>
+	{/if}
 {/if}

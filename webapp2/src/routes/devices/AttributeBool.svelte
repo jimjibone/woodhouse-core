@@ -25,5 +25,5 @@
 {:else if attr.perms === Permissions.PERM_WRITEONLY}
 	<p>WO: {attr.value ? "true" : "false"}</p>
 {:else} <!-- readonly, undefined -->
-	<p>RO: {attr.value ? "true" : "false"}</p>
+	<Switch checked={attr.value} aria-readonly disabled/>
 {/if}

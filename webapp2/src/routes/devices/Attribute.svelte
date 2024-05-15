@@ -4,6 +4,7 @@
 
 	import * as Card from '$lib/components/ui/card';
 	import AttributeBool from './AttributeBool.svelte';
+	import AttributeFloat from './AttributeFloat.svelte';
 	import AttributeInt from './AttributeInt.svelte';
 
 	export let online: boolean;
@@ -19,25 +20,13 @@
 	// $:info = getDeviceInfo(device);
 </script>
 
-<Card.Root class={online ? "" : "bg-muted"}>
-	<Card.Header class="pb-3">
-		<Card.Title>{attr.id}</Card.Title>
-	</Card.Header>
-	<Card.Content>
-<!-- <div class="flex w-full max-w-sm flex-col gap-1.5">
-	<Label>{attr.id}</Label> -->
+<div>
 	{#if attr.bool !== undefined}
 		<AttributeBool id={attr.id} attr={attr.bool} onAction={action} />
 	{:else if attr.int !== undefined}
 		<AttributeInt id={attr.id} attr={attr.int} onAction={action} />
 	{:else if attr.float !== undefined}
-		{#if attr.float.perms === Permissions.PERM_READWRITE}
-			<p>RW: {attr.float.value}</p>
-		{:else if attr.float.perms === Permissions.PERM_WRITEONLY}
-			<p>WO: {attr.float.value}</p>
-		{:else} <!-- readonly, undefined -->
-			<p>RO: {attr.float.value}</p>
-		{/if}
+		<AttributeFloat id={attr.id} attr={attr.float} onAction={action} />
 	{:else if attr.text !== undefined}
 		{#if attr.text.perms === Permissions.PERM_READWRITE}
 			<p>RW: {attr.text.value}</p>
@@ -65,6 +54,4 @@
 	{:else}
 		<p>Unsupported type: {attr.toJsonString()}</p>
 	{/if}
-<!-- </div> -->
-	</Card.Content>
-</Card.Root>
+</div>
