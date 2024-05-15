@@ -78,7 +78,7 @@ func (dev *Device) setOffline(log *log.Context) *clientsapi.Device {
 			}
 			return &clientsapi.Device{
 				Id:        dev.ID,
-				FullState: true,
+				FullState: false,
 				Typ:       dev.Typ,
 				Services: []*clientsapi.Service{
 					srv,
