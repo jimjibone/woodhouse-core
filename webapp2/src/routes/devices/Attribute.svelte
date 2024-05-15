@@ -22,11 +22,11 @@
 
 <div>
 	{#if attr.bool !== undefined}
-		<AttributeBool id={attr.id} attr={attr.bool} onAction={action} />
+		<AttributeBool id={attr.id} attr={attr.bool} onAction={action} disabled={!online}/>
 	{:else if attr.int !== undefined}
-		<AttributeInt id={attr.id} attr={attr.int} onAction={action} />
+		<AttributeInt id={attr.id} attr={attr.int} onAction={action} disabled={!online}/>
 	{:else if attr.float !== undefined}
-		<AttributeFloat id={attr.id} attr={attr.float} onAction={action} />
+		<AttributeFloat id={attr.id} attr={attr.float} onAction={action} disabled={!online}/>
 	{:else if attr.text !== undefined}
 		{#if attr.text.perms === Permissions.PERM_READWRITE}
 			<p>RW: {attr.text.value}</p>

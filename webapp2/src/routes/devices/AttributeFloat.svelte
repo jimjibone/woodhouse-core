@@ -2,6 +2,7 @@
 	import { FloatAttribute, FloatValue, Permissions, Value, Unit } from '$lib/api/v1/clients/client_service_pb';
 	import { Input } from "$lib/components/ui/input/index.js";
 
+	export let disabled: boolean;
 	export let id: string;
 	export let attr: FloatAttribute;
 	export let onAction: (val: Value) => Promise<void> | undefined
@@ -53,14 +54,7 @@
 	}
 </script>
 
-{#if attr.perms === Permissions.PERM_READWRITE}
-	<!-- <p>editing: {editing}, editValue: {editValue}, invalid: {editInvalid}</p> -->
-	<form class="flex w-full max-w-sm items-center space-x-2" on:submit={submit}>
-		<Input type="number" invalid={editInvalid} min={attr.min} max={attr.max} placeholder={attr.value} bind:value={editValue} on:focusin={startEditing} on:focusout={stopEditing} on:keypress={keypress}/>
-	</form>
-{:else if attr.perms === Permissions.PERM_WRITEONLY}
-	<p>WO: {attr.value}</p>
-{:else} <!-- readonly, undefined -->
+{#if disabled || attr.perms === Permissions.PERM_READONLY || attr.perms === Permissions.PERM_UNDEFINED}
 	{#if attr.unit === Unit.PERCENTAGE}
 	<p>{attr.value} %</p>
 	{:else if attr.unit === Unit.ARC_DEGREES}
@@ -82,6 +76,15 @@
 	{:else if attr.unit === Unit.WATTS}
 	<p>{attr.value} W</p>
 	{:else}
-	<p>RO: {attr.value}</p>
+	<p>{attr.value}</p>
 	{/if}
+{:else if attr.perms === Permissions.PERM_READWRITE}
+	<!-- <p>editing: {editing}, editValue: {editValue}, invalid: {editInvalid}</p> -->
+	<form class="flex w-full max-w-sm items-center space-x-2" on:submit={submit}>
+		<Input type="number" invalid={editInvalid} min={attr.min} max={attr.max} placeholder={attr.value} bind:value={editValue} on:focusin={startEditing} on:focusout={stopEditing} on:keypress={keypress}/>
+	</form>
+{:else if attr.perms === Permissions.PERM_WRITEONLY}
+	<p>WO: {attr.value}</p>
+{:else}
+	<p>UNKNOWN {attr.value}</p>
 {/if}
