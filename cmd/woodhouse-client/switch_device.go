@@ -21,7 +21,7 @@ func NewSwitchDevice(id string) *SwitchDevice {
 		dev:       devices.NewDevice(id, clientsapi.Device_LIGHTBULB),
 		info:      services.NewInfo(),
 		online:    services.NewOnline(),
-		lightbulb: services.NewLightbulb(),
+		lightbulb: services.NewLightbulb("lightbulb"),
 	}
 	dev.dev.AddService(dev.info, dev.online, dev.lightbulb)
 
