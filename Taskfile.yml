@@ -88,18 +88,18 @@ tasks:
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
 
-  build-bridge-shelly:
+  build-shelly:
     deps:
       - proto
       - build-dir
     cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-bridge-shelly{{exeExt}} ./cmd/woodhouse-bridge-shelly
+      - go build -o {{.BUILD_DIR}}/woodhouse-shelly{{exeExt}} ./cmd/woodhouse-shelly
 
-  run-bridge-shelly:
+  run-shelly:
     deps:
-      - build-bridge-shelly
+      - build-shelly
     cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-bridge-shelly{{exeExt}} {{.CLI_ARGS}}
+      - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
 
   build-bridge-zigbee:
     deps:

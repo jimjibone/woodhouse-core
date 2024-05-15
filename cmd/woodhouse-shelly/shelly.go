@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/grandcat/zeroconf"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-bridge-shelly/shelly_v1"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-bridge-shelly/shelly_v2"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-shelly/shelly_v1"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-shelly/shelly_v2"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/wh/v1"
 )

@@ -1,0 +1,9 @@
+[Unit]
+Description=woodhouse-shelly
+After=network-online.target
+
+[Service]
+ExecStart=/home/jimjibone/woodhouse/woodhouse-shelly
+
+[Install]
+WantedBy=default.target
