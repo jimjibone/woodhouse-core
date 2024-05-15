@@ -429,9 +429,9 @@ export declare enum Device_DeviceType {
   GENERIC = 3,
 
   /**
-   * @generated from enum value: SWITCH = 4;
+   * @generated from enum value: INPUT = 4;
    */
-  SWITCH = 4,
+  INPUT = 4,
 
   /**
    * @generated from enum value: RELAY = 5;
@@ -521,9 +521,9 @@ export declare enum Service_ServiceType {
   GENERIC = 3,
 
   /**
-   * @generated from enum value: SWITCH = 4;
+   * @generated from enum value: INPUT = 4;
    */
-  SWITCH = 4,
+  INPUT = 4,
 
   /**
    * @generated from enum value: RELAY = 5;

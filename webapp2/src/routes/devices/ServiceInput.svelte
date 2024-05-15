@@ -28,7 +28,7 @@
 	}
 </script>
 
-{#if service.typ === Service_ServiceType.SWITCH}
+{#if service.typ === Service_ServiceType.INPUT}
 <div class={online ? "" : "bg-muted"}>
 	<div class="pb-3">
 		<ServiceHeader id={service.id} alias={service.alias}/>
@@ -45,5 +45,5 @@
 	</div>
 </div>
 {:else}
-<p>ERROR Service Type {Service_ServiceType[service.typ]} is not SWITCH</p>
+<p>ERROR Service Type {Service_ServiceType[service.typ]} is not INPUT</p>
 {/if}

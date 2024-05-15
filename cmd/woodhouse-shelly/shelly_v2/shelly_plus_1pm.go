@@ -11,20 +11,20 @@ import (
 
 // ShellyPlus1PM - device type: Plus1PM
 type ShellyPlus1PM struct {
-	shelly  *ShellyComms
-	info    *services.Info
-	online  *services.Online
-	switch0 *services.Switch
-	relay0  *services.Relay
+	shelly *ShellyComms
+	info   *services.Info
+	online *services.Online
+	input0 *services.Input
+	relay0 *services.Relay
 }
 
 func NewShellyPlus1PM(hostname, ip string, client *wh.Client) *ShellyPlus1PM {
 	dev := &ShellyPlus1PM{
-		shelly:  NewShellyComms(hostname, ip, clientsapi.Device_RELAY, client),
-		info:    services.NewInfo(),
-		online:  services.NewOnline(),
-		switch0: services.NewSwitch("switch0"),
-		relay0:  services.NewRelay("relay0"),
+		shelly: NewShellyComms(hostname, ip, clientsapi.Device_RELAY, client),
+		info:   services.NewInfo(),
+		online: services.NewOnline(),
+		input0: services.NewInput("input0"),
+		relay0: services.NewRelay("relay0"),
 	}
 
 	initRelay(dev.relay0)
@@ -36,7 +36,7 @@ func NewShellyPlus1PM(hostname, ip string, client *wh.Client) *ShellyPlus1PM {
 	dev.shelly.dev.AddService(
 		dev.info,
 		dev.online,
-		dev.switch0,
+		dev.input0,
 		dev.relay0,
 	)
 	dev.info.Name.OnAction(dev.handleNameAction)
@@ -66,7 +66,7 @@ func (dev *ShellyPlus1PM) onConnected(config GetConfigResponse, status GetStatus
 	// Generate inputs/scripts/switches from the config.
 	for _, val := range config.Inputs {
 		if val.ID == 0 {
-			dev.switch0.SetAlias(val.Name)
+			dev.input0.SetAlias(val.Name)
 		} else {
 			dev.shelly.log.Warnf("config contained unexpected input %+v", val)
 		}
@@ -82,7 +82,7 @@ func (dev *ShellyPlus1PM) onConnected(config GetConfigResponse, status GetStatus
 	// Update the values of inputs/scripts/switches from the status.
 	for _, val := range status.Inputs {
 		if val.ID == 0 {
-			dev.switch0.On.Set(val.State)
+			dev.input0.On.Set(val.State)
 		} else {
 			dev.shelly.log.Warnf("status contained unexpected input %+v", val)
 		}
@@ -111,7 +111,7 @@ func (dev *ShellyPlus1PM) onNotificationFrame(frame NotificationFrame) {
 	// Update the values of inputs/scripts/switches from the status.
 	for _, val := range frame.NotifyStatus.Inputs {
 		if val.ID == 0 {
-			dev.switch0.On.Set(val.State)
+			dev.input0.On.Set(val.State)
 		} else {
 			dev.shelly.log.Warnf("status contained unexpected input %+v", val)
 		}
