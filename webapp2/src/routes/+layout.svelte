@@ -13,9 +13,7 @@
 		Triangle,
 		Settings,
 		LayoutDashboard,
-
 		Lamp
-
 	} from 'lucide-svelte';
 
 	import { resetMode, setMode } from 'mode-watcher';

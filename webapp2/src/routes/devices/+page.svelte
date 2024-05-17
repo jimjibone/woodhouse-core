@@ -5,11 +5,8 @@
 	import { DevicesStreamRequest } from '$lib/api/v1/clients/user_service_pb';
 	import { ActionRequest, Value, type ActionResponse, BoolValue, Device, Service, Attribute, Service_ServiceType, Device_DeviceType } from '$lib/api/v1/clients/client_service_pb';
 	import { getContext } from 'svelte';
-	import Button from '@/components/ui/button/button.svelte';
-	import * as Card from "$lib/components/ui/card";
 	import DeviceComponent from './Device.svelte';
 	import { getDeviceName } from '$lib/apitools';
-	import { dev } from '$app/environment';
 
 	let connected = true;
 	let backoff = 1000;

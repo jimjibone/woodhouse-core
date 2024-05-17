@@ -4,9 +4,12 @@
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
 	import ServiceHeader from './ServiceHeader.svelte';
 	import ServiceInput from './ServiceInput.svelte';
+	import ServiceInput2 from './ServiceInput2.svelte';
 	import ServiceRelay from './ServiceRelay.svelte';
+	import ServiceRelay2 from './ServiceRelay2.svelte';
 	import BoxedAttribute from './BoxedAttribute.svelte';
 
+	export let name: string;
 	export let online: boolean;
 	export let service: Service;
 	export let onAction: (serviceID: string, val: Value) => Promise<void> | undefined
@@ -20,9 +23,11 @@
 
 {#if !(service.typ === Service_ServiceType.INFO || service.typ === Service_ServiceType.ONLINE)}
 	{#if service.typ === Service_ServiceType.RELAY}
-	<ServiceRelay online={online} service={service} onAction={onAction} />
+	<!-- <ServiceRelay online={online} service={service} onAction={onAction} /> -->
+	<ServiceRelay2 online={online} service={service} onAction={onAction} />
 	{:else if service.typ === Service_ServiceType.INPUT}
-	<ServiceInput online={online} service={service} onAction={onAction} />
+	<!-- <ServiceInput online={online} service={service} onAction={onAction} /> -->
+	<ServiceInput2 online={online} service={service}/>
 	{:else}
 	<div class={online ? "" : "bg-muted"}>
 		<div class="pb-3">
