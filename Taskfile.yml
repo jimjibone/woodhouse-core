@@ -101,15 +101,15 @@ tasks:
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
 
-  build-bridge-zigbee:
+  build-zigbee:
     deps:
       - proto
       - build-dir
     cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-bridge-zigbee{{exeExt}} ./cmd/woodhouse-bridge-zigbee
+      - go build -o {{.BUILD_DIR}}/woodhouse-zigbee{{exeExt}} ./cmd/woodhouse-zigbee
 
-  run-bridge-zigbee:
+  run-zigbee:
     deps:
-      - build-bridge-zigbee
+      - build-zigbee
     cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-bridge-zigbee{{exeExt}} {{.CLI_ARGS}}
+      - cd {{.BUILD_DIR}} && ./woodhouse-zigbee{{exeExt}} {{.CLI_ARGS}}
