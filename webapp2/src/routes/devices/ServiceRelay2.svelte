@@ -62,11 +62,11 @@
 
 {#if service.typ === Service_ServiceType.RELAY}
 <!-- <div class="grid grid-cols-2 gap-4"> -->
-<div class={cn("p-2 rounded-lg border bg-card text-card-foreground shadow-sm", attrOn?.value ? "dark:bg-primary dark:text-primary-foreground" : "bg-muted")}>
+<div class={cn("p-2 rounded-lg border bg-card text-card-foreground shadow-sm", !online && "bg-muted")}>
 	<div class="flex flex-row gap-2">
 		<div class="shrink">
 			<div class="h-full grid place-content-center">
-				<button class={cn("p-2 rounded-full", attrOn?.value ? "bg-yellow-400" : "bg-secondary text-secondary-foreground")} on:click={actionOnToggle}>
+				<button class={cn("p-2 rounded-full", attrOn?.value ? "bg-yellow-400 text-black" : "bg-secondary text-secondary-foreground")} on:click={actionOnToggle}>
 					<Power/>
 				</button>
 			</div>
