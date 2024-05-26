@@ -6,6 +6,7 @@
 	import AttributeBool from './AttributeBool.svelte';
 	import AttributeFloat from './AttributeFloat.svelte';
 	import AttributeInt from './AttributeInt.svelte';
+	import AttributeColor from './AttributeColor.svelte';
 
 	export let online: boolean;
 	export let attr: Attribute;
@@ -27,6 +28,8 @@
 		<AttributeInt id={attr.id} attr={attr.int} onAction={action} disabled={!online}/>
 	{:else if attr.float !== undefined}
 		<AttributeFloat id={attr.id} attr={attr.float} onAction={action} disabled={!online}/>
+	{:else if attr.color !== undefined}
+		<AttributeColor id={attr.id} attr={attr.color} onAction={action} disabled={!online}/>
 	{:else if attr.text !== undefined}
 		{#if attr.text.perms === Permissions.PERM_READWRITE}
 			<p>RW: {attr.text.value}</p>

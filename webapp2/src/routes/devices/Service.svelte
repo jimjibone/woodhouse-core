@@ -3,11 +3,10 @@
 
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
 	import ServiceHeader from './ServiceHeader.svelte';
-	import ServiceInput from './ServiceInput.svelte';
 	import ServiceInput2 from './ServiceInput2.svelte';
-	import ServiceRelay from './ServiceRelay.svelte';
 	import ServiceRelay2 from './ServiceRelay2.svelte';
 	import BoxedAttribute from './BoxedAttribute.svelte';
+	import ServiceLightbulb from './ServiceLightbulb.svelte';
 
 	export let name: string;
 	export let online: boolean;
@@ -28,6 +27,8 @@
 	{:else if service.typ === Service_ServiceType.INPUT}
 	<!-- <ServiceInput online={online} service={service} onAction={onAction} /> -->
 	<ServiceInput2 online={online} service={service}/>
+	{:else if service.typ === Service_ServiceType.LIGHTBULB}
+	<ServiceLightbulb online={online} service={service} onAction={onAction} />
 	{:else}
 	<div class={online ? "" : "bg-muted"}>
 		<div class="pb-3">

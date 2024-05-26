@@ -35,6 +35,7 @@ export const Unit = /*@__PURE__*/ proto3.makeEnum(
     {no: 8, name: "UNIT_VOLTS", localName: "VOLTS"},
     {no: 9, name: "UNIT_AMPS", localName: "AMPS"},
     {no: 10, name: "UNIT_WATTS", localName: "WATTS"},
+    {no: 11, name: "UNIT_MIREDS", localName: "MIREDS"},
   ],
 );
 
@@ -192,6 +193,7 @@ export const Attribute = /*@__PURE__*/ proto3.makeMessageType(
     { no: 5, name: "text", kind: "message", T: TextAttribute },
     { no: 7, name: "duration", kind: "message", T: DurationAttribute },
     { no: 8, name: "time", kind: "message", T: TimeAttribute },
+    { no: 10, name: "color", kind: "message", T: ColorAttribute },
   ],
 );
 
@@ -208,6 +210,7 @@ export const Value = /*@__PURE__*/ proto3.makeMessageType(
     { no: 5, name: "text", kind: "message", T: TextValue },
     { no: 7, name: "duration", kind: "message", T: DurationValue },
     { no: 8, name: "time", kind: "message", T: TimeValue },
+    { no: 10, name: "color", kind: "message", T: ColorValue },
   ],
 );
 
@@ -347,6 +350,55 @@ export const TimeValue = /*@__PURE__*/ proto3.makeMessageType(
   () => [
     { no: 1, name: "seconds", kind: "scalar", T: 18 /* ScalarType.SINT64 */ },
     { no: 2, name: "nanos", kind: "scalar", T: 17 /* ScalarType.SINT32 */ },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ColorAttribute
+ */
+export const ColorAttribute = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ColorAttribute",
+  () => [
+    { no: 1, name: "hue_sat", kind: "message", T: ColorHueSat },
+    { no: 2, name: "xy", kind: "message", T: ColorXY },
+    { no: 3, name: "perms", kind: "enum", T: proto3.getEnumType(Permissions) },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ColorValue
+ */
+export const ColorValue = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ColorValue",
+  () => [
+    { no: 1, name: "hue_sat", kind: "message", T: ColorHueSat },
+    { no: 2, name: "xy", kind: "message", T: ColorXY },
+  ],
+);
+
+/**
+ * Color expressed as hue/saturation.
+ *
+ * @generated from message woodhouse.api.v1.clients.ColorHueSat
+ */
+export const ColorHueSat = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ColorHueSat",
+  () => [
+    { no: 1, name: "hue", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 2, name: "sat", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+  ],
+);
+
+/**
+ * Color expressed in the CIE 1931 color space (x/y).
+ *
+ * @generated from message woodhouse.api.v1.clients.ColorXY
+ */
+export const ColorXY = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ColorXY",
+  () => [
+    { no: 1, name: "x", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 2, name: "y", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
   ],
 );
 

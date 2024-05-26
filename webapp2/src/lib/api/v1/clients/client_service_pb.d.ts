@@ -109,6 +109,13 @@ export declare enum Unit {
    * @generated from enum value: UNIT_WATTS = 10;
    */
   WATTS = 10,
+
+  /**
+   * mireds
+   *
+   * @generated from enum value: UNIT_MIREDS = 11;
+   */
+  MIREDS = 11,
 }
 
 /**
@@ -573,7 +580,7 @@ export declare class Attribute extends Message<Attribute> {
   text?: TextAttribute;
 
   /**
-   * ActionAttribute   action   = 6;
+   * ActionAttribute action     = 6;
    *
    * @generated from field: woodhouse.api.v1.clients.DurationAttribute duration = 7;
    */
@@ -583,6 +590,13 @@ export declare class Attribute extends Message<Attribute> {
    * @generated from field: woodhouse.api.v1.clients.TimeAttribute time = 8;
    */
   time?: TimeAttribute;
+
+  /**
+   * ColorModeAttribute color_mode = 9;
+   *
+   * @generated from field: woodhouse.api.v1.clients.ColorAttribute color = 10;
+   */
+  color?: ColorAttribute;
 
   constructor(data?: PartialMessage<Attribute>);
 
@@ -631,7 +645,7 @@ export declare class Value extends Message<Value> {
   text?: TextValue;
 
   /**
-   * ActionValue   action   = 6;
+   * ActionValue action     = 6;
    *
    * @generated from field: woodhouse.api.v1.clients.DurationValue duration = 7;
    */
@@ -641,6 +655,13 @@ export declare class Value extends Message<Value> {
    * @generated from field: woodhouse.api.v1.clients.TimeValue time = 8;
    */
   time?: TimeValue;
+
+  /**
+   * ColorModeValue color_mode = 9;
+   *
+   * @generated from field: woodhouse.api.v1.clients.ColorValue color = 10;
+   */
+  color?: ColorValue;
 
   constructor(data?: PartialMessage<Value>);
 
@@ -1066,5 +1087,130 @@ export declare class TimeValue extends Message<TimeValue> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TimeValue;
 
   static equals(a: TimeValue | PlainMessage<TimeValue> | undefined, b: TimeValue | PlainMessage<TimeValue> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ColorAttribute
+ */
+export declare class ColorAttribute extends Message<ColorAttribute> {
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ColorHueSat hue_sat = 1;
+   */
+  hueSat?: ColorHueSat;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ColorXY xy = 2;
+   */
+  xy?: ColorXY;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.Permissions perms = 3;
+   */
+  perms: Permissions;
+
+  constructor(data?: PartialMessage<ColorAttribute>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ColorAttribute";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ColorAttribute;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ColorAttribute;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ColorAttribute;
+
+  static equals(a: ColorAttribute | PlainMessage<ColorAttribute> | undefined, b: ColorAttribute | PlainMessage<ColorAttribute> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ColorValue
+ */
+export declare class ColorValue extends Message<ColorValue> {
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ColorHueSat hue_sat = 1;
+   */
+  hueSat?: ColorHueSat;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ColorXY xy = 2;
+   */
+  xy?: ColorXY;
+
+  constructor(data?: PartialMessage<ColorValue>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ColorValue";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ColorValue;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ColorValue;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ColorValue;
+
+  static equals(a: ColorValue | PlainMessage<ColorValue> | undefined, b: ColorValue | PlainMessage<ColorValue> | undefined): boolean;
+}
+
+/**
+ * Color expressed as hue/saturation.
+ *
+ * @generated from message woodhouse.api.v1.clients.ColorHueSat
+ */
+export declare class ColorHueSat extends Message<ColorHueSat> {
+  /**
+   * @generated from field: double hue = 1;
+   */
+  hue: number;
+
+  /**
+   * @generated from field: double sat = 2;
+   */
+  sat: number;
+
+  constructor(data?: PartialMessage<ColorHueSat>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ColorHueSat";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ColorHueSat;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ColorHueSat;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ColorHueSat;
+
+  static equals(a: ColorHueSat | PlainMessage<ColorHueSat> | undefined, b: ColorHueSat | PlainMessage<ColorHueSat> | undefined): boolean;
+}
+
+/**
+ * Color expressed in the CIE 1931 color space (x/y).
+ *
+ * @generated from message woodhouse.api.v1.clients.ColorXY
+ */
+export declare class ColorXY extends Message<ColorXY> {
+  /**
+   * @generated from field: double x = 1;
+   */
+  x: number;
+
+  /**
+   * @generated from field: double y = 2;
+   */
+  y: number;
+
+  constructor(data?: PartialMessage<ColorXY>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ColorXY";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ColorXY;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ColorXY;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ColorXY;
+
+  static equals(a: ColorXY | PlainMessage<ColorXY> | undefined, b: ColorXY | PlainMessage<ColorXY> | undefined): boolean;
 }
 
