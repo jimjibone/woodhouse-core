@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/grandcat/zeroconf"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-shelly/shelly_v1"
@@ -12,7 +13,9 @@ import (
 	"github.com/jimjibone/woodhouse-4/wh/v1"
 )
 
-func shellyStuff(ctx context.Context, client *wh.Client) error {
+func shellyStuff(wg *sync.WaitGroup, ctx context.Context, client *wh.Client) error {
+	defer wg.Done()
+
 	log.Infof("shelly started")
 	defer log.Infof("shelly finished")
 

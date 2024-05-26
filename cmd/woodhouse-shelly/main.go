@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"sync"
 
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
@@ -12,9 +13,8 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:                 "woodhouse-shelly",
-		Usage:                "Woodhouse client for Shelly devices.",
-		EnableBashCompletion: true,
+		Name:  "woodhouse-shelly",
+		Usage: "Woodhouse client for Shelly devices.",
 		Flags: []cli.Flag{
 			&cli.PathFlag{
 				Name:     "store",
@@ -31,15 +31,10 @@ func main() {
 				Usage: "ID used by this bridge",
 				Value: "shelly",
 			},
-			&cli.StringFlag{
-				Name:  "name",
-				Usage: "Name used by this bridge",
-				Value: "Shelly",
-			},
 			&cli.BoolFlag{
 				Name:    "debug",
 				Aliases: []string{"v"},
-				Usage:   "Enable debug logging",
+				Usage:   "enable debug logging",
 			},
 		},
 		Before: func(args *cli.Context) error {
@@ -59,9 +54,17 @@ func main() {
 			client := wh.NewClient(store, args.String("addr"), wh.WithClientID(args.String("id")))
 
 			// Start the Shelly goroutine.
+			wg := &sync.WaitGroup{}
+			defer wg.Wait()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			go shellyStuff(ctx, client)
+			wg.Add(1)
+			go func() {
+				err := shellyStuff(wg, ctx, client)
+				if err != nil {
+					log.Errorf("failed to run: %s", err)
+				}
+			}()
 
 			// Run the client.
 			err := client.Run()
