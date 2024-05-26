@@ -27,7 +27,7 @@ type ShellyComms struct {
 	wg    sync.WaitGroup
 
 	client *wh.Client
-	dev    *devices.DeviceImpl
+	dev    *devices.Device
 	added  bool
 
 	ip     string

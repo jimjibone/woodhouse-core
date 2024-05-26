@@ -31,7 +31,7 @@ type ShellyDimmer2 struct {
 	client *wh.Client
 	added  bool
 
-	dev       *devices.DeviceImpl
+	dev       *devices.Device
 	info      *services.Info
 	online    *services.Online
 	lightbulb *services.Lightbulb
