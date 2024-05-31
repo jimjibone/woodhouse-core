@@ -1,27 +1,28 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { DeviceStore, type DeviceStoreType } from '$lib/stores';
+	import { DeviceAction, DeviceStore, type DeviceStoreType } from '$lib/stores';
+	import Service from './devices/Service.svelte';
+	import { getDeviceInfo, getDeviceName } from '$lib/apitools';
 
 	let store: DeviceStoreType;
 	const unsubscribe = DeviceStore.subscribe((val: DeviceStoreType) => store = val);
 	onDestroy(unsubscribe);
-
 </script>
 
 <header class="bg-background sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b px-4">
-	<h1 class="text-xl font-semibold">Dashboard</h1>
+	<h1 class="text-xl font-semibold">Dashboard{store.connected ? "" : " - Disconnected (backoff=" + store.backoff + "ms)"}</h1>
 </header>
-<main class="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
-	<div class="relative flex gap-4 h-full min-h-[50vh] flex-col rounded-xl lg:col-span-3">
-		<p>Connected: {store.connected} - Backoff: {store.backoff}ms</p>
-		{#each store.devices as dev, i}
-		<div>
-			<p>{dev.toJsonString()}</p>
-		</div>
-		{:else}
+<main class="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
+	{#each store.devices as dev, i (dev.id)}
+		{#each dev.services as srv, i (srv.id)}
+			{@const info = getDeviceInfo(dev)}
+			<Service title={info.name} online={info.online} service={srv} onAction={(serviceID, val) => {
+				return DeviceAction(dev.id, serviceID, val);
+			}}/>
+		{/each}
+	{:else}
 		<div>
 			<p>No devices!</p>
 		</div>
-		{/each}
-	</div>
+	{/each}
 </main>
