@@ -8,7 +8,7 @@
 	import BoxedAttribute from './BoxedAttribute.svelte';
 	import ServiceLightbulb from './ServiceLightbulb.svelte';
 
-	export let title: string | undefined;
+	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
 	export let onAction: ((serviceID: string, val: Value) => Promise<void>) | undefined
