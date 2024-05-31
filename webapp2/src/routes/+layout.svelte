@@ -10,23 +10,13 @@
 	import {
 		Sun,
 		Moon,
-		Triangle,
 		Settings,
 		LayoutDashboard,
-		Lamp
+		Lamp,
+		Bug,
 	} from 'lucide-svelte';
 
 	import { resetMode, setMode } from 'mode-watcher';
-
-	import { setContext } from 'svelte';
-	import { createGrpcWebTransport } from '@connectrpc/connect-web';
-
-	// This transport is going to be used throughout the app
-	const transport = createGrpcWebTransport({
-		baseUrl: "/api",
-	});
-
-	setContext('transport', transport);
 </script>
 
 <ModeWatcher />
@@ -35,7 +25,12 @@
 	<aside class="inset-y fixed left-0 z-20 flex h-full flex-col border-r">
 		<div class="border-b p-2">
 			<Button variant="outline" size="icon" aria-label="Home" href="/">
-				<Triangle class="fill-foreground size-5" />
+				<!-- <Home class="size-5" /> -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="2,8 12,2 22,8"></polyline>
+					<polyline points="17,5 17,3 18,3 18,5"></polyline>
+					<polyline points="5,12 7,21 12,18 17,21 19,12"></polyline>
+				</svg>
 			</Button>
 		</div>
 		<nav class="grid gap-1 p-2">
@@ -64,6 +59,19 @@
 					</a>
 				</Tooltip.Trigger>
 				<Tooltip.Content side="right" sideOffset={5}>Devices</Tooltip.Content>
+			</Tooltip.Root>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<a
+						href="/debug"
+						aria-label="Debug"
+						class={buttonVariants({ variant: "ghost", size: "icon", class: "rounded-lg" })}
+						class:bg-muted={$page.url.pathname === '/debug'}
+					>
+						<Bug class="size-5" />
+					</a>
+				</Tooltip.Trigger>
+				<Tooltip.Content side="right" sideOffset={5}>Debug</Tooltip.Content>
 			</Tooltip.Root>
 		</nav>
 		<nav class="mt-auto grid gap-1 p-2">
