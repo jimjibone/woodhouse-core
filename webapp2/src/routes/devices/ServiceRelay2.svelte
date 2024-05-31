@@ -7,9 +7,9 @@
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
-	export let onAction: (serviceID: string, val: Value) => Promise<void> | undefined
+	export let onAction: ((serviceID: string, val: Value) => Promise<void>) | undefined
 
-	let alias: string = (title ? title+": "+service.alias : service.alias);
+	let alias: string = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
 	let attrOn: BoolAttribute | undefined
 	let attrVoltage: FloatAttribute | undefined
 	let attrCurrent: FloatAttribute | undefined

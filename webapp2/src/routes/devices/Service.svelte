@@ -8,10 +8,10 @@
 	import BoxedAttribute from './BoxedAttribute.svelte';
 	import ServiceLightbulb from './ServiceLightbulb.svelte';
 
-	export let name: string;
+	export let title: string | undefined;
 	export let online: boolean;
 	export let service: Service;
-	export let onAction: (serviceID: string, val: Value) => Promise<void> | undefined
+	export let onAction: ((serviceID: string, val: Value) => Promise<void>) | undefined
 
 	let action = async (val: Value) => {
 		if (onAction) {
@@ -23,12 +23,12 @@
 {#if !(service.typ === Service_ServiceType.INFO || service.typ === Service_ServiceType.ONLINE)}
 	{#if service.typ === Service_ServiceType.RELAY}
 	<!-- <ServiceRelay online={online} service={service} onAction={onAction} /> -->
-	<ServiceRelay2 online={online} service={service} onAction={onAction} />
+	<ServiceRelay2 title={title} online={online} service={service} onAction={onAction} />
 	{:else if service.typ === Service_ServiceType.INPUT}
 	<!-- <ServiceInput online={online} service={service} onAction={onAction} /> -->
-	<ServiceInput2 online={online} service={service}/>
+	<ServiceInput2 title={title} online={online} service={service}/>
 	{:else if service.typ === Service_ServiceType.LIGHTBULB}
-	<ServiceLightbulb online={online} service={service} onAction={onAction} />
+	<ServiceLightbulb title={title} online={online} service={service} onAction={onAction} />
 	{:else}
 	<div class={online ? "" : "bg-muted"}>
 		<div class="pb-3">
