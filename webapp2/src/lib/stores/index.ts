@@ -26,7 +26,7 @@ let streamer: Streamer | undefined = undefined;
 
 // Create a writable store.
 const { subscribe, set, update } = writable<DeviceStoreType>({connected: false, backoff: 0, devices: []}, (set: Subscriber<DeviceStoreType>) => {
-	console.log("subscriber started");
+	// console.log("subscriber started");
 
 	if (streamer === undefined) {
 		streamer = new Streamer(client);
@@ -34,7 +34,7 @@ const { subscribe, set, update } = writable<DeviceStoreType>({connected: false, 
 
 	return () => {
 		// TODO: close stream when all subscribers stop.
-		console.log("subscriber finished");
+		// console.log("subscriber finished");
 	}
 });
 
