@@ -13,7 +13,7 @@
 </header>
 <main class="grid flex-1 gap-4 overflow-auto p-4">
 	<div class="relative flex gap-4 h-full min-h-[50vh] flex-col rounded-xl">
-		{#each store.devices as dev, i}
+		{#each store.devices as dev, i (dev.id)}
 		<DeviceComponent device={dev} onAction={DeviceAction}/>
 		{/each}
 	</div>

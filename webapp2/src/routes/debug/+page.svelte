@@ -12,7 +12,7 @@
 </header>
 <main class="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
 	<div class="relative flex gap-4 h-full min-h-[50vh] flex-col rounded-xl lg:col-span-3">
-		{#each store.devices as dev, i}
+		{#each store.devices as dev, i (dev.id)}
 		<div>
 			<p>{dev.toJsonString()}</p>
 		</div>
