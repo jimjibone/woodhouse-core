@@ -35,10 +35,14 @@ tasks:
       - mkdir -p "{{.BUILD_DIR}}"
 
   build-all:
+    deps:
+      - proto
+      - build-dir
+      - webapp:proto
+      - webapp:proto
     cmds:
       - task: build-web
       - task: build
-
   build:
     deps:
       - build-core
@@ -54,9 +58,6 @@ tasks:
       - task: webapp:build
 
   build-core:
-    deps:
-      - proto
-      - build-dir
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
 
@@ -67,9 +68,6 @@ tasks:
       - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
   build-whctl:
-    deps:
-      - proto
-      - build-dir
     cmds:
       - go build -o {{.BUILD_DIR}}/whctl{{exeExt}} ./cmd/whctl
 
@@ -80,9 +78,6 @@ tasks:
       - cd {{.BUILD_DIR}} && ./whctl{{exeExt}} {{.CLI_ARGS}}
 
   build-client:
-    deps:
-      - proto
-      - build-dir
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-client{{exeExt}} ./cmd/woodhouse-client
 
@@ -93,9 +88,6 @@ tasks:
       - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
 
   build-reactor:
-    deps:
-      - proto
-      - build-dir
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-reactor{{exeExt}} ./cmd/woodhouse-reactor
 
@@ -106,9 +98,6 @@ tasks:
       - cd {{.BUILD_DIR}} && ./woodhouse-reactor{{exeExt}} {{.CLI_ARGS}}
 
   build-shelly:
-    deps:
-      - proto
-      - build-dir
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-shelly{{exeExt}} ./cmd/woodhouse-shelly
 
@@ -119,9 +108,6 @@ tasks:
       - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
 
   build-zigbee:
-    deps:
-      - proto
-      - build-dir
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-zigbee{{exeExt}} ./cmd/woodhouse-zigbee
 
