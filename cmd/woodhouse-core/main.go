@@ -25,7 +25,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/paths"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
-	webapp "github.com/jimjibone/woodhouse-4/webapp2"
+	"github.com/jimjibone/woodhouse-4/webapp"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

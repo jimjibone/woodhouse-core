@@ -1,15 +1,11 @@
-<script lang="ts">
+<script>
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn, flyAndScale } from "$lib/utils";
-
-	type $$Props = DropdownMenuPrimitive.SubContentProps;
-	type $$Events = DropdownMenuPrimitive.SubContentEvents;
-
-	let className: $$Props["class"] = undefined;
-	export let transition: $$Props["transition"] = flyAndScale;
-	export let transitionConfig: $$Props["transitionConfig"] = {
+	import { cn, flyAndScale } from "$lib/utils.js";
+	let className = undefined;
+	export let transition = flyAndScale;
+	export let transitionConfig = {
 		x: -10,
-		y: 0
+		y: 0,
 	};
 	export { className as class };
 </script>

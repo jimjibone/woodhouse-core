@@ -1,11 +1,8 @@
-<script lang="ts">
+<script>
 	import { Switch as SwitchPrimitive } from "bits-ui";
-	import { cn } from "../../../utils";
-
-	type $$Props = SwitchPrimitive.Props;
-
-	let className: $$Props["class"] = undefined;
-	export let checked: $$Props["checked"] = undefined;
+	import { cn } from "$lib/utils.js";
+	let className = undefined;
+	export let checked = undefined;
 	export { className as class };
 </script>
 
@@ -16,6 +13,8 @@
 		className
 	)}
 	{...$$restProps}
+	on:click
+	on:keydown
 >
 	<SwitchPrimitive.Thumb
 		class={cn(

@@ -12,8 +12,8 @@ includes:
     taskfile: ./api/Taskfile.yml
     dir: ./api
   webapp:
-    taskfile: ./webapp2/Taskfile.yaml
-    dir: ./webapp2
+    taskfile: ./webapp/Taskfile.yaml
+    dir: ./webapp
 
 tasks:
   default:

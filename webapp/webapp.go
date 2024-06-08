@@ -2,5 +2,5 @@ package webapp
 
 import "embed"
 
-//go:embed public/*
+//go:embed build/*
 var Content embed.FS

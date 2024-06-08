@@ -5,6 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
+import type { Service } from "./client_service_pb.js";
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -49,5 +50,63 @@ export declare class DevicesStreamRequest extends Message<DevicesStreamRequest> 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DevicesStreamRequest;
 
   static equals(a: DevicesStreamRequest | PlainMessage<DevicesStreamRequest> | undefined, b: DevicesStreamRequest | PlainMessage<DevicesStreamRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.DashboardStreamRequest
+ */
+export declare class DashboardStreamRequest extends Message<DashboardStreamRequest> {
+  constructor(data?: PartialMessage<DashboardStreamRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.DashboardStreamRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DashboardStreamRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DashboardStreamRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DashboardStreamRequest;
+
+  static equals(a: DashboardStreamRequest | PlainMessage<DashboardStreamRequest> | undefined, b: DashboardStreamRequest | PlainMessage<DashboardStreamRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.DashboardItem
+ */
+export declare class DashboardItem extends Message<DashboardItem> {
+  /**
+   * @generated from field: string device_id = 1;
+   */
+  deviceId: string;
+
+  /**
+   * @generated from field: string device_name = 2;
+   */
+  deviceName: string;
+
+  /**
+   * @generated from field: bool online = 3;
+   */
+  online: boolean;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.Service service = 4;
+   */
+  service?: Service;
+
+  constructor(data?: PartialMessage<DashboardItem>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.DashboardItem";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DashboardItem;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DashboardItem;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DashboardItem;
+
+  static equals(a: DashboardItem | PlainMessage<DashboardItem> | undefined, b: DashboardItem | PlainMessage<DashboardItem> | undefined): boolean;
 }
 
