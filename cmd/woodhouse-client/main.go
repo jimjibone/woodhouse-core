@@ -48,8 +48,13 @@ func main() {
 			// Create the client.
 			client := wh.NewClient(store, args.String("addr"))
 
-			dev := NewSwitchDevice("fake123")
-			if err := client.AddDevice(dev.dev); err != nil {
+			fake123 := NewFakeLightbulb("fake123")
+			if err := client.AddDevice(fake123.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake2 := NewFakeRelay("fake2")
+			if err := client.AddDevice(fake2.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
 

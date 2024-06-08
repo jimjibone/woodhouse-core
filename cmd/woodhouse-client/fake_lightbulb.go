@@ -9,15 +9,15 @@ import (
 	"github.com/jimjibone/woodhouse-4/wh/v1/devices/services"
 )
 
-type SwitchDevice struct {
-	dev       *devices.DeviceImpl
+type FakeLightbulb struct {
+	dev       *devices.Device
 	info      *services.Info
 	online    *services.Online
 	lightbulb *services.Lightbulb
 }
 
-func NewSwitchDevice(id string) *SwitchDevice {
-	dev := &SwitchDevice{
+func NewFakeLightbulb(id string) *FakeLightbulb {
+	dev := &FakeLightbulb{
 		dev:       devices.NewDevice(id, clientsapi.Device_LIGHTBULB),
 		info:      services.NewInfo(),
 		online:    services.NewOnline(),
@@ -26,15 +26,15 @@ func NewSwitchDevice(id string) *SwitchDevice {
 	dev.dev.AddService(dev.info, dev.online, dev.lightbulb)
 
 	// Set up the info service.
-	dev.info.Name.Set("Fake Light Switch")
-	dev.info.Model.Set("Fake Switch")
+	dev.info.Name.Set("Fake Lightbulb")
+	dev.info.Model.Set("Fake Lightbulb Thing")
 	dev.info.Manufacturer.Set("Fake Things Inc")
 	dev.online.Online.Set(true)
 
 	// Set up the light service.
 	dev.lightbulb.OnAction(dev.handleLightbulbAction)
 	dev.lightbulb.On.OnAction(func(val bool) {
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 		log.Infof("on set to %t", val)
 		dev.lightbulb.On.Set(val)
 	})
@@ -43,10 +43,17 @@ func NewSwitchDevice(id string) *SwitchDevice {
 		dev.lightbulb.Brightness.Set(val)
 	})
 
+	// Set default values.
+	dev.lightbulb.On.Set(false)
+	dev.lightbulb.Brightness.Set(75)
+	dev.lightbulb.ColorTemp.Set(1802)
+	dev.lightbulb.Color.Set(22.0, 97.0, 0.0, 0.0)
+	dev.lightbulb.Transition.Set(time.Second)
+
 	return dev
 }
 
-func (dev *SwitchDevice) handleLightbulbAction(request *clientsapi.ActionRequest, feedback func(*clientsapi.ActionResponse)) error {
+func (dev *FakeLightbulb) handleLightbulbAction(request *clientsapi.ActionRequest, feedback func(*clientsapi.ActionResponse)) error {
 	feedback(&clientsapi.ActionResponse{
 		ActionId: request.ActionId,
 		Status:   clientsapi.ActionResponse_SENT,
