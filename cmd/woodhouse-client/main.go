@@ -13,7 +13,7 @@ import (
 func main() {
 	app := &cli.App{
 		Name:                 "woodhouse-client",
-		Usage:                "Runs the woodhouse client",
+		Usage:                "Runs the woodhouse example client",
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.PathFlag{

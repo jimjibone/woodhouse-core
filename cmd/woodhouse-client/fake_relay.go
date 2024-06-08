@@ -30,6 +30,7 @@ func NewFakeRelay(id string) *FakeRelay {
 	dev.info.Model.Set("Fake Relay Thing")
 	dev.info.Manufacturer.Set("Fake Things Inc")
 	dev.online.Online.Set(true)
+	dev.online.LastSeen.Set(time.Now())
 
 	// Set up the light service.
 	dev.relay.OnAction(dev.handleAction)

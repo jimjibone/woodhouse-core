@@ -154,6 +154,8 @@ func (manager *DeviceManager) GetDeviceUpdates() *queue.Sub[*clientsapi.Device] 
 	return manager.txDeviceUpdates.NewSub()
 }
 
+// Checks that the device exists, it's online and the client is known. Generates
+// a new action ID and the client ID for the requested device.
 func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID string, err error) {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()

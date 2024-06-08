@@ -88,6 +88,19 @@ tasks:
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
 
+  build-reactor:
+    deps:
+      - proto
+      - build-dir
+    cmds:
+      - go build -o {{.BUILD_DIR}}/woodhouse-reactor{{exeExt}} ./cmd/woodhouse-reactor
+
+  run-reactor:
+    deps:
+      - build-reactor
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-reactor{{exeExt}} {{.CLI_ARGS}}
+
   build-shelly:
     deps:
       - proto

@@ -30,6 +30,7 @@ func NewFakeLightbulb(id string) *FakeLightbulb {
 	dev.info.Model.Set("Fake Lightbulb Thing")
 	dev.info.Manufacturer.Set("Fake Things Inc")
 	dev.online.Online.Set(true)
+	dev.online.LastSeen.Set(time.Now())
 
 	// Set up the light service.
 	dev.lightbulb.OnAction(dev.handleLightbulbAction)
