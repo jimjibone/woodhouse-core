@@ -360,6 +360,32 @@ export declare class ClientInfo extends Message<ClientInfo> {
 }
 
 /**
+ * @generated from message woodhouse.api.v1.clients.DeviceStreamRequest
+ */
+export declare class DeviceStreamRequest extends Message<DeviceStreamRequest> {
+  /**
+   * A list of device IDs to include in the steam. Sends all devices if empty.
+   *
+   * @generated from field: repeated string include_device_ids = 1;
+   */
+  includeDeviceIds: string[];
+
+  constructor(data?: PartialMessage<DeviceStreamRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.DeviceStreamRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeviceStreamRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeviceStreamRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeviceStreamRequest;
+
+  static equals(a: DeviceStreamRequest | PlainMessage<DeviceStreamRequest> | undefined, b: DeviceStreamRequest | PlainMessage<DeviceStreamRequest> | undefined): boolean;
+}
+
+/**
  * Device contains either the full or partial (update) state of a device. The id
  * field must always be set. All devices are required to implement the Info and
  * Online services, so if full_state is set to true these services must be

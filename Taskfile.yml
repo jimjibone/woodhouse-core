@@ -12,13 +12,13 @@ includes:
     taskfile: ./api/Taskfile.yml
     dir: ./api
   webapp:
-    taskfile: ./webapp/Taskfile.yml
-    dir: ./webapp
+    taskfile: ./webapp2/Taskfile.yaml
+    dir: ./webapp2
 
 tasks:
   default:
     deps:
-      - build
+      - build-all
 
   proto:
     deps:
@@ -34,16 +34,16 @@ tasks:
     cmds:
       - mkdir -p "{{.BUILD_DIR}}"
 
+  build-all:
+    cmds:
+      - task: build-web
+      - task: build
+
   build:
     deps:
       - build-core
       - build-shelly
       - build-zigbee
-
-  build-all:
-    cmds:
-      - task: webapp:build
-      - task: build
 
   run:
     deps:
@@ -51,13 +51,12 @@ tasks:
 
   build-web:
     cmds:
-      - cd webapp2 && npm run build
+      - task: webapp:build
 
   build-core:
     deps:
       - proto
       - build-dir
-      - build-web
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
 

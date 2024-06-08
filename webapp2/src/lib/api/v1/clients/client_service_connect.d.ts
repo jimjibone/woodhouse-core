@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ActionRequest, ActionResponse, Empty, StatusUpdate } from "./client_service_pb.js";
+import { ActionRequest, ActionResponse, Device, DeviceStreamRequest, Empty, StatusUpdate } from "./client_service_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -41,6 +41,31 @@ export declare const ClientService: {
       readonly I: typeof ActionResponse,
       readonly O: typeof ActionRequest,
       readonly kind: MethodKind.BiDiStreaming,
+    },
+    /**
+     * Get a stream of Device updates. The first batch of replies will be the
+     * current state of the devices, followed by updates when they occur. The
+     * stream also includes a 10 second heartbeat (an empty Device) which should
+     * be ignored, but can be used to monitor the stream for disconnects.
+     *
+     * @generated from rpc woodhouse.api.v1.clients.ClientService.DeviceStream
+     */
+    readonly deviceStream: {
+      readonly name: "DeviceStream",
+      readonly I: typeof DeviceStreamRequest,
+      readonly O: typeof Device,
+      readonly kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * Send an action to a device service.
+     *
+     * @generated from rpc woodhouse.api.v1.clients.ClientService.SendAction
+     */
+    readonly sendAction: {
+      readonly name: "SendAction",
+      readonly I: typeof ActionRequest,
+      readonly O: typeof ActionResponse,
+      readonly kind: MethodKind.ServerStreaming,
     },
   }
 };
