@@ -37,8 +37,8 @@ tasks:
   build:
     deps:
       - build-core
-      - build-bridge-shelly
-      - build-bridge-zigbee
+      - build-shelly
+      - build-zigbee
 
   build-all:
     cmds:
@@ -49,10 +49,15 @@ tasks:
     deps:
       - run-core
 
+  build-web:
+    cmds:
+      - cd webapp2 && npm run build
+
   build-core:
     deps:
       - proto
       - build-dir
+      - build-web
     cmds:
       - go build -o {{.BUILD_DIR}}/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
 
