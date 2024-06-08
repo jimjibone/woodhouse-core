@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Service, Service_ServiceType, Value, BoolValue, Attribute as AttributeType, BoolAttribute, FloatAttribute } from '$lib/api/v1/clients/client_service_pb';
-	import { Power } from 'lucide-svelte';
+	import { Loader, Power, PowerOff } from 'lucide-svelte';
 	import { cn } from "$lib/utils.js";
 	import { validators } from 'tailwind-merge';
 
@@ -9,13 +9,14 @@
 	export let service: Service;
 	export let onAction: ((serviceID: string, val: Value) => Promise<void>) | undefined
 
-	let alias: string = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
+	$:alias = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
 	let attrOn: BoolAttribute | undefined
 	let attrVoltage: FloatAttribute | undefined
 	let attrCurrent: FloatAttribute | undefined
 	let attrPower: FloatAttribute | undefined
 	let attrTemperature: FloatAttribute | undefined
 	let attrOthers: AttributeType[]
+	let actionPending: boolean = false;
 
 	$:{
 		attrOthers = [];
@@ -38,7 +39,9 @@
 
 	let action = async (val: Value) => {
 		if (onAction) {
-			onAction(service.id, val);
+			actionPending = true;
+			await onAction(service.id, val);
+			actionPending = false;
 		}
 	}
 
@@ -66,8 +69,14 @@
 	<div class="flex flex-row gap-2">
 		<div class="shrink">
 			<div class="h-full grid place-content-center">
-				<button class={cn("p-2 rounded-full", attrOn?.value ? "bg-yellow-400 text-black" : "bg-secondary text-secondary-foreground")} on:click={actionOnToggle}>
+				<button class={cn("p-2 rounded-full", attrOn?.value ? "bg-yellow-400 text-black" : "bg-secondary text-secondary-foreground")} on:click={actionOnToggle} disabled={actionPending}>
+					{#if actionPending}
+					<Loader/>
+					{:else if attrOn?.value}
 					<Power/>
+					{:else}
+					<PowerOff/>
+					{/if}
 				</button>
 			</div>
 		</div>

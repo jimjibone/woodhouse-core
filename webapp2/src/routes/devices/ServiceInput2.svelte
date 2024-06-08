@@ -8,7 +8,7 @@
 	export let online: boolean;
 	export let service: Service;
 
-	let alias: string = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
+	$:alias = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
 	let attrOn: BoolAttribute | undefined
 	let attrOthers: AttributeType[]
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Service, Service_ServiceType, Value, BoolValue, Attribute as AttributeType, BoolAttribute, IntAttribute, FloatAttribute, ColorAttribute, DurationAttribute } from '$lib/api/v1/clients/client_service_pb';
-	import { Power } from 'lucide-svelte';
+	import { Loader, Power, PowerOff } from 'lucide-svelte';
 	import { cn } from "$lib/utils.js";
 	import chroma from "chroma-js";
 
@@ -9,13 +9,14 @@
 	export let service: Service;
 	export let onAction: ((serviceID: string, val: Value) => Promise<void>) | undefined
 
-	let alias: string = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
+	$:alias = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
 	let attrOn: BoolAttribute | undefined
 	let attrBrightness: IntAttribute | undefined
 	let attrColorTemp: IntAttribute | undefined
 	let attrColor: ColorAttribute | undefined
 	let attrTransition: DurationAttribute | undefined
 	let attrOthers: AttributeType[]
+	let actionPending: boolean = false;
 
 	const foregroundLight = "hsl(0 0% 100%)";
 	const foregroundDark = "hsl(240 10% 3.9%)";
@@ -65,7 +66,9 @@
 
 	let action = async (val: Value) => {
 		if (onAction) {
-			onAction(service.id, val);
+			actionPending = true;
+			await onAction(service.id, val);
+			actionPending = false;
 		}
 	}
 
@@ -95,11 +98,19 @@
 			<div class="h-full grid place-content-center">
 				{#if attrOn?.value}
 				<button class={cn("p-2 rounded-full")} style="color: {buttonForeground}; background-color: {buttonBackground};" on:click={actionOnToggle}>
+					{#if actionPending}
+					<Loader/>
+					{:else}
 					<Power/>
+					{/if}
 				</button>
 				{:else}
 				<button class={cn("p-2 rounded-full", "bg-secondary text-secondary-foreground")} on:click={actionOnToggle}>
-					<Power/>
+					{#if actionPending}
+					<Loader/>
+					{:else}
+					<PowerOff/>
+					{/if}
 				</button>
 				{/if}
 			</div>
