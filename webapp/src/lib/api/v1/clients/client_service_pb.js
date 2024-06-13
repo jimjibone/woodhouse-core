@@ -156,7 +156,7 @@ export const Device_DeviceType = /*@__PURE__*/ proto3.makeEnum(
     {no: 4, name: "INPUT"},
     {no: 5, name: "RELAY"},
     {no: 6, name: "LIGHTBULB"},
-    {no: 7, name: "THERMOSTAT"},
+    {no: 7, name: "CLIMATE"},
   ],
 );
 
@@ -186,7 +186,8 @@ export const Service_ServiceType = /*@__PURE__*/ proto3.makeEnum(
     {no: 4, name: "INPUT"},
     {no: 5, name: "RELAY"},
     {no: 6, name: "LIGHTBULB"},
-    {no: 7, name: "THERMOSTAT"},
+    {no: 7, name: "CLIMATE"},
+    {no: 8, name: "BATTERY"},
   ],
 );
 

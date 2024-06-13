@@ -7,6 +7,8 @@
 	import ServiceRelay2 from './ServiceRelay2.svelte';
 	import BoxedAttribute from './BoxedAttribute.svelte';
 	import ServiceLightbulb from './ServiceLightbulb.svelte';
+	import ServiceBattery from './ServiceBattery.svelte';
+	import ServiceClimate from './ServiceClimate.svelte';
 
 	export let title: string | undefined = undefined;
 	export let online: boolean;
@@ -29,6 +31,10 @@
 		<ServiceInput2 {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.LIGHTBULB}
 		<ServiceLightbulb {title} {online} {service} {onAction} />
+	{:else if service.typ === Service_ServiceType.BATTERY}
+		<ServiceBattery {title} {online} {service} />
+	{:else if service.typ === Service_ServiceType.CLIMATE}
+		<ServiceClimate {title} {online} {service} {onAction} />
 	{:else}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">

@@ -477,9 +477,9 @@ export declare enum Device_DeviceType {
   LIGHTBULB = 6,
 
   /**
-   * @generated from enum value: THERMOSTAT = 7;
+   * @generated from enum value: CLIMATE = 7;
    */
-  THERMOSTAT = 7,
+  CLIMATE = 7,
 }
 
 /**
@@ -569,9 +569,14 @@ export declare enum Service_ServiceType {
   LIGHTBULB = 6,
 
   /**
-   * @generated from enum value: THERMOSTAT = 7;
+   * @generated from enum value: CLIMATE = 7;
    */
-  THERMOSTAT = 7,
+  CLIMATE = 7,
+
+  /**
+   * @generated from enum value: BATTERY = 8;
+   */
+  BATTERY = 8,
 }
 
 /**
