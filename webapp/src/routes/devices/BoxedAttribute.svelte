@@ -6,20 +6,14 @@
 
 	export let online: boolean;
 	export let attr: AttributeType;
-	export let onAction: (val: Value) => Promise<void> | undefined
-
-	let action = async (val: Value) => {
-		if (onAction) {
-			onAction(val);
-		}
-	}
+	export let onAction: (vals: Value[]) => Promise<void> | undefined;
 </script>
 
-<Card.Root class={online ? "" : "bg-muted"}>
+<Card.Root class={online ? '' : 'bg-muted'}>
 	<Card.Header class="pb-3">
 		<Card.Title>{attr.id}</Card.Title>
 	</Card.Header>
 	<Card.Content>
-		<Attribute online={online} attr={attr} onAction={onAction} />
+		<Attribute {online} {attr} {onAction} />
 	</Card.Content>
 </Card.Root>

@@ -1,8 +1,11 @@
-import { setContext } from 'svelte';
-import { type Subscriber, writable } from "svelte/store";
-import { ActionRequest, Device, Service, Value } from '$lib/api/v1/clients/client_service_pb';
+import { type Subscriber, writable } from 'svelte/store';
+import {
+	ActionRequest,
+	Device,
+	Service,
+	Value
+} from '$lib/api/v1/clients/client_service_pb';
 
-import type { Transport } from '@connectrpc/connect';
 import { createGrpcWebTransport } from '@connectrpc/connect-web';
 import { createPromiseClient, ConnectError, Code, type PromiseClient } from '@connectrpc/connect';
 import { UserService } from '$lib/api/v1/clients/user_service_connect';
@@ -10,14 +13,14 @@ import { DevicesStreamRequest } from '$lib/api/v1/clients/user_service_pb';
 import { getDeviceName } from '$lib/apitools';
 
 export type DeviceStoreType = {
-	connected: boolean
-	backoff: number
-	devices: Device[]
+	connected: boolean;
+	backoff: number;
+	devices: Device[];
 };
 
 // Create the GRPC-Web transport and client.
 const transport = createGrpcWebTransport({
-	baseUrl: "/api",
+	baseUrl: '/api'
 });
 const client = createPromiseClient(UserService, transport);
 
@@ -25,38 +28,41 @@ const client = createPromiseClient(UserService, transport);
 let streamer: Streamer | undefined = undefined;
 
 // Create a writable store.
-const { subscribe, set, update } = writable<DeviceStoreType>({connected: false, backoff: 0, devices: []}, (set: Subscriber<DeviceStoreType>) => {
-	// console.log("subscriber started");
+const { subscribe, set, update } = writable<DeviceStoreType>(
+	{ connected: false, backoff: 0, devices: [] },
+	(set: Subscriber<DeviceStoreType>) => {
+		// console.log("subscriber started");
 
-	if (streamer === undefined) {
-		streamer = new Streamer(client);
-	}
+		if (streamer === undefined) {
+			streamer = new Streamer(client);
+		}
 
-	return () => {
-		// TODO: close stream when all subscribers stop.
-		// console.log("subscriber finished");
+		return () => {
+			// TODO: close stream when all subscribers stop.
+			// console.log("subscriber finished");
+		};
 	}
-});
+);
 
 export const DeviceStore = {
 	subscribe
 };
 
-export const DeviceAction = async (deviceID: string, serviceID: string, val: Value) => {
+export const DeviceAction = async (deviceID: string, serviceID: string, vals: Value[]) => {
 	const request = new ActionRequest({
 		deviceId: deviceID,
 		serviceId: serviceID,
-		values: [ val ]
+		values: vals
 	});
-	console.log("sending action: " + request.toJsonString());
+	console.log('sending action: ' + request.toJsonString());
 	try {
 		for await (const response of client.sendAction(request)) {
-			console.log("received action: " + response.toJsonString());
+			console.log('received action: ' + response.toJsonString());
 			// responses = [...responses, response];
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			console.error("error action: " + err.message);
+			console.error('error action: ' + err.message);
 		}
 	}
 };
@@ -81,7 +87,7 @@ const updateDevice = (prev: Device, next: Device): Device => {
 		}
 	}
 	return prev;
-}
+};
 
 const updateService = (prev: Service, next: Service): Service => {
 	prev.typ = next.typ;
@@ -100,9 +106,12 @@ const updateService = (prev: Service, next: Service): Service => {
 		}
 	}
 	return prev;
-}
+};
 
-const streamDevices = async (client: PromiseClient<typeof UserService>, onFinish: (resetBackoff: boolean) => void) => {
+const streamDevices = async (
+	client: PromiseClient<typeof UserService>,
+	onFinish: (resetBackoff: boolean) => void
+) => {
 	// Use a timer to periodically check if the connection has died. If it
 	// has then trigger the abort controller to cancel the stream and then
 	// fire up another one after a backoff delay.
@@ -123,7 +132,7 @@ const streamDevices = async (client: PromiseClient<typeof UserService>, onFinish
 			didConnect = true;
 
 			// ID will be empty if this is a keepalive message.
-			if (response.id !== "") {
+			if (response.id !== '') {
 				// console.log("streamDevices: device: " + response.toJsonString());
 				update((prev: DeviceStoreType) => {
 					let foundDevice = false;
@@ -143,8 +152,8 @@ const streamDevices = async (client: PromiseClient<typeof UserService>, onFinish
 					prev.devices = prev.devices.sort((a, b) => {
 						const aName = getDeviceName(a);
 						const bName = getDeviceName(b);
-						return aName > bName ? 1 : (bName > aName ? -1 : 0);
-					})
+						return aName > bName ? 1 : bName > aName ? -1 : 0;
+					});
 
 					prev.connected = true;
 
@@ -160,7 +169,7 @@ const streamDevices = async (client: PromiseClient<typeof UserService>, onFinish
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			if (err.code !== Code.Unknown) {
-				console.error("streamDevices: error stream: (" + err.code + ") " + err.message);
+				console.error('streamDevices: error stream: (' + err.code + ') ' + err.message);
 			}
 		}
 
@@ -179,11 +188,11 @@ const streamDevices = async (client: PromiseClient<typeof UserService>, onFinish
 class Streamer {
 	constructor(client: PromiseClient<typeof UserService>) {
 		this.retry(client);
-	};
+	}
 
 	backoff = 1000;
 	minBackoff = 1000;
-	maxBackoff = 16000;
+	maxBackoff = 8000;
 
 	retry = (client: PromiseClient<typeof UserService>) => {
 		streamDevices(client, (resetBackoff: boolean) => {
@@ -191,7 +200,7 @@ class Streamer {
 				this.backoff = this.minBackoff;
 			} else {
 				this.backoff = this.backoff * 2;
-				if (this.backoff >this. maxBackoff) {
+				if (this.backoff > this.maxBackoff) {
 					this.backoff = this.maxBackoff;
 				}
 			}
@@ -204,4 +213,4 @@ class Streamer {
 			}, this.backoff);
 		});
 	};
-};
+}
