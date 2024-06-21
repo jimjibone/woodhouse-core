@@ -116,6 +116,13 @@ export declare enum Unit {
    * @generated from enum value: UNIT_MIREDS = 11;
    */
   MIREDS = 11,
+
+  /**
+   * hPa
+   *
+   * @generated from enum value: UNIT_HECTOPASCAL = 12;
+   */
+  HECTOPASCAL = 12,
 }
 
 /**
@@ -582,6 +589,11 @@ export declare enum Service_ServiceType {
    * @generated from enum value: BUTTON = 9;
    */
   BUTTON = 9,
+
+  /**
+   * @generated from enum value: ENVIRONMENT = 10;
+   */
+  ENVIRONMENT = 10,
 }
 
 /**

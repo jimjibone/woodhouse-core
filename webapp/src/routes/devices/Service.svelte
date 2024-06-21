@@ -10,6 +10,7 @@
 	import ServiceBattery from './ServiceBattery.svelte';
 	import ServiceClimate from './ServiceClimate.svelte';
 	import ServiceButton from './ServiceButton.svelte';
+	import ServiceEnvironment from './ServiceEnvironment.svelte';
 
 	export let title: string | undefined = undefined;
 	export let online: boolean;
@@ -39,6 +40,8 @@
 		<ServiceClimate {title} {online} {service} {onAction} />
 	{:else if service.typ === Service_ServiceType.BUTTON}
 		<ServiceButton {title} {online} {service} {expandable} />
+	{:else if service.typ === Service_ServiceType.ENVIRONMENT}
+		<ServiceEnvironment {title} {online} {service} />
 	{:else}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">

@@ -36,6 +36,7 @@ export const Unit = /*@__PURE__*/ proto3.makeEnum(
     {no: 9, name: "UNIT_AMPS", localName: "AMPS"},
     {no: 10, name: "UNIT_WATTS", localName: "WATTS"},
     {no: 11, name: "UNIT_MIREDS", localName: "MIREDS"},
+    {no: 12, name: "UNIT_HECTOPASCAL", localName: "HECTOPASCAL"},
   ],
 );
 
@@ -189,6 +190,7 @@ export const Service_ServiceType = /*@__PURE__*/ proto3.makeEnum(
     {no: 7, name: "CLIMATE"},
     {no: 8, name: "BATTERY"},
     {no: 9, name: "BUTTON"},
+    {no: 10, name: "ENVIRONMENT"},
   ],
 );
 

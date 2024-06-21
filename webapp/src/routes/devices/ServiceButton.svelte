@@ -2,7 +2,8 @@
 	import {
 		Service,
 		Service_ServiceType,
-		EnumAttribute
+		EnumAttribute,
+		DurationAttribute
 	} from '$lib/api/v1/clients/client_service_pb';
 	import { Pointer, Eye, EyeOff } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
@@ -14,12 +15,15 @@
 
 	$: alias = title ? title + (service.alias !== '' ? ': ' + service.alias : '') : service.alias;
 	let attrState: EnumAttribute | undefined;
+	let attrDuration: DurationAttribute | undefined;
 	let showOptions: boolean = false;
 
 	$: {
 		for (const attr of service.attrs) {
 			if (attr.id === 'state') {
 				attrState = attr.enum;
+			} else if (attr.id === 'duration') {
+				attrDuration = attr.duration;
 			}
 		}
 	}
@@ -58,6 +62,13 @@
 							{:else}
 							<p>
 								{attrState.value}
+							</p>
+							{/if}
+						{/if}
+						{#if attrDuration !== undefined}
+							{#if attrDuration.value > 0}
+							<p class="text-muted-foreground">
+								{attrDuration.value}ms
 							</p>
 							{/if}
 						{/if}
