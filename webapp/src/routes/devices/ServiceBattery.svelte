@@ -68,7 +68,7 @@
 					{/if}
 					<div class="flex flex-row gap-2 rounded-lg p-0">
 						{#if attrLevel !== undefined}
-							<p class="text-muted-foreground">
+							<p>
 								{attrLevel.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 							</p>
 						{/if}

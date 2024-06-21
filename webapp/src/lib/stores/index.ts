@@ -192,7 +192,7 @@ class Streamer {
 
 	backoff = 1000;
 	minBackoff = 1000;
-	maxBackoff = 8000;
+	maxBackoff = 4000;
 
 	retry = (client: PromiseClient<typeof UserService>) => {
 		streamDevices(client, (resetBackoff: boolean) => {

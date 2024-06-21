@@ -188,6 +188,7 @@ export const Service_ServiceType = /*@__PURE__*/ proto3.makeEnum(
     {no: 6, name: "LIGHTBULB"},
     {no: 7, name: "CLIMATE"},
     {no: 8, name: "BATTERY"},
+    {no: 9, name: "BUTTON"},
   ],
 );
 
@@ -205,6 +206,7 @@ export const Attribute = /*@__PURE__*/ proto3.makeMessageType(
     { no: 7, name: "duration", kind: "message", T: DurationAttribute },
     { no: 8, name: "time", kind: "message", T: TimeAttribute },
     { no: 10, name: "color", kind: "message", T: ColorAttribute },
+    { no: 11, name: "enum", kind: "message", T: EnumAttribute },
   ],
 );
 
@@ -222,6 +224,7 @@ export const Value = /*@__PURE__*/ proto3.makeMessageType(
     { no: 7, name: "duration", kind: "message", T: DurationValue },
     { no: 8, name: "time", kind: "message", T: TimeValue },
     { no: 10, name: "color", kind: "message", T: ColorValue },
+    { no: 11, name: "enum", kind: "message", T: EnumValue },
   ],
 );
 
@@ -410,6 +413,28 @@ export const ColorXY = /*@__PURE__*/ proto3.makeMessageType(
   () => [
     { no: 1, name: "x", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
     { no: 2, name: "y", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.EnumAttribute
+ */
+export const EnumAttribute = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.EnumAttribute",
+  () => [
+    { no: 1, name: "options", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "perms", kind: "enum", T: proto3.getEnumType(Permissions) },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.EnumValue
+ */
+export const EnumValue = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.EnumValue",
+  () => [
+    { no: 1, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
 );
 

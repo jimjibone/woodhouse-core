@@ -78,8 +78,8 @@
 					<div class="flex flex-row gap-2 rounded-lg p-0">
 						{#if attrHeatingSetpoint !== undefined}
 						<div class="flex flex-row gap-1 items-center">
-							<Gauge class="text-muted-foreground size-5"/>
-							<p class="text-muted-foreground">
+							<Gauge class="size-5"/>
+							<p>
 								{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
 							</p>
 						</div>

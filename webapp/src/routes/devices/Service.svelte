@@ -9,11 +9,13 @@
 	import ServiceLightbulb from './ServiceLightbulb.svelte';
 	import ServiceBattery from './ServiceBattery.svelte';
 	import ServiceClimate from './ServiceClimate.svelte';
+	import ServiceButton from './ServiceButton.svelte';
 
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
 	export let onAction: ((serviceID: string, vals: Value[]) => Promise<void>) | undefined;
+	export let expandable: boolean = true;
 
 	let action = async (vals: Value[]) => {
 		if (onAction) {
@@ -35,6 +37,8 @@
 		<ServiceBattery {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.CLIMATE}
 		<ServiceClimate {title} {online} {service} {onAction} />
+	{:else if service.typ === Service_ServiceType.BUTTON}
+		<ServiceButton {title} {online} {service} {expandable} />
 	{:else}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">

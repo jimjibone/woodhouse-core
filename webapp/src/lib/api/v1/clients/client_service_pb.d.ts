@@ -577,6 +577,11 @@ export declare enum Service_ServiceType {
    * @generated from enum value: BATTERY = 8;
    */
   BATTERY = 8,
+
+  /**
+   * @generated from enum value: BUTTON = 9;
+   */
+  BUTTON = 9,
 }
 
 /**
@@ -628,6 +633,11 @@ export declare class Attribute extends Message<Attribute> {
    * @generated from field: woodhouse.api.v1.clients.ColorAttribute color = 10;
    */
   color?: ColorAttribute;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.EnumAttribute enum = 11;
+   */
+  enum?: EnumAttribute;
 
   constructor(data?: PartialMessage<Attribute>);
 
@@ -693,6 +703,11 @@ export declare class Value extends Message<Value> {
    * @generated from field: woodhouse.api.v1.clients.ColorValue color = 10;
    */
   color?: ColorValue;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.EnumValue enum = 11;
+   */
+  enum?: EnumValue;
 
   constructor(data?: PartialMessage<Value>);
 
@@ -1243,5 +1258,63 @@ export declare class ColorXY extends Message<ColorXY> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ColorXY;
 
   static equals(a: ColorXY | PlainMessage<ColorXY> | undefined, b: ColorXY | PlainMessage<ColorXY> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.EnumAttribute
+ */
+export declare class EnumAttribute extends Message<EnumAttribute> {
+  /**
+   * @generated from field: repeated string options = 1;
+   */
+  options: string[];
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value: string;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.Permissions perms = 3;
+   */
+  perms: Permissions;
+
+  constructor(data?: PartialMessage<EnumAttribute>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.EnumAttribute";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EnumAttribute;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EnumAttribute;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EnumAttribute;
+
+  static equals(a: EnumAttribute | PlainMessage<EnumAttribute> | undefined, b: EnumAttribute | PlainMessage<EnumAttribute> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.EnumValue
+ */
+export declare class EnumValue extends Message<EnumValue> {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+
+  constructor(data?: PartialMessage<EnumValue>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.EnumValue";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EnumValue;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EnumValue;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EnumValue;
+
+  static equals(a: EnumValue | PlainMessage<EnumValue> | undefined, b: EnumValue | PlainMessage<EnumValue> | undefined): boolean;
 }
 

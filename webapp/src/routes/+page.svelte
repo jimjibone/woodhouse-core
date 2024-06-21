@@ -16,7 +16,7 @@
 	{#each store.devices as dev, i (dev.id)}
 		{#each dev.services as srv, i (srv.id)}
 			{@const info = getDeviceInfo(dev)}
-			<Service title={info.name} online={info.online} service={srv} onAction={(serviceID, val) => {
+			<Service title={info.name} online={info.online} service={srv} expandable={false} onAction={(serviceID, val) => {
 				return DeviceAction(dev.id, serviceID, val);
 			}}/>
 		{/each}
