@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DashboardItem, DashboardStreamRequest, DevicesStreamRequest, GetDevicesRequest } from "./user_service_pb.js";
+import { DevicesStreamRequest, GetDevicesRequest } from "./user_service_pb.js";
 import { ActionRequest, ActionResponse, Device } from "./client_service_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
@@ -34,15 +34,6 @@ export declare const UserService: {
       readonly name: "DevicesStream",
       readonly I: typeof DevicesStreamRequest,
       readonly O: typeof Device,
-      readonly kind: MethodKind.ServerStreaming,
-    },
-    /**
-     * @generated from rpc woodhouse.api.v1.clients.UserService.DashboardStream
-     */
-    readonly dashboardStream: {
-      readonly name: "DashboardStream",
-      readonly I: typeof DashboardStreamRequest,
-      readonly O: typeof DashboardItem,
       readonly kind: MethodKind.ServerStreaming,
     },
     /**

@@ -4,7 +4,6 @@
 // @ts-nocheck
 
 import { proto3 } from "@bufbuild/protobuf";
-import { Service } from "./client_service_pb.js";
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -21,27 +20,6 @@ export const DevicesStreamRequest = /*@__PURE__*/ proto3.makeMessageType(
   "woodhouse.api.v1.clients.DevicesStreamRequest",
   () => [
     { no: 1, name: "include_device_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-  ],
-);
-
-/**
- * @generated from message woodhouse.api.v1.clients.DashboardStreamRequest
- */
-export const DashboardStreamRequest = /*@__PURE__*/ proto3.makeMessageType(
-  "woodhouse.api.v1.clients.DashboardStreamRequest",
-  [],
-);
-
-/**
- * @generated from message woodhouse.api.v1.clients.DashboardItem
- */
-export const DashboardItem = /*@__PURE__*/ proto3.makeMessageType(
-  "woodhouse.api.v1.clients.DashboardItem",
-  () => [
-    { no: 1, name: "device_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "device_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "online", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 4, name: "service", kind: "message", T: Service },
   ],
 );
 

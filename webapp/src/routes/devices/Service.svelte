@@ -12,6 +12,7 @@
 	import ServiceButton from './ServiceButton.svelte';
 	import ServiceEnvironment from './ServiceEnvironment.svelte';
 	import ServiceContact from './ServiceContact.svelte';
+	import ServiceUpdate from './ServiceUpdate.svelte';
 
 	export let title: string | undefined = undefined;
 	export let online: boolean;
@@ -45,7 +46,9 @@
 		<ServiceEnvironment {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.CONTACT}
 		<ServiceContact {title} {online} {service} />
-	{:else}
+	{:else if service.typ === Service_ServiceType.UPDATE}
+		<ServiceUpdate {title} {online} {service} />
+	{:else if expandable}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">
 				<ServiceHeader id={service.id} alias={service.alias} />

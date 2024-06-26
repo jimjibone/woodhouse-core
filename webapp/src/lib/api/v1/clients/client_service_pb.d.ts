@@ -599,6 +599,11 @@ export declare enum Service_ServiceType {
    * @generated from enum value: CONTACT = 11;
    */
   CONTACT = 11,
+
+  /**
+   * @generated from enum value: UPDATE = 12;
+   */
+  UPDATE = 12,
 }
 
 /**

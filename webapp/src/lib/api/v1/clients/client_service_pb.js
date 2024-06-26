@@ -192,6 +192,7 @@ export const Service_ServiceType = /*@__PURE__*/ proto3.makeEnum(
     {no: 9, name: "BUTTON"},
     {no: 10, name: "ENVIRONMENT"},
     {no: 11, name: "CONTACT"},
+    {no: 12, name: "UPDATE"},
   ],
 );
 
