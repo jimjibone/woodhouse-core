@@ -53,10 +53,11 @@
 		}
 
 		let color: any;
-		const offline = !(attrOn !== undefined && attrOn.value);
-		if (offline) {
+		if (!online) {
+			// Show color as off if offline.
 			// @ts-ignore
-			color = chroma.hsv(240, 4.8 / 100.0, 95.9 / 100.0);
+			color = chroma.hex("#00000000");
+			// color = chroma.rgb(39, 39, 32);
 		} else {
 			if (attrColor !== undefined && attrColor.hueSat !== undefined) {
 				// @ts-ignore
@@ -67,7 +68,7 @@
 				color = chroma.temperature(kelvin);
 			} else {
 				// @ts-ignore
-				color = chroma.rgb(250, 204, 21);
+				color = chroma.rgb(250, 204, 21); // yellow
 			}
 		}
 		buttonForeground = color.luminance() < 0.5 ? foregroundLight : foregroundDark;
