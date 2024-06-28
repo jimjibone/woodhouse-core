@@ -10,7 +10,7 @@
 		ColorAttribute,
 		DurationAttribute
 	} from '$lib/api/v1/clients/client_service_pb';
-	import { Loader, Power, PowerOff } from 'lucide-svelte';
+	import { Loader, Lightbulb, LightbulbOff } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
 	import chroma from 'chroma-js';
 
@@ -123,7 +123,7 @@
 							{#if actionPending}
 								<Loader />
 							{:else}
-								<Power />
+								<Lightbulb />
 							{/if}
 						</button>
 					{:else}
@@ -134,7 +134,7 @@
 							{#if actionPending}
 								<Loader />
 							{:else}
-								<PowerOff />
+								<LightbulbOff />
 							{/if}
 						</button>
 					{/if}
