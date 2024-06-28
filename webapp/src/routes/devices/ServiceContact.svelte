@@ -10,11 +10,18 @@
 	$:alias = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
 	let attrClosed: BoolAttribute | undefined
 
+	let displayOn: boolean = false;
+
 	$:{
 		for (const attr of service.attrs) {
 			if (attr.id === "closed") {
 				attrClosed = attr.bool;
 			}
+		}
+		if (online && !attrClosed?.value) {
+			displayOn = true;
+		} else {
+			displayOn = false;
 		}
 	}
 </script>
@@ -25,15 +32,13 @@
 	<div class="flex flex-row gap-2">
 		<div class="shrink">
 			<div class="h-full grid place-content-center">
-				{#if attrClosed?.value}
-				<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
-					<DoorClosed/>
+				<div class={cn("p-2 rounded-full", displayOn ? "bg-blue-400 dark:bg-blue-600 text-secondary-foreground" : "bg-secondary text-secondary-foreground")}>
+					{#if attrClosed?.value}
+						<DoorClosed/>
+					{:else}
+						<DoorOpen/>
+					{/if}
 				</div>
-				{:else}
-				<div class="p-2 rounded-full bg-yellow-400 text-black">
-					<DoorOpen/>
-				</div>
-				{/if}
 			</div>
 		</div>
 		<div class="grow">

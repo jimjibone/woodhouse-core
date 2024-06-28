@@ -39,7 +39,7 @@
 		<div class="flex flex-row gap-2">
 			<div class="shrink">
 				<div class="grid h-full place-content-center">
-					<div class={cn("p-2 rounded-full", false ? "bg-red-400 text-black" : "bg-secondary text-secondary-foreground")}>
+					<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
 						<Thermometer/>
 					</div>
 				</div>

@@ -43,7 +43,7 @@
 			<div class="shrink">
 				<div class="grid h-full place-content-center">
 					{#if attrAvailable?.value}
-					<div class="p-2 rounded-full bg-yellow-400 text-black">
+					<div class="p-2 rounded-full bg-green-400 dark:bg-green-600 text-secondary-foreground">
 						<PackageOpen/>
 					</div>
 					{:else}

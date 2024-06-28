@@ -10,16 +10,19 @@
 
 	$:alias = (title ? title + (service.alias !== "" ? ": "+service.alias : "") : service.alias);
 	let attrOn: BoolAttribute | undefined
-	let attrOthers: AttributeType[]
+
+	let displayOn: boolean = false;
 
 	$:{
-		attrOthers = [];
 		for (const attr of service.attrs) {
 			if (attr.id === "on") {
 				attrOn = attr.bool;
-			} else {
-				attrOthers = [...attrOthers, attr];
 			}
+		}
+		if (online && attrOn?.value) {
+			displayOn = true;
+		} else {
+			displayOn = false;
 		}
 	}
 </script>
@@ -30,7 +33,7 @@
 	<div class="flex flex-row gap-2">
 		<div class="shrink">
 			<div class="h-full grid place-content-center">
-				<div class={cn("p-2 rounded-full", attrOn?.value ? "bg-yellow-400 text-black" : "bg-secondary text-secondary-foreground")}>
+				<div class={cn("p-2 rounded-full", displayOn ? "bg-blue-400 dark:bg-blue-600 text-secondary-foreground" : "bg-secondary text-secondary-foreground")}>
 					<LogIn/>
 				</div>
 			</div>

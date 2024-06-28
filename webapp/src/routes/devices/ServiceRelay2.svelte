@@ -84,7 +84,7 @@
 					<button
 						class={cn(
 							'rounded-full p-2',
-							attrOn?.value ? 'bg-yellow-400 text-black' : 'bg-secondary text-secondary-foreground'
+							attrOn?.value ? 'bg-green-400 dark:bg-green-600 text-secondary-foreground' : 'bg-secondary text-secondary-foreground'
 						)}
 						on:click={actionOnToggle}
 						disabled={actionPending}

@@ -31,6 +31,7 @@
 	const foregroundLight = 'hsl(0 0% 100%)';
 	const foregroundDark = 'hsl(240 10% 3.9%)';
 
+	let displayOn: boolean = false;
 	let buttonForeground: string = 'hsl(var(--primary-foreground) / var(--tw-text-opacity))';
 	let buttonBackground: string = 'rgb(250 204 21)'; // default "bg-yellow-400"
 
@@ -53,12 +54,13 @@
 		}
 
 		let color: any;
-		if (!online) {
+		if (!online || !attrOn?.value) {
 			// Show color as off if offline.
+			displayOn = false;
 			// @ts-ignore
-			color = chroma.hex("#00000000");
-			// color = chroma.rgb(39, 39, 32);
+			color = chroma.hsl(240, 4.8/100.0, 95.9/100.0); // light-muted
 		} else {
+			displayOn = true;
 			if (attrColor !== undefined && attrColor.hueSat !== undefined) {
 				// @ts-ignore
 				color = chroma.hsv(attrColor.hueSat.hue, attrColor.hueSat.sat / 100.0, 1.0);
@@ -112,7 +114,7 @@
 		<div class="flex flex-row gap-2">
 			<div class="shrink">
 				<div class="grid h-full place-content-center">
-					{#if attrOn?.value}
+					{#if displayOn}
 						<button
 							class={cn('rounded-full p-2')}
 							style="color: {buttonForeground}; background-color: {buttonBackground};"
@@ -126,7 +128,7 @@
 						</button>
 					{:else}
 						<button
-							class={cn('rounded-full p-2', 'bg-secondary text-secondary-foreground')}
+							class={cn('rounded-full p-2', 'bg-muted text-secondary-foreground')}
 							on:click={actionOnToggle}
 						>
 							{#if actionPending}
