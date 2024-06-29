@@ -47,11 +47,11 @@
 			<div class="shrink">
 				<div class="grid h-full place-content-center">
 					<div class={cn("p-2 rounded-full", level < 10 ? "bg-red-400 text-black" : "bg-secondary text-secondary-foreground")}>
-					{#if level < 10}
+					{#if level < 20}
 					<BatteryWarning />
-					{:else if level < 25}
+					{:else if level < 33}
 					<BatteryLow/>
-					{:else if level < 50}
+					{:else if level < 66}
 					<BatteryMedium/>
 					{:else}
 					<BatteryFull/>
