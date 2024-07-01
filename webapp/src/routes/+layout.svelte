@@ -26,10 +26,17 @@
 		<div class="border-b p-2">
 			<Button variant="outline" size="icon" aria-label="Home" href="/">
 				<!-- <Home class="size-5" /> -->
-				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<!-- <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<polyline points="2,8 12,2 22,8"></polyline>
 					<polyline points="17,5 17,3 18,3 18,5"></polyline>
 					<polyline points="5,12 7,21 12,18 17,21 19,12"></polyline>
+				</svg> -->
+				<svg height="24" width="24" version="1.1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+					<g stroke="currentColor">
+						<path d="M 160,49 V 30 h 20 v 32" stroke-linecap="round" transform="matrix(0.11787724,0,0,0.11787724,-2.1452688,-0.08237258)" style="fill:none;;stroke-width:16.9668;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
+						<path d="m 32,80 88,-55 88,55" stroke-linecap="square" style="fill:none;;stroke-width:16.9668;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:normal" transform="matrix(0.11787724,0,0,0.11787724,-2.1452688,-0.08237258)" />
+						<path d="m 60,105 10,85 50,-60 51,60 9,-90" stroke-linecap="square" transform="matrix(0.11787724,0,0,0.11787724,-2.1452688,-0.08237258)" style="fill:none;;stroke-width:16.9668;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
+					</g>
 				</svg>
 			</Button>
 		</div>
