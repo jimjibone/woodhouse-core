@@ -19,7 +19,7 @@
 	import { resetMode, setMode } from 'mode-watcher';
 </script>
 
-<ModeWatcher />
+<ModeWatcher themeColors={{ dark: "#09090b", light: "#ffffff" }}/>
 
 <div class="grid h-screen w-full pl-[53px]">
 	<aside class="inset-y fixed left-0 z-20 flex h-full flex-col border-r">
