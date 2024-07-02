@@ -121,13 +121,19 @@
 		}
 	};
 
+	import { mediaQuery } from "svelte-legos";
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
 	import * as Drawer from "$lib/components/ui/drawer";
 	import { Button } from "$lib/components/ui/button";
 	import { Minus, Plus } from 'lucide-svelte';
 
+	const isDesktop = mediaQuery("(min-width: 768px)");
 	let drawerOpen: boolean = false;
 	let openDrawer = () => {
-		drawerOpen = !drawerOpen;
+		drawerOpen = true;
+	};
+	let closeDrawer = () => {
+		drawerOpen = false;
 	};
 </script>
 
@@ -208,6 +214,53 @@
 		</div>
 	</button>
 
+	{#if $isDesktop}
+	<Dialog.Root bind:open={drawerOpen}>
+		<Dialog.Content>
+			<Dialog.Header>
+				<Dialog.Title>{alias}</Dialog.Title>
+				<Dialog.Description>
+				This action cannot be undone.
+				</Dialog.Description>
+			</Dialog.Header>
+			{#if attrBrightness !== undefined}
+			<p>Brightness</p>
+				<div class="p-4 pb-0">
+					<div class="flex items-center justify-center space-x-2">
+					<Button
+						variant="outline"
+						size="icon"
+						class="size-12 shrink-0 rounded-full"
+						on:click={(ev) => actionSetBrightness(ev, -10n)}
+						disabled={attrBrightness.value <= 0}
+					>
+						<Minus class="size-5" />
+						<span class="sr-only">Decrease</span>
+					</Button>
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-4xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+					<Button
+						variant="outline"
+						size="icon"
+						class="size-12 shrink-0 rounded-full"
+						on:click={(ev) => actionSetBrightness(ev, 10n)}
+						disabled={attrBrightness.value >= 100}
+					>
+						<Plus class="size-5" />
+						<span class="sr-only">Increase</span>
+					</Button>
+					</div>
+				</div>
+			{/if}
+		</Dialog.Content>
+	  </Dialog.Root>
+	{:else}
 	<Drawer.Root bind:open={drawerOpen}>
 		<!-- <Drawer.Trigger asChild let:builder>
 		</Drawer.Trigger> -->
@@ -385,6 +438,7 @@
 			</div>
 		</Drawer.Content>
 	</Drawer.Root>
+	{/if}
 {:else}
 	<p>ERROR Service Type {Service_ServiceType[service.typ]} is not LIGHTBULB</p>
 {/if}
