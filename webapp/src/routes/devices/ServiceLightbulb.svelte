@@ -8,7 +8,8 @@
 		BoolAttribute,
 		IntAttribute,
 		ColorAttribute,
-		DurationAttribute
+		DurationAttribute,
+		IntValue
 	} from '$lib/api/v1/clients/client_service_pb';
 	import { Loader, Lightbulb, LightbulbOff } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
@@ -96,20 +97,47 @@
 		]);
 	};
 
-	let actionOnToggle = async () => {
+	let actionOnToggle = async (ev: MouseEvent) => {
+		ev.stopPropagation();
 		if (attrOn !== undefined) {
 			actionOn(!attrOn.value);
 		}
 	};
+
+	let actionSetBrightness = async (ev: MouseEvent, adjustment: bigint) => {
+		ev.stopPropagation();
+		if (attrBrightness !== undefined) {
+			let val = attrBrightness.value + adjustment;
+			if (val < 0) val = 0n;
+			if (val > 100) val = 100n;
+			action([
+				new Value({
+					id: 'brightness',
+					int: new IntValue({
+						value: val
+					})
+				})
+			]);
+		}
+	};
+
+	import * as Drawer from "$lib/components/ui/drawer";
+	import { Button } from "$lib/components/ui/button";
+	import { Minus, Plus } from 'lucide-svelte';
+
+	let drawerOpen: boolean = false;
+	let openDrawer = () => {
+		drawerOpen = !drawerOpen;
+	};
 </script>
 
 {#if service.typ === Service_ServiceType.LIGHTBULB}
-	<!-- <div class="grid grid-cols-2 gap-4"> -->
-	<div
+	<button
 		class={cn(
-			'rounded-lg border bg-card p-2 text-card-foreground shadow-sm',
+			'rounded-lg border bg-card p-2 text-card-foreground shadow-sm text-left',
 			!online && 'bg-muted'
 		)}
+		on:click={openDrawer}
 	>
 		<div class="flex flex-row gap-2">
 			<div class="shrink">
@@ -172,14 +200,191 @@
 						<p class="text-muted-foreground">{(attrColor.xy.y).toFixed(2)}</p>
 						{/if} -->
 						{/if}
+						<!-- <Button variant="outline" builders={[builder]}>Open</Button> -->
+						<!-- <Button variant="outline" on:click={chopen}>Chopen</Button> -->
 					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-	<!-- <div class="p-4 rounded-lg shadow-lg bg-fuchsia-500">02</div>
-<div class="p-4 rounded-lg shadow-lg bg-fuchsia-500">03</div>
-</div> -->
+	</button>
+
+	<Drawer.Root bind:open={drawerOpen}>
+		<!-- <Drawer.Trigger asChild let:builder>
+		</Drawer.Trigger> -->
+		<Drawer.Content class="max-h-[96%]">
+			<div class="w-full mx-auto flex flex-col overflow-auto p-4 rounded-t-[10px] ">
+			<!-- <div class="min-w-96"> -->
+			<Drawer.Header>
+				<Drawer.Title>{alias}</Drawer.Title>
+				<Drawer.Description>This action cannot be undone.</Drawer.Description>
+			</Drawer.Header>
+			{#if attrBrightness !== undefined}
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+				<Button
+					variant="outline"
+					size="icon"
+					class="size-12 shrink-0 rounded-full"
+					on:click={(ev) => actionSetBrightness(ev, -10n)}
+					disabled={attrBrightness.value <= 0}
+				>
+					<Minus class="size-5" />
+					<span class="sr-only">Decrease</span>
+				</Button>
+				<div class="flex-1 text-center">
+					<div class="flex justify-center content-start">
+						<div class="text-6xl font-bold tracking-tighter">
+							{attrBrightness.value}
+							<span class="text-2xl uppercase text-muted-foreground">%</span>
+						</div>
+					</div>
+				</div>
+				<Button
+					variant="outline"
+					size="icon"
+					class="size-12 shrink-0 rounded-full"
+					on:click={(ev) => actionSetBrightness(ev, 10n)}
+					disabled={attrBrightness.value >= 100}
+				>
+					<Plus class="size-5" />
+					<span class="sr-only">Increase</span>
+				</Button>
+				</div>
+				<div class="mt-3 h-[120px]">
+				<!-- <VisXYContainer {data} height={60}>
+					<VisGroupedBar {x} {y} color="hsl(var(--primary) / 0.2)" />
+				</VisXYContainer> -->
+				</div>
+			</div>
+
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-6xl font-bold tracking-tighter">
+								{attrBrightness.value}
+								<span class="text-2xl uppercase text-muted-foreground">%</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			{/if}
+			<Drawer.Footer>
+				<Drawer.Close>Cancel</Drawer.Close>
+			</Drawer.Footer>
+			<!-- </div> -->
+			</div>
+		</Drawer.Content>
+	</Drawer.Root>
 {:else}
 	<p>ERROR Service Type {Service_ServiceType[service.typ]} is not LIGHTBULB</p>
 {/if}
