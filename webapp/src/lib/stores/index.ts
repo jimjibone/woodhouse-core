@@ -212,9 +212,13 @@ class Streamer {
 				prev.backoff = this.backoff;
 				return prev;
 			});
-			setTimeout(() => {
+			if (this.backoff === 0) {
 				this.retry(client);
-			}, this.backoff);
+			} else {
+				setTimeout(() => {
+					this.retry(client);
+				}, this.backoff);
+			}
 		});
 	};
 }
