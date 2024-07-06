@@ -226,6 +226,7 @@ func main() {
 					}
 				})
 				mux.Handle("/manifest.json", http.FileServer(http.FS(buildfs)))
+				mux.Handle("/service-worker.js", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/favicon.png", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/favicon-128.png", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/favicon-256.png", http.FileServer(http.FS(buildfs)))
