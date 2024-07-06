@@ -225,7 +225,12 @@ func main() {
 						panic(err)
 					}
 				})
+				mux.Handle("/manifest.json", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/favicon.png", http.FileServer(http.FS(buildfs)))
+				mux.Handle("/favicon-128.png", http.FileServer(http.FS(buildfs)))
+				mux.Handle("/favicon-256.png", http.FileServer(http.FS(buildfs)))
+				mux.Handle("/favicon-512.png", http.FileServer(http.FS(buildfs)))
+				mux.Handle("/apple-touch-icon.png", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/_app/", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/api/", http.StripPrefix("/api/", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 					wrappedServer.ServeHTTP(res, req)
