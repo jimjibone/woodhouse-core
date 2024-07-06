@@ -197,11 +197,15 @@ class Streamer {
 	retry = (client: PromiseClient<typeof UserService>) => {
 		streamDevices(client, (resetBackoff: boolean) => {
 			if (resetBackoff) {
-				this.backoff = this.minBackoff;
+				this.backoff = 0;
 			} else {
-				this.backoff = this.backoff * 2;
-				if (this.backoff > this.maxBackoff) {
-					this.backoff = this.maxBackoff;
+				if (this.backoff === 0) {
+					this.backoff = this.minBackoff;
+				} else {
+					this.backoff = this.backoff * 2;
+					if (this.backoff > this.maxBackoff) {
+						this.backoff = this.maxBackoff;
+					}
 				}
 			}
 			update((prev: DeviceStoreType) => {
