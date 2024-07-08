@@ -53,8 +53,8 @@
 					{/if}
 					<div class="flex flex-row gap-2 rounded-lg p-0">
 						{#if attrTemperature !== undefined}
-						<div class="flex flex-row gap-1 items-center">
-							<Thermometer class="size-5"/>
+						<div class="flex flex-row gap-0 items-center">
+							<!-- <Thermometer class="size-4"/> -->
 							<p>
 								{attrTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
 							</p>
@@ -62,15 +62,15 @@
 						{/if}
 						{#if attrHumidity !== undefined}
 						<div class="flex flex-row gap-0 items-center">
-							<Droplet class="text-muted-foreground size-5"/>
+							<!-- <Droplet class="text-muted-foreground size-4"/> -->
 							<p class="text-muted-foreground">
 								{attrHumidity.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 							</p>
 						</div>
 						{/if}
 						{#if attrPressure !== undefined}
-						<div class="flex flex-row gap-1 items-center pl-1">
-							<Gauge class="text-muted-foreground size-5"/>
+						<div class="flex flex-row gap-0.5 items-center">
+							<!-- <Gauge class="text-muted-foreground size-4"/> -->
 							<p class="text-muted-foreground">
 								{attrPressure.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}hPa
 							</p>

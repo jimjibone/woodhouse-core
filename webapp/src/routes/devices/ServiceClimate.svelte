@@ -76,25 +76,25 @@
 						</div>
 					{/if}
 					<div class="flex flex-row gap-2 rounded-lg p-0">
-						{#if attrHeatingSetpoint !== undefined}
-						<div class="flex flex-row gap-1 items-center">
-							<Gauge class="size-5"/>
-							<p>
-								{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
-							</p>
-						</div>
-						{/if}
 						{#if attrLocalTemperature !== undefined}
 						<div class="flex flex-row gap-0 items-center">
-							<Thermometer class="text-muted-foreground size-5"/>
-							<p class="text-muted-foreground">
+							<!-- <Thermometer class="size-5"/> -->
+							<p>
 								{attrLocalTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
 							</p>
 						</div>
 						{/if}
+						{#if attrHeatingSetpoint !== undefined}
+						<div class="flex flex-row gap-0.5 items-center">
+							<!-- <Gauge class="text-muted-foreground size-5"/> -->
+							<p class="text-muted-foreground">
+								{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
+							</p>
+						</div>
+						{/if}
 						{#if attrPIHeatingDemand !== undefined}
-						<div class="flex flex-row gap-1 items-center pl-1">
-							<Power class="text-muted-foreground size-5"/>
+						<div class="flex flex-row gap-0.5 items-center">
+							<!-- <Power class="text-muted-foreground size-5"/> -->
 							<p class="text-muted-foreground">
 								{attrPIHeatingDemand.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 							</p>
