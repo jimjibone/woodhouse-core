@@ -65,13 +65,13 @@
 							{#if attrAvailable.value}
 							<p>
 								Update available
-								{#if attrUpdateVersion !== undefined} {attrUpdateVersion.value}{/if}
-								{#if attrCurrentVersion !== undefined}(from {attrCurrentVersion.value}){/if}
+								<!-- {#if attrUpdateVersion !== undefined} {attrUpdateVersion.value}{/if} -->
+								<!-- {#if attrCurrentVersion !== undefined}(from {attrCurrentVersion.value}){/if} -->
 							</p>
 							{:else}
 							<p>
 								Up to date
-								{#if attrCurrentVersion !== undefined}(version {attrCurrentVersion.value}){/if}
+								<!-- {#if attrCurrentVersion !== undefined}(version {attrCurrentVersion.value}){/if} -->
 							</p>
 							{/if}
 						{/if}
