@@ -32,6 +32,8 @@ type DeviceManager struct {
 	txDeviceUpdates *queue.Pub[*clientsapi.Device]
 	actionRequests  *queue.Pub[ActionRequest]
 	actionResponses *queue.Pub[ActionResponse]
+	imageRequests   *queue.Pub[ImageRequest]
+	imageResponses  *queue.Pub[ImageResponse]
 	devices         map[string]*Device // key=device id
 	changed         bool
 }
@@ -53,6 +55,17 @@ type ActionResponse struct {
 	Offline  bool
 }
 
+type ImageRequest struct {
+	ClientID string
+	Request  *clientsapi.ImageRequest
+}
+
+type ImageResponse struct {
+	ClientID string
+	Response *clientsapi.ImageResponse
+	Offline  bool
+}
+
 func (ar ActionResponse) String() string {
 	if ar.Response != nil {
 		return fmt.Sprintf("client_id:%q response:{%s}", ar.ClientID, ar.Response)
@@ -71,6 +84,8 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 		txDeviceUpdates: queue.NewPub[*clientsapi.Device](),
 		actionRequests:  queue.NewPub[ActionRequest](),
 		actionResponses: queue.NewPub[ActionResponse](),
+		imageRequests:   queue.NewPub[ImageRequest](),
+		imageResponses:  queue.NewPub[ImageResponse](),
 		devices:         make(map[string]*Device),
 	}
 
@@ -135,6 +150,29 @@ func (manager *DeviceManager) PushActionResponse(clientID string, res *clientsap
 
 func (manager *DeviceManager) GetActionResponses() *queue.Sub[ActionResponse] {
 	return manager.actionResponses.NewSub()
+}
+
+func (manager *DeviceManager) PushImageRequest(clientID string, req *clientsapi.ImageRequest) {
+	manager.imageRequests.Pub(ImageRequest{
+		ClientID: clientID,
+		Request:  req,
+	})
+}
+
+func (manager *DeviceManager) GetImageRequests() *queue.Sub[ImageRequest] {
+	return manager.imageRequests.NewSub()
+}
+
+func (manager *DeviceManager) PushImageResponse(clientID string, res *clientsapi.ImageResponse, offline bool) {
+	manager.imageResponses.Pub(ImageResponse{
+		ClientID: clientID,
+		Response: res,
+		Offline:  offline,
+	})
+}
+
+func (manager *DeviceManager) GetImageResponses() *queue.Sub[ImageResponse] {
+	return manager.imageResponses.NewSub()
 }
 
 func (manager *DeviceManager) GetDevices() <-chan *clientsapi.Device {
