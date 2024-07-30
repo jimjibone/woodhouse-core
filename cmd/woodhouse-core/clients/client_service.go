@@ -211,7 +211,7 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 		return err
 	}
 
-	service.log.Infof("action %q started: %s", actionID, req)
+	service.log.Infof("action %q for %q started: %s", actionID, clientID, req)
 	defer service.log.Infof("action %q finished", actionID)
 
 	req.ActionId = actionID
@@ -221,11 +221,32 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 
 	service.deviceManager.PushActionRequest(clientID, req)
 
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	lastStatus := clientsapi.ActionResponse_UNDEFINED
+
 	for {
 		select {
+		case <-ticker.C:
+			// Time out requests if no status has been received.
+			if lastStatus == clientsapi.ActionResponse_UNDEFINED {
+				// Push the update out to the user.
+				err := server.Send(&clientsapi.ActionResponse{
+					ActionId: actionID,
+					Status:   clientsapi.ActionResponse_CANCELED,
+					Details:  "client didn't respond",
+				})
+				if err != nil {
+					service.log.Warnf("action %q send err: %s", actionID, err)
+					return status.Errorf(codes.Unknown, "failed to send")
+				}
+				return nil
+			}
+
 		case update := <-sub.Sub():
-			service.log.Infof("action %q update: %s", actionID, update)
 			if update.ClientID == clientID {
+				service.log.Infof("action %q update: %s", actionID, update)
 				if update.Response != nil {
 					if update.Response.GetActionId() == actionID {
 						// Push the update out to the user.
