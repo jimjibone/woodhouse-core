@@ -67,6 +67,16 @@ tasks:
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
+  build-frigate:
+    cmds:
+      - go build -o {{.BUILD_DIR}}/woodhouse-frigate{{exeExt}} ./cmd/woodhouse-frigate
+
+  run-frigate:
+    deps:
+      - build-frigate
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-frigate{{exeExt}} {{.CLI_ARGS}}
+
   build-whctl:
     cmds:
       - go build -o {{.BUILD_DIR}}/whctl{{exeExt}} ./cmd/whctl
