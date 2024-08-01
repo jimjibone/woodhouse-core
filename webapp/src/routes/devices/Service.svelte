@@ -13,33 +13,38 @@
 	import ServiceEnvironment from './ServiceEnvironment.svelte';
 	import ServiceContact from './ServiceContact.svelte';
 	import ServiceUpdate from './ServiceUpdate.svelte';
+	import ServiceEnum from './ServiceEnum.svelte';
+	import ServiceCamera from './ServiceCamera.svelte';
 
+	export let deviceID: string;
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
-	export let onAction: ((serviceID: string, vals: Value[]) => Promise<void>) | undefined;
+	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (vals: Value[]) => void) => Promise<void>);
 	export let expandable: boolean = true;
 
+	let onActionNoHandler = async (serviceID: string, vals: Value[]) => {
+		onAction(serviceID, vals, (res: Value[]) => {
+			console.error("unused action response values:", res);
+		});
+	};
+
 	let action = async (vals: Value[]) => {
-		if (onAction) {
-			onAction(service.id, vals);
-		}
+		onActionNoHandler(service.id, vals);
 	};
 </script>
 
 {#if !(service.typ === Service_ServiceType.INFO || service.typ === Service_ServiceType.ONLINE)}
 	{#if service.typ === Service_ServiceType.RELAY}
-		<!-- <ServiceRelay online={online} service={service} onAction={onAction} /> -->
-		<ServiceRelay2 {title} {online} {service} {onAction} />
+		<ServiceRelay2 {title} {online} {service} onAction={onActionNoHandler} />
 	{:else if service.typ === Service_ServiceType.INPUT}
-		<!-- <ServiceInput online={online} service={service} onAction={onAction} /> -->
 		<ServiceInput2 {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.LIGHTBULB}
-		<ServiceLightbulb {title} {online} {service} {onAction} />
+		<ServiceLightbulb {title} {online} {service} onAction={onActionNoHandler} />
 	{:else if service.typ === Service_ServiceType.BATTERY}
 		<ServiceBattery {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.CLIMATE}
-		<ServiceClimate {title} {online} {service} {onAction} />
+		<ServiceClimate {title} {online} {service} onAction={onActionNoHandler} />
 	{:else if service.typ === Service_ServiceType.BUTTON}
 		<ServiceButton {title} {online} {service} {expandable} />
 	{:else if service.typ === Service_ServiceType.ENVIRONMENT}
@@ -48,6 +53,10 @@
 		<ServiceContact {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.UPDATE}
 		<ServiceUpdate {title} {online} {service} />
+	{:else if service.typ === Service_ServiceType.ENUM}
+		<ServiceEnum {title} {online} {service} onAction={onActionNoHandler} />
+	{:else if service.typ === Service_ServiceType.CAMERA}
+		<ServiceCamera deviceID={deviceID} {title} {online} {service} onAction={onAction} />
 	{:else if expandable}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">

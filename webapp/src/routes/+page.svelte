@@ -58,7 +58,7 @@
 		{#each dev.services as srv, i (srv.id)}
 			{#if showServiceType(true, srv.typ)}
 			{@const info = getDeviceInfo(dev)}
-			<ServiceComponent title={info.name} online={info.online} service={srv} expandable={false} onAction={(serviceID, val) => {
+			<ServiceComponent deviceID={dev.id} title={info.name} online={info.online} service={srv} expandable={false} onAction={(serviceID, val) => {
 				return DeviceAction(dev.id, serviceID, val);
 			}}/>
 			{/if}

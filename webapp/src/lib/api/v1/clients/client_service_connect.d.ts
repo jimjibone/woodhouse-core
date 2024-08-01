@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ActionRequest, ActionResponse, Device, DeviceStreamRequest, Empty, StatusUpdate } from "./client_service_pb.js";
+import { ActionRequest, ActionResponse, Device, DeviceStreamRequest, Empty, ImageRequest, ImageResponse, StatusUpdate } from "./client_service_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -43,6 +43,15 @@ export declare const ClientService: {
       readonly kind: MethodKind.BiDiStreaming,
     },
     /**
+     * @generated from rpc woodhouse.api.v1.clients.ClientService.ImageStream
+     */
+    readonly imageStream: {
+      readonly name: "ImageStream",
+      readonly I: typeof ImageResponse,
+      readonly O: typeof ImageRequest,
+      readonly kind: MethodKind.BiDiStreaming,
+    },
+    /**
      * Get a stream of Device updates. The first batch of replies will be the
      * current state of the devices, followed by updates when they occur. The
      * stream also includes a 10 second heartbeat (an empty Device) which should
@@ -65,6 +74,17 @@ export declare const ClientService: {
       readonly name: "SendAction",
       readonly I: typeof ActionRequest,
       readonly O: typeof ActionResponse,
+      readonly kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * Send an image request to a device service.
+     *
+     * @generated from rpc woodhouse.api.v1.clients.ClientService.SendImageRequest
+     */
+    readonly sendImageRequest: {
+      readonly name: "SendImageRequest",
+      readonly I: typeof ImageRequest,
+      readonly O: typeof ImageResponse,
       readonly kind: MethodKind.ServerStreaming,
     },
   }

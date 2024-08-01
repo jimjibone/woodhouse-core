@@ -34,7 +34,7 @@
 					: 'offline'}{info.web_url !== '' ? ', ' + info.web_url : ''}
 			</p>
 			{#each device.services as srv, i (srv.id)}
-				<Service online={info.online} service={srv} onAction={action} />
+				<Service deviceID={device.id} online={info.online} service={srv} onAction={action} />
 			{/each}
 		</div>
 	</Card.Content>

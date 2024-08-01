@@ -127,6 +127,48 @@ export const DeviceStreamRequest = /*@__PURE__*/ proto3.makeMessageType(
 );
 
 /**
+ * @generated from message woodhouse.api.v1.clients.ImageRequest
+ */
+export const ImageRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ImageRequest",
+  () => [
+    { no: 1, name: "request_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "device_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "attribute_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ImageResponse
+ */
+export const ImageResponse = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ImageResponse",
+  () => [
+    { no: 1, name: "request_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "status", kind: "enum", T: proto3.getEnumType(ImageResponse_ImageStatus) },
+    { no: 3, name: "details", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+  ],
+);
+
+/**
+ * @generated from enum woodhouse.api.v1.clients.ImageResponse.ImageStatus
+ */
+export const ImageResponse_ImageStatus = /*@__PURE__*/ proto3.makeEnum(
+  "woodhouse.api.v1.clients.ImageResponse.ImageStatus",
+  [
+    {no: 0, name: "UNDEFINED"},
+    {no: 1, name: "PENDING"},
+    {no: 2, name: "SENT"},
+    {no: 3, name: "COMPLETE"},
+    {no: 4, name: "TIMEOUT"},
+    {no: 5, name: "CANCELED"},
+    {no: 6, name: "ERROR"},
+  ],
+);
+
+/**
  * Device contains either the full or partial (update) state of a device. The id
  * field must always be set. All devices are required to implement the Info and
  * Online services, so if full_state is set to true these services must be
@@ -193,6 +235,15 @@ export const Service_ServiceType = /*@__PURE__*/ proto3.makeEnum(
     {no: 10, name: "ENVIRONMENT"},
     {no: 11, name: "CONTACT"},
     {no: 12, name: "UPDATE"},
+    {no: 13, name: "BOOL"},
+    {no: 14, name: "INT"},
+    {no: 15, name: "FLOAT"},
+    {no: 16, name: "TEXT"},
+    {no: 17, name: "DURATION"},
+    {no: 18, name: "TIME"},
+    {no: 19, name: "COLOR"},
+    {no: 20, name: "ENUM"},
+    {no: 21, name: "CAMERA"},
   ],
 );
 
@@ -211,6 +262,7 @@ export const Attribute = /*@__PURE__*/ proto3.makeMessageType(
     { no: 8, name: "time", kind: "message", T: TimeAttribute },
     { no: 10, name: "color", kind: "message", T: ColorAttribute },
     { no: 11, name: "enum", kind: "message", T: EnumAttribute },
+    { no: 12, name: "image", kind: "message", T: ImageAttribute },
   ],
 );
 
@@ -229,6 +281,7 @@ export const Value = /*@__PURE__*/ proto3.makeMessageType(
     { no: 8, name: "time", kind: "message", T: TimeValue },
     { no: 10, name: "color", kind: "message", T: ColorValue },
     { no: 11, name: "enum", kind: "message", T: EnumValue },
+    { no: 12, name: "image", kind: "message", T: ImageValue },
   ],
 );
 
@@ -440,5 +493,21 @@ export const EnumValue = /*@__PURE__*/ proto3.makeMessageType(
   () => [
     { no: 1, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ImageAttribute
+ */
+export const ImageAttribute = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ImageAttribute",
+  [],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ImageValue
+ */
+export const ImageValue = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.ImageValue",
+  [],
 );
 

@@ -313,6 +313,9 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 				service.log.Infof("action %q update: %s", actionID, update)
 				if update.Response != nil {
 					if update.Response.GetActionId() == actionID {
+						// Update the last status.
+						lastStatus = update.Response.Status
+
 						// Push the update out to the user.
 						err := server.Send(&clientsapi.ActionResponse{
 							ActionId: actionID,
@@ -402,6 +405,9 @@ func (service *ClientService) SendImageRequest(req *clientsapi.ImageRequest, ser
 				service.log.Infof("image request %q update: %s", requestID, apitools.ImageResponseString(update.Response))
 				if update.Response != nil {
 					if update.Response.GetRequestId() == requestID {
+						// Update the last status.
+						lastStatus = update.Response.Status
+
 						// Push the update out to the user.
 						err := server.Send(&clientsapi.ImageResponse{
 							RequestId: requestID,

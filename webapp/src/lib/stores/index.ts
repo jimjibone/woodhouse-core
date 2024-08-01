@@ -1,7 +1,10 @@
 import { type Subscriber, writable } from 'svelte/store';
 import {
 	ActionRequest,
+	ActionResponse,
 	Device,
+	ImageRequest,
+	ImageResponse_ImageStatus,
 	Service,
 	Value
 } from '$lib/api/v1/clients/client_service_pb';
@@ -48,7 +51,7 @@ export const DeviceStore = {
 	subscribe
 };
 
-export const DeviceAction = async (deviceID: string, serviceID: string, vals: Value[]) => {
+export const DeviceAction = async (deviceID: string, serviceID: string, vals: Value[], responseHandler: (vals: Value[]) => void) => {
 	const request = new ActionRequest({
 		deviceId: deviceID,
 		serviceId: serviceID,
@@ -59,10 +62,37 @@ export const DeviceAction = async (deviceID: string, serviceID: string, vals: Va
 		for await (const response of client.sendAction(request)) {
 			console.log('received action: ' + response.toJsonString());
 			// responses = [...responses, response];
+			// if (response.values.length > 0) {
+			// 	responseHandler(response.values);
+			// }
+			responseHandler([]);
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error action: ' + err.message);
+		}
+	}
+};
+
+export const SendImageRequest = async (deviceID: string, serviceID: string, attributeID: string, dataHandler: (data: Uint8Array) => void, errHandler: (status: ImageResponse_ImageStatus, details: string) => void) => {
+	const request = new ImageRequest({
+		deviceId: deviceID,
+		serviceId: serviceID,
+		attributeId: attributeID
+	});
+	console.log('sending image request: ' + request.toJsonString());
+	try {
+		for await (const response of client.sendImageRequest(request)) {
+			console.log('received image response: request-id:' + response.requestId + ', status:' + ImageResponse_ImageStatus[response.status] + ', details:' + response.details + ', data:' + response.data.length + ' bytes');
+			if (response.status >= ImageResponse_ImageStatus.TIMEOUT) {
+				errHandler(response.status, response.details);
+			} else if (response.data.length > 0) {
+				dataHandler(response.data);
+			}
+		}
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error image request: ' + err.message);
 		}
 	}
 };

@@ -38,9 +38,10 @@
 	"dependencies": {
 		"@bufbuild/protobuf": "^1.9.0",
 		"@connectrpc/connect-web": "^1.4.0",
-		"bits-ui": "^0.21.11",
+		"bits-ui": "^0.21.12",
 		"chroma-js": "^2.4.2",
 		"clsx": "^2.1.1",
+		"cmdk-sv": "^0.0.17",
 		"lucide-svelte": "^0.372.0",
 		"mode-watcher": "^0.3.0",
 		"svelte-legos": "^0.2.3",

@@ -393,6 +393,148 @@ export declare class DeviceStreamRequest extends Message<DeviceStreamRequest> {
 }
 
 /**
+ * @generated from message woodhouse.api.v1.clients.ImageRequest
+ */
+export declare class ImageRequest extends Message<ImageRequest> {
+  /**
+   * Set by the server.
+   *
+   * @generated from field: string request_id = 1;
+   */
+  requestId: string;
+
+  /**
+   * ID of the device to send the action to.
+   *
+   * @generated from field: string device_id = 2;
+   */
+  deviceId: string;
+
+  /**
+   * ID of the service to request an image from.
+   *
+   * @generated from field: string service_id = 3;
+   */
+  serviceId: string;
+
+  /**
+   * ID of the image attribute to request an image from.
+   *
+   * @generated from field: string attribute_id = 4;
+   */
+  attributeId: string;
+
+  constructor(data?: PartialMessage<ImageRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ImageRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ImageRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ImageRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ImageRequest;
+
+  static equals(a: ImageRequest | PlainMessage<ImageRequest> | undefined, b: ImageRequest | PlainMessage<ImageRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ImageResponse
+ */
+export declare class ImageResponse extends Message<ImageResponse> {
+  /**
+   * @generated from field: string request_id = 1;
+   */
+  requestId: string;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ImageResponse.ImageStatus status = 2;
+   */
+  status: ImageResponse_ImageStatus;
+
+  /**
+   * @generated from field: string details = 3;
+   */
+  details: string;
+
+  /**
+   * @generated from field: bytes data = 4;
+   */
+  data: Uint8Array;
+
+  constructor(data?: PartialMessage<ImageResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ImageResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ImageResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ImageResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ImageResponse;
+
+  static equals(a: ImageResponse | PlainMessage<ImageResponse> | undefined, b: ImageResponse | PlainMessage<ImageResponse> | undefined): boolean;
+}
+
+/**
+ * @generated from enum woodhouse.api.v1.clients.ImageResponse.ImageStatus
+ */
+export declare enum ImageResponse_ImageStatus {
+  /**
+   * No status defined.
+   *
+   * @generated from enum value: UNDEFINED = 0;
+   */
+  UNDEFINED = 0,
+
+  /**
+   * The action is queued for transmission to the device.
+   *
+   * @generated from enum value: PENDING = 1;
+   */
+  PENDING = 1,
+
+  /**
+   * The action has been sent to the device.
+   *
+   * @generated from enum value: SENT = 2;
+   */
+  SENT = 2,
+
+  /**
+   * Note all enums beyond this point indicate a final response.
+   *
+   * The action was completed by the device.
+   *
+   * @generated from enum value: COMPLETE = 3;
+   */
+  COMPLETE = 3,
+
+  /**
+   * The action was not acknowledged by the device before the timeout.
+   *
+   * @generated from enum value: TIMEOUT = 4;
+   */
+  TIMEOUT = 4,
+
+  /**
+   * The action was canceled before a final response was received.
+   *
+   * @generated from enum value: CANCELED = 5;
+   */
+  CANCELED = 5,
+
+  /**
+   * The action failed due to an error. See details.
+   *
+   * @generated from enum value: ERROR = 6;
+   */
+  ERROR = 6,
+}
+
+/**
  * Device contains either the full or partial (update) state of a device. The id
  * field must always be set. All devices are required to implement the Info and
  * Online services, so if full_state is set to true these services must be
@@ -604,6 +746,51 @@ export declare enum Service_ServiceType {
    * @generated from enum value: UPDATE = 12;
    */
   UPDATE = 12,
+
+  /**
+   * @generated from enum value: BOOL = 13;
+   */
+  BOOL = 13,
+
+  /**
+   * @generated from enum value: INT = 14;
+   */
+  INT = 14,
+
+  /**
+   * @generated from enum value: FLOAT = 15;
+   */
+  FLOAT = 15,
+
+  /**
+   * @generated from enum value: TEXT = 16;
+   */
+  TEXT = 16,
+
+  /**
+   * @generated from enum value: DURATION = 17;
+   */
+  DURATION = 17,
+
+  /**
+   * @generated from enum value: TIME = 18;
+   */
+  TIME = 18,
+
+  /**
+   * @generated from enum value: COLOR = 19;
+   */
+  COLOR = 19,
+
+  /**
+   * @generated from enum value: ENUM = 20;
+   */
+  ENUM = 20,
+
+  /**
+   * @generated from enum value: CAMERA = 21;
+   */
+  CAMERA = 21,
 }
 
 /**
@@ -638,7 +825,7 @@ export declare class Attribute extends Message<Attribute> {
   text?: TextAttribute;
 
   /**
-   * ActionAttribute action     = 6;
+   * ActionAttribute    action     = 6;
    *
    * @generated from field: woodhouse.api.v1.clients.DurationAttribute duration = 7;
    */
@@ -660,6 +847,11 @@ export declare class Attribute extends Message<Attribute> {
    * @generated from field: woodhouse.api.v1.clients.EnumAttribute enum = 11;
    */
   enum?: EnumAttribute;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ImageAttribute image = 12;
+   */
+  image?: ImageAttribute;
 
   constructor(data?: PartialMessage<Attribute>);
 
@@ -708,7 +900,7 @@ export declare class Value extends Message<Value> {
   text?: TextValue;
 
   /**
-   * ActionValue action     = 6;
+   * ActionValue    action     = 6;
    *
    * @generated from field: woodhouse.api.v1.clients.DurationValue duration = 7;
    */
@@ -730,6 +922,11 @@ export declare class Value extends Message<Value> {
    * @generated from field: woodhouse.api.v1.clients.EnumValue enum = 11;
    */
   enum?: EnumValue;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.ImageValue image = 12;
+   */
+  image?: ImageValue;
 
   constructor(data?: PartialMessage<Value>);
 
@@ -1338,5 +1535,43 @@ export declare class EnumValue extends Message<EnumValue> {
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EnumValue;
 
   static equals(a: EnumValue | PlainMessage<EnumValue> | undefined, b: EnumValue | PlainMessage<EnumValue> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ImageAttribute
+ */
+export declare class ImageAttribute extends Message<ImageAttribute> {
+  constructor(data?: PartialMessage<ImageAttribute>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ImageAttribute";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ImageAttribute;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ImageAttribute;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ImageAttribute;
+
+  static equals(a: ImageAttribute | PlainMessage<ImageAttribute> | undefined, b: ImageAttribute | PlainMessage<ImageAttribute> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ImageValue
+ */
+export declare class ImageValue extends Message<ImageValue> {
+  constructor(data?: PartialMessage<ImageValue>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.ImageValue";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ImageValue;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ImageValue;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ImageValue;
+
+  static equals(a: ImageValue | PlainMessage<ImageValue> | undefined, b: ImageValue | PlainMessage<ImageValue> | undefined): boolean;
 }
 

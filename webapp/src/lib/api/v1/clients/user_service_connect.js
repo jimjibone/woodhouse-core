@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { DevicesStreamRequest, GetDevicesRequest } from "./user_service_pb.js";
-import { ActionRequest, ActionResponse, Device } from "./client_service_pb.js";
+import { ActionRequest, ActionResponse, Device, ImageRequest, ImageResponse } from "./client_service_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -37,12 +37,25 @@ export const UserService = {
       kind: MethodKind.ServerStreaming,
     },
     /**
+     * Send an action to a device service.
+     *
      * @generated from rpc woodhouse.api.v1.clients.UserService.SendAction
      */
     sendAction: {
       name: "SendAction",
       I: ActionRequest,
       O: ActionResponse,
+      kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * Send an image request to a device service.
+     *
+     * @generated from rpc woodhouse.api.v1.clients.UserService.SendImageRequest
+     */
+    sendImageRequest: {
+      name: "SendImageRequest",
+      I: ImageRequest,
+      O: ImageResponse,
       kind: MethodKind.ServerStreaming,
     },
   }
