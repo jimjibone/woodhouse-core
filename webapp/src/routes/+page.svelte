@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { DeviceAction, DeviceStore, type DeviceStoreType } from '$lib/stores';
+	import { DeviceStore, type DeviceStoreType } from '$lib/stores';
 	import ServiceComponent from './devices/Service.svelte';
 	import { getDeviceInfo } from '$lib/apitools';
 	import * as Menubar from "$lib/components/ui/menubar";
@@ -58,9 +58,7 @@
 		{#each dev.services as srv, i (srv.id)}
 			{#if showServiceType(true, srv.typ)}
 			{@const info = getDeviceInfo(dev)}
-			<ServiceComponent deviceID={dev.id} title={info.name} online={info.online} service={srv} expandable={false} onAction={(serviceID, val) => {
-				return DeviceAction(dev.id, serviceID, val);
-			}}/>
+			<ServiceComponent deviceID={dev.id} title={info.name} online={info.online} service={srv} expandable={false}/>
 			{/if}
 		{/each}
 	{:else}

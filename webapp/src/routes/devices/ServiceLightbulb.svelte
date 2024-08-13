@@ -9,7 +9,8 @@
 		IntAttribute,
 		ColorAttribute,
 		DurationAttribute,
-		IntValue
+		IntValue,
+		ActionResponse
 	} from '$lib/api/v1/clients/client_service_pb';
 	import { Loader, Lightbulb, LightbulbOff } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
@@ -18,7 +19,7 @@
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
-	export let onAction: ((serviceID: string, vals: Value[]) => Promise<void>) | undefined;
+	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => Promise<void>) | undefined;
 
 	$: alias = title ? title + (service.alias !== '' ? ': ' + service.alias : '') : service.alias;
 	let attrOn: BoolAttribute | undefined;
@@ -81,8 +82,9 @@
 	let action = async (vals: Value[]) => {
 		if (onAction) {
 			actionPending = true;
-			await onAction(service.id, vals);
-			actionPending = false;
+			await onAction(service.id, vals, (response: ActionResponse) => {
+				actionPending = false;
+			});
 		}
 	};
 
@@ -126,6 +128,7 @@
 	import * as Drawer from "$lib/components/ui/drawer";
 	import { Button } from "$lib/components/ui/button";
 	import { Minus, Plus } from 'lucide-svelte';
+	import { ActionResponse_ActionStatus } from '@/api/v1/clients/client_service_pb';
 
 	const isDesktop = mediaQuery("(min-width: 768px)");
 	let drawerOpen: boolean = false;

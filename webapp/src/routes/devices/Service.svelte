@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { Service, Service_ServiceType, Value } from '$lib/api/v1/clients/client_service_pb';
+	import { ActionResponse, Service, Service_ServiceType, Value } from '$lib/api/v1/clients/client_service_pb';
 
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+	import { SendActionRequest } from '$lib/stores';
 	import ServiceHeader from './ServiceHeader.svelte';
 	import ServiceInput2 from './ServiceInput2.svelte';
 	import ServiceRelay2 from './ServiceRelay2.svelte';
@@ -20,16 +21,19 @@
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
-	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (vals: Value[]) => void) => Promise<void>);
 	export let expandable: boolean = true;
 
 	let onActionNoHandler = async (serviceID: string, vals: Value[]) => {
-		onAction(serviceID, vals, (res: Value[]) => {
-			console.error("unused action response values:", res);
+		SendActionRequest(deviceID, serviceID, vals, (response: ActionResponse) => {
+			console.error("unused action response values:", response.toJsonString());
 		});
 	};
 
-	let action = async (vals: Value[]) => {
+	let onActionWithHandler = async (serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => {
+		SendActionRequest(deviceID, serviceID, vals, responseHandler);
+	};
+
+	let legacyAction = async (vals: Value[]) => {
 		onActionNoHandler(service.id, vals);
 	};
 </script>
@@ -40,7 +44,7 @@
 	{:else if service.typ === Service_ServiceType.INPUT}
 		<ServiceInput2 {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.LIGHTBULB}
-		<ServiceLightbulb {title} {online} {service} onAction={onActionNoHandler} />
+		<ServiceLightbulb {title} {online} {service} onAction={onActionWithHandler} />
 	{:else if service.typ === Service_ServiceType.BATTERY}
 		<ServiceBattery {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.CLIMATE}
@@ -56,7 +60,7 @@
 	{:else if service.typ === Service_ServiceType.ENUM}
 		<ServiceEnum {title} {online} {service} onAction={onActionNoHandler} />
 	{:else if service.typ === Service_ServiceType.CAMERA}
-		<ServiceCamera deviceID={deviceID} {title} {online} {service} onAction={onAction} />
+		<ServiceCamera deviceID={deviceID} {title} {online} {service} onAction={onActionWithHandler} />
 	{:else if expandable}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">
@@ -66,7 +70,7 @@
 				<ScrollArea class="w-auto whitespace-nowrap" orientation="horizontal">
 					<div class="flex w-auto space-x-4">
 						{#each service.attrs as attr, i}
-							<BoxedAttribute {online} {attr} onAction={action} />
+							<BoxedAttribute {online} {attr} onAction={legacyAction} />
 						{/each}
 					</div>
 				</ScrollArea>

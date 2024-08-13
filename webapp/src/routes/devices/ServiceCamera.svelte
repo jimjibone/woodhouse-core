@@ -15,6 +15,7 @@
 		ImageValue,
 		Value,
 		ImageResponse_ImageStatus,
+		ActionResponse,
 	} from '$lib/api/v1/clients/client_service_pb';
 
 	import { SendImageRequest } from '$lib/stores';
@@ -23,7 +24,7 @@
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
-	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (vals: Value[]) => void) => Promise<void>) | undefined;
+	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => Promise<void>) | undefined;
 
 	let attrImage: ImageAttribute | undefined;
 	let showOptions: boolean = false;
