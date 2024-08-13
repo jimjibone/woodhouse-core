@@ -193,12 +193,14 @@ func main() {
 				if err := server.Serve(apiLis); err != nil {
 					serverErr <- fmt.Errorf("grpc server: %w", err)
 				}
+				server.GracefulStop()
 			}()
 			go func() {
 				log.Infof("insecure api server ready at grpc://%s", insecureApiLis.Addr())
 				if err := insecureServer.Serve(insecureApiLis); err != nil {
 					serverErr <- fmt.Errorf("grpc insecure server: %w", err)
 				}
+				insecureServer.GracefulStop()
 			}()
 
 			// Run the web server with grpc-web support.
