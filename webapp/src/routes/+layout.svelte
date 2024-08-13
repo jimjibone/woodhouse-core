@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { Toaster } from "$lib/components/ui/sonner";
 
 	import {
 		Sun,
@@ -20,6 +21,8 @@
 </script>
 
 <ModeWatcher themeColors={{ dark: "#09090b", light: "#ffffff" }}/>
+
+<Toaster closeButton richColors />
 
 <div class="grid h-screen w-full pl-[53px]">
 	<aside class="inset-y fixed left-0 z-20 flex h-full flex-col border-r">

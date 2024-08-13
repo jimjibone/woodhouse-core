@@ -15,6 +15,7 @@
 	import { Loader, Lightbulb, LightbulbOff } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
 	import chroma from 'chroma-js';
+	import { toast } from "svelte-sonner";
 
 	export let title: string | undefined = undefined;
 	export let online: boolean;
@@ -84,6 +85,11 @@
 			actionPending = true;
 			await onAction(service.id, vals, (response: ActionResponse) => {
 				actionPending = false;
+				if (response.status >= ActionResponse_ActionStatus.TIMEOUT) {
+					toast.error("Action Failed", {
+						description: response.details
+					})
+				}
 			});
 		}
 	};
