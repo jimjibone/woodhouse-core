@@ -38,8 +38,8 @@ func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server
 }
 
 func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, server clientsapi.UserService_DevicesStreamServer) error {
-	service.log.Infof("device stream started")
-	defer service.log.Infof("device stream finished")
+	service.log.Infof("devices stream started")
+	defer service.log.Infof("devices stream finished")
 
 	sub := service.deviceManager.GetDeviceUpdates()
 	defer sub.Close()
