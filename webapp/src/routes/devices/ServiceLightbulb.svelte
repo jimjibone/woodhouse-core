@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { ServiceRoot } from '$lib/components/wh/service'
+	import { Button } from "$lib/components/ui/button";
 	import {
 		Service,
 		Service_ServiceType,
@@ -10,9 +12,10 @@
 		ColorAttribute,
 		DurationAttribute,
 		IntValue,
-		ActionResponse
+		ActionResponse,
+		ActionResponse_ActionStatus
 	} from '$lib/api/v1/clients/client_service_pb';
-	import { Loader, Lightbulb, LightbulbOff } from 'lucide-svelte';
+	import { Loader, Lightbulb, LightbulbOff, Minus, Plus } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
 	import chroma from 'chroma-js';
 	import { toast } from "svelte-sonner";
@@ -22,7 +25,6 @@
 	export let service: Service;
 	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => Promise<void>) | undefined;
 
-	$: alias = title ? title + (service.alias !== '' ? ': ' + service.alias : '') : service.alias;
 	let attrOn: BoolAttribute | undefined;
 	let attrBrightness: IntAttribute | undefined;
 	let attrColorTemp: IntAttribute | undefined;
@@ -128,109 +130,62 @@
 			]);
 		}
 	};
-
-	import { mediaQuery } from "svelte-legos";
-	import * as Dialog from "$lib/components/ui/dialog/index.js";
-	import * as Drawer from "$lib/components/ui/drawer";
-	import { Button } from "$lib/components/ui/button";
-	import { Minus, Plus } from 'lucide-svelte';
-	import { ActionResponse_ActionStatus } from '@/api/v1/clients/client_service_pb';
-
-	const isDesktop = mediaQuery("(min-width: 768px)");
-	let drawerOpen: boolean = false;
-	let openDrawer = () => {
-		drawerOpen = true;
-	};
-	let closeDrawer = () => {
-		drawerOpen = false;
-	};
 </script>
 
 {#if service.typ === Service_ServiceType.LIGHTBULB}
-	<button
-		class={cn(
-			'rounded-lg border bg-card p-2 text-card-foreground shadow-sm text-left',
-			!online && 'bg-muted'
-		)}
-		on:click={openDrawer}
-	>
-		<div class="flex flex-row gap-2">
-			<div class="shrink">
-				<div class="grid h-full place-content-center">
-					{#if displayOn}
-						<button
-							class={cn('rounded-full p-2')}
-							style="color: {buttonForeground}; background-color: {buttonBackground};"
-							on:click={actionOnToggle}
-						>
-							{#if actionPending}
-								<Loader />
-							{:else}
-								<Lightbulb />
-							{/if}
-						</button>
+	<ServiceRoot title={title} alias={service.alias} online={online}>
+		<span slot="icon">
+			{#if displayOn}
+				<button
+					class={cn('rounded-full p-2')}
+					style="color: {buttonForeground}; background-color: {buttonBackground};"
+					on:click={actionOnToggle}
+				>
+					{#if actionPending}
+						<Loader />
 					{:else}
-						<button
-							class={cn('rounded-full p-2', 'bg-muted text-secondary-foreground')}
-							on:click={actionOnToggle}
-						>
-							{#if actionPending}
-								<Loader />
-							{:else}
-								<LightbulbOff />
-							{/if}
-						</button>
+						<Lightbulb />
 					{/if}
-				</div>
-			</div>
-			<div class="grow">
-				<div class="flex h-full flex-col justify-center gap-0">
-					{#if alias !== ''}
-						<div class="rounded-lg p-0">
-							<p class="font-semibold">{alias}</p>
-						</div>
+				</button>
+			{:else}
+				<button
+					class={cn('rounded-full p-2', 'bg-muted text-secondary-foreground')}
+					on:click={actionOnToggle}
+				>
+					{#if actionPending}
+						<Loader />
+					{:else}
+						<LightbulbOff />
 					{/if}
-					<div class="flex flex-row gap-2 rounded-lg p-0">
-						{#if attrOn !== undefined}
-							<p>{attrOn.value ? 'On' : 'Off'}</p>
-						{/if}
-						{#if attrBrightness !== undefined}
-							<p class="text-muted-foreground">
-								{attrBrightness.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
-							</p>
-						{/if}
-						{#if attrColorTemp !== undefined}
-							<!-- <p class="text-muted-foreground">{(1 / Number(attrColorTemp.value) * 1000000.0).toLocaleString(undefined, { maximumFractionDigits: 0 })}°K</p> -->
-							<p class="text-muted-foreground">
-								{((1 / Number(attrColorTemp.value)) * 1000000.0).toFixed(0)}°K
-							</p>
-						{/if}
-						{#if attrColor !== undefined}
-							{#if attrColor.hueSat !== undefined}
-								<p class="text-muted-foreground">Hue {attrColor.hueSat.hue.toFixed(0)}°</p>
-								<p class="text-muted-foreground">Sat {attrColor.hueSat.sat.toFixed(0)}%</p>
-							{/if}
-							<!-- {#if attrColor.xy !== undefined}
-						<p class="text-muted-foreground">{(attrColor.xy.x).toFixed(2)}</p>
-						<p class="text-muted-foreground">{(attrColor.xy.y).toFixed(2)}</p>
-						{/if} -->
-						{/if}
-						<!-- <Button variant="outline" builders={[builder]}>Open</Button> -->
-						<!-- <Button variant="outline" on:click={chopen}>Chopen</Button> -->
-					</div>
-				</div>
+				</button>
+			{/if}
+		</span>
+		<span slot="details">
+			<div class="flex flex-row gap-2 rounded-lg p-0">
+				{#if attrOn !== undefined}
+					<p>{attrOn.value ? 'On' : 'Off'}</p>
+				{/if}
+				{#if attrBrightness !== undefined}
+					<p class="text-muted-foreground">
+						{attrBrightness.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
+					</p>
+				{/if}
+				{#if attrColorTemp !== undefined}
+					<p class="text-muted-foreground">
+						{((1 / Number(attrColorTemp.value)) * 1000000.0).toFixed(0)}°K
+					</p>
+				{/if}
+				{#if attrColor !== undefined}
+					{#if attrColor.hueSat !== undefined}
+						<p class="text-muted-foreground">Hue {attrColor.hueSat.hue.toFixed(0)}°</p>
+						<p class="text-muted-foreground">Sat {attrColor.hueSat.sat.toFixed(0)}%</p>
+					{/if}
+				{/if}
 			</div>
-		</div>
-	</button>
-
-	{#if $isDesktop}
-	<Dialog.Root bind:open={drawerOpen}>
-		<Dialog.Content>
-			<Dialog.Header>
-				<Dialog.Title>{alias}</Dialog.Title>
-			</Dialog.Header>
+		</span>
+		<span slot="dialog-desktop">
 			{#if attrBrightness !== undefined}
-			<p>Brightness</p>
+				<p class="text-center">Brightness</p>
 				<div class="p-4 pb-0">
 					<div class="flex items-center justify-center space-x-2">
 					<Button
@@ -264,54 +219,46 @@
 					</div>
 				</div>
 			{/if}
-		</Dialog.Content>
-	  </Dialog.Root>
-	{:else}
-	<Drawer.Root bind:open={drawerOpen}>
-		<Drawer.Content class="max-h-[96%]">
-			<div class="w-full mx-auto flex flex-col overflow-auto p-4 rounded-t-[10px] ">
-			<Drawer.Header>
-				<Drawer.Title>{alias}</Drawer.Title>
-			</Drawer.Header>
+		</span>
+		<span slot="dialog-mobile">
 			{#if attrBrightness !== undefined}
-			<div class="p-4 pb-0">
-				<div class="flex items-center justify-center space-x-2">
-					<Button
-						variant="outline"
-						size="icon"
-						class="size-10 shrink-0 rounded-full"
-						on:click={(ev) => actionSetBrightness(ev, -10n)}
-						disabled={attrBrightness.value <= 0}
-					>
-						<Minus class="size-5" />
-						<span class="sr-only">Decrease</span>
-					</Button>
-					<div class="flex-1 text-center">
-						<div class="flex justify-center content-start">
-							<div class="text-3xl font-bold tracking-tighter">
-								{attrBrightness.value}
-								<span class="text-2xl uppercase text-muted-foreground">%</span>
+				<p class="text-center">Brightness</p>
+				<div class="p-4 pb-0">
+					<div class="flex items-center justify-center space-x-2">
+						<Button
+							variant="outline"
+							size="icon"
+							class="size-12 shrink-0 rounded-full"
+							on:click={(ev) => actionSetBrightness(ev, -10n)}
+							disabled={attrBrightness.value <= 0}
+						>
+							<Minus class="size-5" />
+							<span class="sr-only">Decrease</span>
+						</Button>
+						<div class="flex-1 text-center">
+							<div class="flex justify-center content-start">
+								<div class="text-4xl font-bold tracking-tighter">
+									{attrBrightness.value}
+									<span class="text-2xl uppercase text-muted-foreground">%</span>
+								</div>
 							</div>
 						</div>
+						<Button
+							variant="outline"
+							size="icon"
+							class="size-12 shrink-0 rounded-full"
+							on:click={(ev) => actionSetBrightness(ev, 10n)}
+							disabled={attrBrightness.value >= 100}
+						>
+							<Plus class="size-5" />
+							<span class="sr-only">Increase</span>
+						</Button>
 					</div>
-					<Button
-						variant="outline"
-						size="icon"
-						class="size-10 shrink-0 rounded-full"
-						on:click={(ev) => actionSetBrightness(ev, 10n)}
-						disabled={attrBrightness.value >= 100}
-					>
-						<Plus class="size-5" />
-						<span class="sr-only">Increase</span>
-					</Button>
+					<div class="mt-3 h-[30px]"></div>
 				</div>
-				<div class="mt-3 h-[30px]"></div>
-			</div>
 			{/if}
-			</div>
-		</Drawer.Content>
-	</Drawer.Root>
-	{/if}
+		</span>
+	</ServiceRoot>
 {:else}
 	<p>ERROR Service Type {Service_ServiceType[service.typ]} is not LIGHTBULB</p>
 {/if}
