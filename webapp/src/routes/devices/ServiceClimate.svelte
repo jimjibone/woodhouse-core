@@ -1,12 +1,17 @@
 <script lang="ts">
+	import { ServiceRoot } from '$lib/components/wh/service';
+	import { Button } from "$lib/components/ui/button";
 	import {
 		Service,
 		Service_ServiceType,
 		Value,
 		FloatAttribute,
-		IntAttribute
+		IntAttribute,
+
+		FloatValue
+
 	} from '$lib/api/v1/clients/client_service_pb';
-	import { Gauge, Power, Thermometer } from 'lucide-svelte';
+	import { Gauge, Power, Thermometer, Minus, Plus } from 'lucide-svelte';
 	import { cn } from '$lib/utils.js';
 
 	export let title: string | undefined = undefined;
@@ -40,74 +45,100 @@
 		}
 	};
 
-	// let actionOn = async (val: boolean) => {
-	// 	action([
-	// 		new Value({
-	// 			id: 'on',
-	// 			bool: new BoolValue({
-	// 				value: val
-	// 			})
-	// 		})
-	// 	]);
-	// };
+	let actionSetHeatingSetpoint = async (ev: MouseEvent, adjustment: number) => {
+		ev.stopPropagation();
+		if (attrHeatingSetpoint !== undefined) {
+			let val = attrHeatingSetpoint.value + adjustment;
+			if (val < attrHeatingSetpoint.min) val = attrHeatingSetpoint.min;
+			if (val > attrHeatingSetpoint.max) val = attrHeatingSetpoint.max;
+			action([
+				new Value({
+					id: 'heating_setpoint',
+					float: new FloatValue({
+						value: val
+					})
+				})
+			]);
+		}
+	};
 </script>
 
 {#if service.typ === Service_ServiceType.CLIMATE}
-	<!-- <div class="grid grid-cols-2 gap-4"> -->
-	<div
-		class={cn(
-			'rounded-lg border bg-card p-2 text-card-foreground shadow-sm',
-			!online && 'bg-muted'
-		)}
-	>
-		<div class="flex flex-row gap-2">
-			<div class="shrink">
-				<div class="grid h-full place-content-center">
-					<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
-						<Thermometer/>
+	<ServiceRoot title={title} alias={service.alias} online={online}>
+		<span slot="icon">
+			<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
+				<Thermometer/>
+			</div>
+		</span>
+		<span slot="details">
+			<div class="flex flex-row gap-2 rounded-lg p-0">
+				{#if attrLocalTemperature !== undefined}
+				<div class="flex flex-row gap-0 items-center">
+					<!-- <Thermometer class="size-5"/> -->
+					<p>
+						{attrLocalTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
+					</p>
+				</div>
+				{/if}
+				{#if attrHeatingSetpoint !== undefined}
+				<div class="flex flex-row gap-0.5 items-center">
+					<!-- <Gauge class="text-muted-foreground size-5"/> -->
+					<p class="text-muted-foreground">
+						{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
+					</p>
+				</div>
+				{/if}
+				{#if attrPIHeatingDemand !== undefined}
+				<div class="flex flex-row gap-0.5 items-center">
+					<!-- <Power class="text-muted-foreground size-5"/> -->
+					<p class="text-muted-foreground">
+						{attrPIHeatingDemand.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
+					</p>
+				</div>
+				{/if}
+			</div>
+		</span>
+		<span slot="dialog-desktop">
+			{#if attrHeatingSetpoint !== undefined}
+			<p class="text-center">Heating Setpoint</p>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+				<Button
+					variant="outline"
+					size="icon"
+					class="size-12 shrink-0 rounded-full"
+					on:click={(ev) => actionSetHeatingSetpoint(ev, -0.5)}
+					disabled={attrHeatingSetpoint.value <= attrHeatingSetpoint.min}
+				>
+					<Minus class="size-5" />
+					<span class="sr-only">Decrease</span>
+				</Button>
+				<div class="flex-1 text-center">
+					<div class="flex justify-center content-start">
+						<div class="text-4xl font-bold tracking-tighter">
+							{attrHeatingSetpoint.value}
+							<span class="text-2xl uppercase text-muted-foreground">°C</span>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="grow">
-				<div class="flex h-full flex-col justify-center gap-0">
-					{#if alias !== ''}
-						<div class="rounded-lg p-0">
-							<p class="font-semibold">{alias}</p>
-						</div>
-					{/if}
-					<div class="flex flex-row gap-2 rounded-lg p-0">
-						{#if attrLocalTemperature !== undefined}
-						<div class="flex flex-row gap-0 items-center">
-							<!-- <Thermometer class="size-5"/> -->
-							<p>
-								{attrLocalTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
-							</p>
-						</div>
-						{/if}
-						{#if attrHeatingSetpoint !== undefined}
-						<div class="flex flex-row gap-0.5 items-center">
-							<!-- <Gauge class="text-muted-foreground size-5"/> -->
-							<p class="text-muted-foreground">
-								{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
-							</p>
-						</div>
-						{/if}
-						{#if attrPIHeatingDemand !== undefined}
-						<div class="flex flex-row gap-0.5 items-center">
-							<!-- <Power class="text-muted-foreground size-5"/> -->
-							<p class="text-muted-foreground">
-								{attrPIHeatingDemand.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
-							</p>
-						</div>
-						{/if}
-					</div>
+				<Button
+					variant="outline"
+					size="icon"
+					class="size-12 shrink-0 rounded-full"
+					on:click={(ev) => actionSetHeatingSetpoint(ev, 0.5)}
+					disabled={attrHeatingSetpoint.value >= attrHeatingSetpoint.max}
+				>
+					<Plus class="size-5" />
+					<span class="sr-only">Increase</span>
+				</Button>
 				</div>
 			</div>
-		</div>
-	</div>
-	<!-- <div class="p-4 rounded-lg shadow-lg bg-fuchsia-500">02</div>
-<div class="p-4 rounded-lg shadow-lg bg-fuchsia-500">03</div>
-</div> -->
+		{/if}
+		</span>
+		<span slot="dialog-mobile">
+
+		</span>
+	</ServiceRoot>
 {:else}
 	<p>ERROR Service Type {Service_ServiceType[service.typ]} is not CLIMATE</p>
 {/if}

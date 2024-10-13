@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ServiceRoot } from '$lib/components/wh/service'
+	import { ServiceRoot } from '$lib/components/wh/service';
 	import { Button } from "$lib/components/ui/button";
 	import {
 		Service,
