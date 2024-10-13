@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -77,11 +78,25 @@ func reactorFunc(client *wh.Client) {
 	relayReactor.OnOnlineUpdated(func(srv *reactors.OnlineService) {
 		log.Infof("relay %q online changed %t %s", relayReactor.Info().Name(), srv.Online(), srv.LastSeen())
 	})
-	relayReactor.OnRelayUpdated(func(srv *reactors.RelayService) {
+	relayReactor.OnRelayUpdated("relay", func(srv *reactors.RelayService) {
 		log.Infof("relay %q relay changed on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C", relayReactor.Info().Name(), srv.On(), srv.Voltage(), srv.Current(), srv.Power(), srv.Temperature())
 	})
 
+	count := 0
 	for range ticker.C {
-		log.Infof("relay %q online: %t, on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C", relayReactor.Info().Name(), relayReactor.Online().Online(), relayReactor.Relay().On(), relayReactor.Relay().Voltage(), relayReactor.Relay().Current(), relayReactor.Relay().Power(), relayReactor.Relay().Temperature())
+		relay := relayReactor.Relay("relay")
+		if relay != nil {
+			log.Infof("relay %q online: %t, on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C", relayReactor.Info().Name(), relayReactor.Online().Online(), relay.On(), relay.Voltage(), relay.Current(), relay.Power(), relay.Temperature())
+
+			if count%5 == 0 {
+				err := relay.SetOn(context.Background(), !relay.On())
+				if err != nil {
+					log.Errorf("relay set failed: %s", err)
+				}
+			}
+			count++
+		} else {
+			log.Infof("no relay")
+		}
 	}
 }
