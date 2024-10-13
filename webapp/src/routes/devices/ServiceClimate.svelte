@@ -99,7 +99,7 @@
 			</div>
 		</span>
 		<span slot="dialog-desktop">
-			{#if attrHeatingSetpoint !== undefined}
+		{#if attrHeatingSetpoint !== undefined}
 			<p class="text-center">Heating Setpoint</p>
 			<div class="p-4 pb-0">
 				<div class="flex items-center justify-center space-x-2">
@@ -136,7 +136,42 @@
 		{/if}
 		</span>
 		<span slot="dialog-mobile">
-
+		{#if attrHeatingSetpoint !== undefined}
+			<p class="text-center">Heating Setpoint</p>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<Button
+						variant="outline"
+						size="icon"
+						class="size-12 shrink-0 rounded-full"
+						on:click={(ev) => actionSetHeatingSetpoint(ev, -0.5)}
+						disabled={attrHeatingSetpoint.value <= attrHeatingSetpoint.min}
+					>
+						<Minus class="size-5" />
+						<span class="sr-only">Decrease</span>
+					</Button>
+					<div class="flex-1 text-center">
+						<div class="flex justify-center content-start">
+							<div class="text-4xl font-bold tracking-tighter">
+								{attrHeatingSetpoint.value}
+								<span class="text-2xl uppercase text-muted-foreground">°C</span>
+							</div>
+						</div>
+					</div>
+					<Button
+						variant="outline"
+						size="icon"
+						class="size-12 shrink-0 rounded-full"
+						on:click={(ev) => actionSetHeatingSetpoint(ev, 0.5)}
+						disabled={attrHeatingSetpoint.value >= attrHeatingSetpoint.max}
+					>
+						<Plus class="size-5" />
+						<span class="sr-only">Increase</span>
+					</Button>
+				</div>
+				<div class="mt-3 h-[30px]"></div>
+			</div>
+		{/if}
 		</span>
 	</ServiceRoot>
 {:else}
