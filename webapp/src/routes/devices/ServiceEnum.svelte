@@ -156,10 +156,7 @@
 						{#each attrValue.options as option}
 							<Command.Item
 								value={option}
-								onSelect={(currentValue) => {
-									action(currentValue);
-									closeAndFocusTrigger(ids.trigger);
-								}}
+								onSelect={(currentValue) => closeAndFocusTrigger(currentValue, ids.trigger)}
 							>
 							<Check
 								class={cn(
