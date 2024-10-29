@@ -56,7 +56,7 @@
 						<div class="flex flex-row gap-0 items-center">
 							<!-- <Thermometer class="size-4"/> -->
 							<p>
-								{attrTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
+								{attrTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}°C
 							</p>
 						</div>
 						{/if}

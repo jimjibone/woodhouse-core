@@ -76,7 +76,7 @@
 				<div class="flex flex-row gap-0 items-center">
 					<!-- <Thermometer class="size-5"/> -->
 					<p>
-						{attrLocalTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
+						{attrLocalTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}°C
 					</p>
 				</div>
 				{/if}
@@ -84,7 +84,7 @@
 				<div class="flex flex-row gap-0.5 items-center">
 					<!-- <Gauge class="text-muted-foreground size-5"/> -->
 					<p class="text-muted-foreground">
-						{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C
+						{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}°C
 					</p>
 				</div>
 				{/if}
@@ -116,7 +116,7 @@
 				<div class="flex-1 text-center">
 					<div class="flex justify-center content-start">
 						<div class="text-4xl font-bold tracking-tighter">
-							{attrHeatingSetpoint.value}
+							{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}
 							<span class="text-2xl uppercase text-muted-foreground">°C</span>
 						</div>
 					</div>
@@ -153,7 +153,7 @@
 					<div class="flex-1 text-center">
 						<div class="flex justify-center content-start">
 							<div class="text-4xl font-bold tracking-tighter">
-								{attrHeatingSetpoint.value}
+								{attrHeatingSetpoint.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}
 								<span class="text-2xl uppercase text-muted-foreground">°C</span>
 							</div>
 						</div>

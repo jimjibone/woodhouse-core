@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ServiceRoot } from '$lib/components/wh/service';
 	import { Button } from "$lib/components/ui/button";
+	import { Switch } from "$lib/components/ui/switch";
 	import {
 		Service,
 		Service_ServiceType,
@@ -184,6 +185,14 @@
 			</div>
 		</span>
 		<span slot="dialog-desktop">
+			{#if attrOn !== undefined}
+			<p class="text-center">On</p>
+			<div class="p-4 pb-0">
+				<div class="flex items-center justify-center space-x-2">
+					<Switch checked={attrOn.value} on:click={(ev) => actionOnToggle(ev)}/>
+				</div>
+			</div>
+			{/if}
 			{#if attrBrightness !== undefined}
 				<p class="text-center">Brightness</p>
 				<div class="p-4 pb-0">

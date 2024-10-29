@@ -53,7 +53,7 @@
 	</Menubar.Menu>
 </Menubar.Root>
 
-<main class="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
+<main class="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 mb-20">
 	{#each store.devices as dev, i (dev.id)}
 		{#each dev.services as srv, i (srv.id)}
 			{#if showServiceType(true, srv.typ)}
