@@ -47,6 +47,7 @@ tasks:
     deps:
       - build-core
       - build-shelly
+      - build-tasmota
       - build-zigbee
 
   run:
@@ -116,6 +117,16 @@ tasks:
       - build-shelly
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
+
+  build-tasmota:
+    cmds:
+      - go build -o {{.BUILD_DIR}}/woodhouse-tasmota{{exeExt}} ./cmd/woodhouse-tasmota
+
+  run-tasmota:
+    deps:
+      - build-tasmota
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-tasmota{{exeExt}} {{.CLI_ARGS}}
 
   build-zigbee:
     cmds:
