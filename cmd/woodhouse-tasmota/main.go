@@ -233,7 +233,7 @@ func main() {
 			&cli.StringFlag{
 				Name:  "id",
 				Usage: "ID used by this bridge",
-				Value: "shelly",
+				Value: "tasmota",
 			},
 			&cli.BoolFlag{
 				Name:    "debug",
