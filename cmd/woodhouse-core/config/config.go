@@ -3,67 +3,27 @@ package config
 import "fmt"
 
 type CoreConfig struct {
-	Changed  bool           `yaml:"-"`
-	Server   ServerConfig   `yaml:"server"`
-	Stores   StoresConfig   `yaml:"stores"`
-	InfluxDB InfluxDBConfig `yaml:"influxdb"`
+	Changed bool         `yaml:"-"`
+	Server  ServerConfig `yaml:"server"`
 }
 
 type ServerConfig struct {
-	ApiAddr  string `yaml:"api-addr"`
-	WebAddr  string `yaml:"web-addr"`
-	CertPath string `yaml:"cert-path"`
-	KeyPath  string `yaml:"key-path"`
-}
-
-type StoresConfig struct {
-	DeviceStoreEnabled bool   `yaml:"device-store-enabled"`
-	DeviceStorePath    string `yaml:"device-store-path"`
-	ClientStoreEnabled bool   `yaml:"client-store-enabled"`
-	ClientStorePath    string `yaml:"client-store-path"`
-}
-
-type InfluxDBConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Addr    string `yaml:"addr"`
-	Token   string `yaml:"token"`
-	Org     string `yaml:"org"`
-	Bucket  string `yaml:"bucket"`
+	ApiAddr string `yaml:"api-addr"`
+	WebAddr string `yaml:"web-addr"`
 }
 
 var LoadedConfig CoreConfig = defaultConfig
 
 var defaultConfig = CoreConfig{
 	Server: ServerConfig{
-		ApiAddr:  "localhost:4000",
-		WebAddr:  "localhost:4080",
-		CertPath: "woodhouse.crt",
-		KeyPath:  "woodhouse.key",
-	},
-	Stores: StoresConfig{
-		DeviceStoreEnabled: true,
-		DeviceStorePath:    "woodhouse-devices.json",
-		ClientStoreEnabled: true,
-		ClientStorePath:    "woodhouse-clients.json",
-	},
-	InfluxDB: InfluxDBConfig{
-		Enabled: false,
-		Addr:    "localhost:8086",
-		Token:   "",
-		Org:     "",
-		Bucket:  "woodhouse",
+		ApiAddr: "localhost:4000",
+		WebAddr: "localhost:4080",
 	},
 }
 
 // Returns an error if the config is not valid.
 func (c CoreConfig) Verify() error {
 	if err := c.Server.Verify(); err != nil {
-		return err
-	}
-	if err := c.Stores.Verify(); err != nil {
-		return err
-	}
-	if err := c.InfluxDB.Verify(); err != nil {
 		return err
 	}
 	return nil
@@ -76,46 +36,6 @@ func (c ServerConfig) Verify() error {
 	}
 	if c.WebAddr == "" {
 		return fmt.Errorf("server.web-addr must be defined")
-	}
-	if c.CertPath == "" {
-		return fmt.Errorf("server.cert-path must be defined")
-	}
-	if c.KeyPath == "" {
-		return fmt.Errorf("server.key-path must be defined")
-	}
-	return nil
-}
-
-// Returns an error if the config is not valid.
-func (c StoresConfig) Verify() error {
-	if c.DeviceStoreEnabled {
-		if c.DeviceStorePath == "" {
-			return fmt.Errorf("stores.device-store-path must be defined")
-		}
-	}
-	if c.ClientStoreEnabled {
-		if c.ClientStorePath == "" {
-			return fmt.Errorf("stores.client-store-path must be defined")
-		}
-	}
-	return nil
-}
-
-// Returns an error if the config is not valid.
-func (c InfluxDBConfig) Verify() error {
-	if c.Enabled {
-		if c.Addr == "" {
-			return fmt.Errorf("influxdb.addr must be defined")
-		}
-		if c.Token == "" {
-			return fmt.Errorf("influxdb.token must be defined")
-		}
-		if c.Org == "" {
-			return fmt.Errorf("influxdb.org must be defined")
-		}
-		if c.Bucket == "" {
-			return fmt.Errorf("influxdb.bucket must be defined")
-		}
 	}
 	return nil
 }

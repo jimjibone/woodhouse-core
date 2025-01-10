@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	api "github.com/jimjibone/woodhouse-4/api/go"
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/config"
@@ -118,25 +117,10 @@ func main() {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
 			}
 
-			// Create device store.
-			deviceStore, err := NewDeviceStore(config.LoadedConfig.Stores.DeviceStoreEnabled, config.LoadedConfig.Stores.DeviceStorePath)
-			if err != nil {
-				return fmt.Errorf("failed to create device store: %s", err)
-			}
-			defer deviceStore.Close()
-
-			// Create history store.
-			historyStore := NewHistoryStore(deviceStore)
-			defer historyStore.Close()
-
 			// Create the config store.
 			store := stores.NewFSStore(args.Path("config-dir"))
 
-			// Create services.
-			reactorService := NewReactorService(deviceStore)
-			bridgeService := NewBridgeService(deviceStore, reactorService)
-
-			certManager, err := cert.NewCertManager(config.LoadedConfig.Server.CertPath, config.LoadedConfig.Server.KeyPath)
+			certManager, err := cert.NewCertManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create cert manager: %s", err)
 			}
@@ -155,6 +139,7 @@ func main() {
 			}
 			defer deviceManager.Close()
 
+			// Create services.
 			clientService := clients.NewClientService(deviceManager)
 			userService := users.NewUserService(deviceManager)
 
@@ -175,14 +160,10 @@ func main() {
 			insecureServer := grpc.NewServer()
 
 			// Register services.
-			api.RegisterBridgeServiceServer(server, bridgeService)
-			api.RegisterReactorServiceServer(server, reactorService)
 			clientsapi.RegisterAuthServiceServer(server, clientAuthService)
 			clientsapi.RegisterClientServiceServer(server, clientService)
 			clientsapi.RegisterUserServiceServer(insecureServer, userService)
 			reflection.Register(server)
-			api.RegisterBridgeServiceServer(insecureServer, bridgeService)
-			api.RegisterReactorServiceServer(insecureServer, reactorService)
 			clientsapi.RegisterAuthServiceServer(insecureServer, clientAuthService)
 			reflection.Register(insecureServer)
 
