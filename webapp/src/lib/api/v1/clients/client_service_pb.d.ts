@@ -849,6 +849,8 @@ export declare class Attribute extends Message<Attribute> {
   enum?: EnumAttribute;
 
   /**
+   * NumberScheduleAttribute number_schedule = 13;
+   *
    * @generated from field: woodhouse.api.v1.clients.ImageAttribute image = 12;
    */
   image?: ImageAttribute;
@@ -924,6 +926,8 @@ export declare class Value extends Message<Value> {
   enum?: EnumValue;
 
   /**
+   * NumberScheduleValue number_schedule = 13;
+   *
    * @generated from field: woodhouse.api.v1.clients.ImageValue image = 12;
    */
   image?: ImageValue;

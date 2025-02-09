@@ -4,6 +4,7 @@
 // @ts-nocheck
 
 import { proto3 } from "@bufbuild/protobuf";
+import { Service } from "./client_service_pb.js";
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -20,6 +21,42 @@ export const DevicesStreamRequest = /*@__PURE__*/ proto3.makeMessageType(
   "woodhouse.api.v1.clients.DevicesStreamRequest",
   () => [
     { no: 1, name: "include_device_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.DeviceService
+ */
+export const DeviceService = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.DeviceService",
+  () => [
+    { no: 1, name: "key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "device_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "full_state", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "has_device_name", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "device_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "has_online", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 7, name: "online", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 8, name: "service", kind: "message", T: Service },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.FavoritesStreamRequest
+ */
+export const FavoritesStreamRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.FavoritesStreamRequest",
+  [],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.FavoritesStreamResponse
+ */
+export const FavoritesStreamResponse = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.FavoritesStreamResponse",
+  () => [
+    { no: 1, name: "device_service", kind: "message", T: DeviceService },
+    { no: 2, name: "key_removed", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
 );
 

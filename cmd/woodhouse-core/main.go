@@ -139,9 +139,15 @@ func main() {
 			}
 			defer deviceManager.Close()
 
+			favoritesManager, err := core.NewFavoritesManager(store, deviceManager)
+			if err != nil {
+				return fmt.Errorf("failed to create favorites manager: %s", err)
+			}
+			defer favoritesManager.Close()
+
 			// Create services.
 			clientService := clients.NewClientService(deviceManager)
-			userService := users.NewUserService(deviceManager)
+			userService := users.NewUserService(deviceManager, favoritesManager)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())

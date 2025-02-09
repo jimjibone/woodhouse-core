@@ -13,8 +13,10 @@
 		Moon,
 		Settings,
 		LayoutDashboard,
+		Rows3,
 		Lamp,
 		Bug,
+		Heart
 	} from 'lucide-svelte';
 
 	import { resetMode, setMode } from 'mode-watcher';
@@ -56,6 +58,32 @@
 					</a>
 				</Tooltip.Trigger>
 				<Tooltip.Content side="right" sideOffset={5}>Dashboard</Tooltip.Content>
+			</Tooltip.Root>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<a
+						href="/favorites"
+						aria-label="Favorites"
+						class={buttonVariants({ variant: "ghost", size: "icon", class: "rounded-lg" })}
+						class:bg-muted={$page.url.pathname === '/favorites'}
+					>
+						<Heart class="size-5" />
+					</a>
+				</Tooltip.Trigger>
+				<Tooltip.Content side="right" sideOffset={5}>Favorites</Tooltip.Content>
+			</Tooltip.Root>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<a
+						href="/services"
+						aria-label="Services"
+						class={buttonVariants({ variant: "ghost", size: "icon", class: "rounded-lg" })}
+						class:bg-muted={$page.url.pathname === '/services'}
+					>
+						<Rows3 class="size-5" />
+					</a>
+				</Tooltip.Trigger>
+				<Tooltip.Content side="right" sideOffset={5}>Services</Tooltip.Content>
 			</Tooltip.Root>
 			<Tooltip.Root>
 				<Tooltip.Trigger>

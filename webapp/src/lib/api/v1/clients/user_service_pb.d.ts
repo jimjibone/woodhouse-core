@@ -5,6 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
+import type { Service } from "./client_service_pb.js";
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -49,5 +50,132 @@ export declare class DevicesStreamRequest extends Message<DevicesStreamRequest> 
   static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DevicesStreamRequest;
 
   static equals(a: DevicesStreamRequest | PlainMessage<DevicesStreamRequest> | undefined, b: DevicesStreamRequest | PlainMessage<DevicesStreamRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.DeviceService
+ */
+export declare class DeviceService extends Message<DeviceService> {
+  /**
+   * The key is a combined version of the device and service IDs.
+   *
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * The universally unique device ID (typically a hardware address or other static and unique identifier, e.g. "00158d00045c089f").
+   *
+   * @generated from field: string device_id = 2;
+   */
+  deviceId: string;
+
+  /**
+   * Indicates that this message contains the entire state of the device.
+   *
+   * @generated from field: bool full_state = 3;
+   */
+  fullState: boolean;
+
+  /**
+   * True if the device_name value is set. May be false if the device_name value has not changed and full_state is false.
+   *
+   * @generated from field: bool has_device_name = 4;
+   */
+  hasDeviceName: boolean;
+
+  /**
+   * The device name from the info service.
+   *
+   * @generated from field: string device_name = 5;
+   */
+  deviceName: string;
+
+  /**
+   * True if the online value is set. May be false if the online value has not changed and full_state is false.
+   *
+   * @generated from field: bool has_online = 6;
+   */
+  hasOnline: boolean;
+
+  /**
+   * The device online state from the online service.
+   *
+   * @generated from field: bool online = 7;
+   */
+  online: boolean;
+
+  /**
+   * A service belonging to the device.
+   *
+   * @generated from field: woodhouse.api.v1.clients.Service service = 8;
+   */
+  service?: Service;
+
+  constructor(data?: PartialMessage<DeviceService>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.DeviceService";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeviceService;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeviceService;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeviceService;
+
+  static equals(a: DeviceService | PlainMessage<DeviceService> | undefined, b: DeviceService | PlainMessage<DeviceService> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.FavoritesStreamRequest
+ */
+export declare class FavoritesStreamRequest extends Message<FavoritesStreamRequest> {
+  constructor(data?: PartialMessage<FavoritesStreamRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.FavoritesStreamRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FavoritesStreamRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FavoritesStreamRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FavoritesStreamRequest;
+
+  static equals(a: FavoritesStreamRequest | PlainMessage<FavoritesStreamRequest> | undefined, b: FavoritesStreamRequest | PlainMessage<FavoritesStreamRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.FavoritesStreamResponse
+ */
+export declare class FavoritesStreamResponse extends Message<FavoritesStreamResponse> {
+  /**
+   * Optional: A DeviceService update, possibly containing the full state.
+   *
+   * @generated from field: woodhouse.api.v1.clients.DeviceService device_service = 1;
+   */
+  deviceService?: DeviceService;
+
+  /**
+   * Optional: Indicates the key of a DeviceService that was was removed.
+   *
+   * @generated from field: string key_removed = 2;
+   */
+  keyRemoved: string;
+
+  constructor(data?: PartialMessage<FavoritesStreamResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.FavoritesStreamResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FavoritesStreamResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FavoritesStreamResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FavoritesStreamResponse;
+
+  static equals(a: FavoritesStreamResponse | PlainMessage<FavoritesStreamResponse> | undefined, b: FavoritesStreamResponse | PlainMessage<FavoritesStreamResponse> | undefined): boolean;
 }
 

@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"time"
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
@@ -13,14 +14,16 @@ import (
 
 type UserService struct {
 	clientsapi.UnimplementedUserServiceServer
-	log           *log.Context
-	deviceManager *core.DeviceManager
+	log              *log.Context
+	deviceManager    *core.DeviceManager
+	favoritesManager *core.FavoritesManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager) *UserService {
 	service := &UserService{
-		log:           log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
-		deviceManager: deviceManager,
+		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
+		deviceManager:    deviceManager,
+		favoritesManager: favoritesManager,
 	}
 	return service
 }
@@ -94,6 +97,69 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 			}
 		}
 	}
+}
+
+func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamRequest, server clientsapi.UserService_FavoritesStreamServer) error {
+	service.log.Infof("favorites stream started")
+	defer service.log.Infof("favorites stream finished")
+
+	lis := make(chan core.FavoriteUpdate)
+	service.favoritesManager.AddListener(lis)
+	defer service.favoritesManager.RemoveListener(lis)
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			// Send an empty Device message as a keepalive for the client.
+			err := server.Send(&clientsapi.FavoritesStreamResponse{})
+			if err != nil {
+				service.log.Errorf("failed to send favorite stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case update := <-lis:
+			msg := &clientsapi.FavoritesStreamResponse{}
+			if update.Updated != nil {
+				msg.DeviceService = update.Updated.Pb()
+			}
+			if update.Removed != nil {
+				msg.KeyRemoved = update.Removed.Key()
+			}
+			err := server.Send(msg)
+			if err != nil {
+				service.log.Errorf("failed to send favorite stream update: %s", err)
+				return status.Errorf(codes.Internal, "failed to send update")
+			}
+		}
+	}
+}
+
+func (service *UserService) AddFavorite(ctx context.Context, req *clientsapi.AddFavoriteRequest) (*clientsapi.AddFavoriteResponse, error) {
+	if req.GetDeviceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "device_id not defined")
+	}
+	if req.GetServiceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "service_id not defined")
+	}
+	service.favoritesManager.AddFavorite(req.DeviceId, req.ServiceId)
+	return &clientsapi.AddFavoriteResponse{}, nil
+}
+
+func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.RemoveFavoriteRequest) (*clientsapi.RemoveFavoriteResponse, error) {
+	if req.GetDeviceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "device_id not defined")
+	}
+	if req.GetServiceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "service_id not defined")
+	}
+	service.favoritesManager.RemoveFavorite(req.DeviceId, req.ServiceId)
+	return &clientsapi.RemoveFavoriteResponse{}, nil
 }
 
 func (service *UserService) SendAction(req *clientsapi.ActionRequest, server clientsapi.UserService_SendActionServer) error {

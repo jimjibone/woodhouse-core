@@ -175,6 +175,20 @@ func (manager *DeviceManager) GetImageResponses() *queue.Sub[ImageResponse] {
 	return manager.imageResponses.NewSub()
 }
 
+// Get the device by ID. Returns nil if the device was not found.
+func (manager *DeviceManager) GetDevice(id string) *clientsapi.Device {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	if dev, found := manager.devices[id]; found {
+		return dev.pb()
+	}
+
+	return nil
+}
+
+// Get a channel on which all devices will be sent. The channel will close when
+// all devices have been sent.
 func (manager *DeviceManager) GetDevices() <-chan *clientsapi.Device {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()

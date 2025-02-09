@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DevicesStreamRequest, GetDevicesRequest } from "./user_service_pb.js";
+import { DevicesStreamRequest, FavoritesStreamRequest, FavoritesStreamResponse, GetDevicesRequest } from "./user_service_pb.js";
 import { ActionRequest, ActionResponse, Device, ImageRequest, ImageResponse } from "./client_service_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
@@ -34,6 +34,21 @@ export const UserService = {
       name: "DevicesStream",
       I: DevicesStreamRequest,
       O: Device,
+      kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * Get a stream of DeviceService updates for favorites. The first batch of
+     * replies will be the current state of the favorites, followed by updates
+     * when they occur. The stream also includes a 10 second heartbeat (an empty
+     * response) which should be ignored, but can be used to monitor the stream
+     * for disconnects.
+     *
+     * @generated from rpc woodhouse.api.v1.clients.UserService.FavoritesStream
+     */
+    favoritesStream: {
+      name: "FavoritesStream",
+      I: FavoritesStreamRequest,
+      O: FavoritesStreamResponse,
       kind: MethodKind.ServerStreaming,
     },
     /**
