@@ -24,7 +24,7 @@ func newDevice(log *log.Context, clientID string, update *clientsapi.Device) (*D
 	if log != nil {
 		log.Debugf("device %q created", dev.ID)
 	}
-	err := dev.update(log, clientID, update)
+	_, err := dev.update(log, clientID, update)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,8 @@ func (dev *Device) setOffline(log *log.Context) *clientsapi.Device {
 	return nil
 }
 
-func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.Device) error {
+// Update the device state and return the changes or an error.
+func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.Device) (*clientsapi.Device, error) {
 	if dev.ClientID != clientID {
 		dev.ClientID = clientID
 		if log != nil {
@@ -105,13 +106,16 @@ func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.
 	if update.FullState {
 		dev.gcServices(log, update)
 	}
+	var changes []*clientsapi.Service
 	for _, srv := range update.Services {
-		err := dev.updateService(log, update.FullState, srv)
+		srvChanges, err := dev.updateService(log, update.FullState, srv)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		changes = append(changes, srvChanges)
 	}
-	return nil
+	update.Services = changes
+	return update, nil
 }
 
 // Garbage collect services no longer reported by this device.
@@ -134,12 +138,12 @@ func (dev *Device) gcServices(log *log.Context, update *clientsapi.Device) error
 	return nil
 }
 
-// Add or update a service.
-func (dev *Device) updateService(log *log.Context, fullState bool, update *clientsapi.Service) error {
+// Add or update a service and return the new state or an error.
+func (dev *Device) updateService(log *log.Context, fullState bool, update *clientsapi.Service) (*clientsapi.Service, error) {
 	if srv, found := dev.Services[update.GetId()]; found {
-		if log != nil {
-			log.Debugf("device %q updated service\n%s", dev.ID, prettyService("  ", update))
-		}
+		// if log != nil {
+		// 	log.Debugf("device %q updated service (update)\n%s", dev.ID, prettyService("  ", update))
+		// }
 
 		// Update general service info.
 		srv.Typ = update.GetTyp()
@@ -178,17 +182,39 @@ func (dev *Device) updateService(log *log.Context, fullState bool, update *clien
 				srv.Attrs = append(srv.Attrs, upd)
 			}
 		}
-		return nil
+
+		if log != nil {
+			log.Debugf("device %q updated service\n%s", dev.ID, prettyService("  ", srv))
+		}
+		return srv, nil
 	}
 	if log != nil {
 		log.Debugf("device %q added service\n%s", dev.ID, prettyService("  ", update))
 	}
 	dev.Services[update.GetId()] = update
+	return update, nil
+}
+
+func (dev *Device) updateFavoriteService(log *log.Context, serviceID string, favorite bool) error {
+	if srv, found := dev.Services[serviceID]; found {
+		if log != nil {
+			if favorite {
+				log.Debugf("device %q added service favorite: %s", dev.ID, serviceID)
+			} else {
+				log.Debugf("device %q removed service favorite: %s", dev.ID, serviceID)
+			}
+		}
+
+		// Update service favorite state.
+		srv.Favorite = favorite
+
+		return nil
+	}
 	return nil
 }
 
 func prettyService(pad string, srv *clientsapi.Service) string {
-	str := fmt.Sprintf("%s- srv id:%q, typ:%q, alias:%q, attrs:%d", pad, srv.GetId(), srv.GetTyp(), srv.GetAlias(), len(srv.Attrs))
+	str := fmt.Sprintf("%s- srv id:%q, typ:%q, alias:%q, attrs:%d, fave:%t", pad, srv.GetId(), srv.GetTyp(), srv.GetAlias(), len(srv.Attrs), srv.GetFavorite())
 	for _, attr := range srv.Attrs {
 		str += fmt.Sprintf("\n%s  - attr %s", pad, attr)
 	}

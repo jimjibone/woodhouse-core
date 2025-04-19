@@ -70,6 +70,13 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 		}
 	}
 
+	// Send an empty device to indicate the end of the initial list.
+	err := server.Send(&clientsapi.Device{})
+	if err != nil {
+		service.log.Errorf("failed to send empty device: %s", err)
+		return status.Errorf(codes.Internal, "failed to send empty device")
+	}
+
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
@@ -147,7 +154,7 @@ func (service *UserService) AddFavorite(ctx context.Context, req *clientsapi.Add
 	if req.GetServiceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "service_id not defined")
 	}
-	service.favoritesManager.AddFavorite(req.DeviceId, req.ServiceId)
+	service.deviceManager.SetFavorite(req.DeviceId, req.ServiceId, true)
 	return &clientsapi.AddFavoriteResponse{}, nil
 }
 
@@ -158,7 +165,7 @@ func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.
 	if req.GetServiceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "service_id not defined")
 	}
-	service.favoritesManager.RemoveFavorite(req.DeviceId, req.ServiceId)
+	service.deviceManager.SetFavorite(req.DeviceId, req.ServiceId, false)
 	return &clientsapi.RemoveFavoriteResponse{}, nil
 }
 

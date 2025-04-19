@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DevicesStreamRequest, FavoritesStreamRequest, FavoritesStreamResponse, GetDevicesRequest } from "./user_service_pb.js";
+import { AddFavoriteRequest, AddFavoriteResponse, DevicesStreamRequest, FavoritesStreamRequest, FavoritesStreamResponse, GetDevicesRequest, RemoveFavoriteRequest, RemoveFavoriteResponse } from "./user_service_pb.js";
 import { ActionRequest, ActionResponse, Device, ImageRequest, ImageResponse } from "./client_service_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
@@ -50,6 +50,24 @@ export declare const UserService: {
       readonly I: typeof FavoritesStreamRequest,
       readonly O: typeof FavoritesStreamResponse,
       readonly kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * @generated from rpc woodhouse.api.v1.clients.UserService.AddFavorite
+     */
+    readonly addFavorite: {
+      readonly name: "AddFavorite",
+      readonly I: typeof AddFavoriteRequest,
+      readonly O: typeof AddFavoriteResponse,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc woodhouse.api.v1.clients.UserService.RemoveFavorite
+     */
+    readonly removeFavorite: {
+      readonly name: "RemoveFavorite",
+      readonly I: typeof RemoveFavoriteRequest,
+      readonly O: typeof RemoveFavoriteResponse,
+      readonly kind: MethodKind.Unary,
     },
     /**
      * Send an action to a device service.

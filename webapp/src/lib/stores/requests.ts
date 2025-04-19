@@ -1,4 +1,5 @@
 import { ActionRequest, ActionResponse, ActionResponse_ActionStatus, ImageRequest, ImageResponse_ImageStatus, Value } from '$lib/api/v1/clients/client_service_pb';
+import { AddFavoriteRequest, RemoveFavoriteRequest } from '@/api/v1/clients/user_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { ConnectError } from '@connectrpc/connect';
 
@@ -44,6 +45,36 @@ export const SendImageRequest = async (deviceID: string, serviceID: string, attr
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error image request: ' + err.message);
+		}
+	}
+};
+
+export const SendFavoriteRequest = async (deviceID: string, serviceID: string, fave: boolean) => {
+	if (fave) {
+		const request = new AddFavoriteRequest({
+			deviceId: deviceID,
+			serviceId: serviceID,
+		});
+		console.log('sending add favorite request: ' + request.toJsonString());
+		try {
+			await UserServiceClient.addFavorite(request);
+		} catch (err) {
+			if (err instanceof ConnectError) {
+				console.error('error sending add favorite request: ' + err.message);
+			}
+		}
+	} else {
+		const request = new RemoveFavoriteRequest({
+			deviceId: deviceID,
+			serviceId: serviceID,
+		});
+		console.log('sending remove favorite request: ' + request.toJsonString());
+		try {
+			await UserServiceClient.removeFavorite(request);
+		} catch (err) {
+			if (err instanceof ConnectError) {
+				console.error('error sending remove favorite request: ' + err.message);
+			}
 		}
 	}
 };

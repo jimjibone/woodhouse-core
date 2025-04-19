@@ -34,6 +34,7 @@ type DeviceManager struct {
 	actionResponses *queue.Pub[ActionResponse]
 	imageRequests   *queue.Pub[ImageRequest]
 	imageResponses  *queue.Pub[ImageResponse]
+	setFavourites   *queue.Queue[favoriteUpdate]
 	devices         map[string]*Device // key=device id
 	changed         bool
 }
@@ -42,6 +43,12 @@ type deviceUpdate struct {
 	ClientID string
 	Update   *clientsapi.Device
 	Offline  bool
+}
+
+type favoriteUpdate struct {
+	DeviceID  string
+	ServiceID string
+	Favorite  bool
 }
 
 type ActionRequest struct {
@@ -86,6 +93,7 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 		actionResponses: queue.NewPub[ActionResponse](),
 		imageRequests:   queue.NewPub[ImageRequest](),
 		imageResponses:  queue.NewPub[ImageResponse](),
+		setFavourites:   queue.New[favoriteUpdate](),
 		devices:         make(map[string]*Device),
 	}
 
@@ -119,6 +127,10 @@ func (manager *DeviceManager) Close() {
 	if err != nil {
 		manager.log.Errorf("failed to save state: %s", err)
 	}
+}
+
+func (manager *DeviceManager) SetFavorite(deviceID, serviceID string, favorite bool) {
+	manager.setFavourites.Push(favoriteUpdate{DeviceID: deviceID, ServiceID: serviceID, Favorite: favorite})
 }
 
 func (manager *DeviceManager) PushDeviceUpdate(clientID string, update *clientsapi.Device) {
@@ -342,6 +354,9 @@ func (manager *DeviceManager) run(ctx context.Context) {
 		case update := <-manager.rxDeviceUpdates.Pop():
 			manager.handleDeviceUpdate(update)
 
+		case update := <-manager.setFavourites.Pop():
+			manager.handleFavoriteUpdate(update)
+
 		case <-ticker.C:
 			err := manager.saveIfChanged()
 			if err != nil {
@@ -358,8 +373,10 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 	if update.ClientID != "" {
 		if update.Update != nil {
 			if update.Update.GetId() != "" {
+				var changes *clientsapi.Device
 				if dev, found := manager.devices[update.Update.GetId()]; found {
-					err := dev.update(manager.log, update.ClientID, update.Update)
+					var err error
+					changes, err = dev.update(manager.log, update.ClientID, update.Update)
 					if err != nil {
 						manager.log.Warnf("failed to update device %q: %s", update.Update.GetId(), err)
 					} else {
@@ -372,10 +389,11 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 					} else {
 						manager.devices[update.Update.GetId()] = dev
 						manager.changed = true
+						changes = dev.pb()
 					}
 				}
 
-				manager.txDeviceUpdates.Pub(update.Update)
+				manager.txDeviceUpdates.Pub(changes)
 			} else {
 				manager.log.Warnf("device updated has empty device ID: %s", update)
 			}
@@ -383,10 +401,10 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 			manager.log.Infof("client %q has gone offline", update.ClientID)
 			for _, dev := range manager.devices {
 				if dev.ClientID == update.ClientID {
-					offlineUpdate := dev.setOffline(manager.log)
-					if offlineUpdate != nil {
+					changes := dev.setOffline(manager.log)
+					if changes != nil {
 						manager.changed = true
-						manager.txDeviceUpdates.Pub(offlineUpdate)
+						manager.txDeviceUpdates.Pub(changes)
 					}
 				}
 			}
@@ -394,6 +412,23 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 			manager.log.Warnf("device update was empty: %s", update)
 		}
 	} else {
-		manager.log.Warnf("device updated has empty client ID: %s", update)
+		manager.log.Warnf("device update has empty client ID: %s", update)
+	}
+}
+
+func (manager *DeviceManager) handleFavoriteUpdate(update favoriteUpdate) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if dev, found := manager.devices[update.DeviceID]; found {
+		err := dev.updateFavoriteService(manager.log, update.ServiceID, update.Favorite)
+		if err != nil {
+			manager.log.Warnf("failed to update favorite device %q, service %q: %s", update.DeviceID, update.ServiceID, err)
+		} else {
+			manager.changed = true
+			manager.txDeviceUpdates.Pub(dev.pb())
+		}
+	} else {
+		manager.log.Warnf("favorite update device ID not found: %s", update)
 	}
 }

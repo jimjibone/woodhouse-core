@@ -3,10 +3,14 @@
 	import { mediaQuery } from "svelte-legos";
 	import * as Dialog from "$lib/components/ui/dialog/index.js";
 	import * as Drawer from "$lib/components/ui/drawer";
+	import { Button } from "$lib/components/ui/button";
+	import { Heart, HeartOff } from 'lucide-svelte';
 
 	export let title: string = "";
 	export let alias: string = "";
 	export let online: boolean;
+	export let favorite: boolean;
+	export let onSetFavorite: ((fave: boolean) => Promise<void>) | undefined;
 
 	$: cardTitle = title ? title + (alias !== '' ? ': ' + alias : '') : alias;
 
@@ -18,6 +22,12 @@
 	let closeDrawer = () => {
 		drawerOpen = false;
 	};
+
+	let toggleFavorite = async() => {
+		if (onSetFavorite) {
+			await onSetFavorite(!favorite);
+		}
+	}
 </script>
 
 <button class={cn('rounded-lg border bg-card p-2 text-card-foreground shadow-sm text-left', !online && 'bg-muted')} on:click={openDrawer}>
@@ -32,8 +42,9 @@
 		<div class="grow">
 			<div class="flex h-full flex-col justify-center gap-0">
 				{#if cardTitle !== ''}
-					<div class="rounded-lg p-0">
+					<div class="rounded-lg p-0 flex flex-row items-center">
 						<p class="font-semibold">{cardTitle}</p>
+						{#if favorite}<Heart class="h-4 pl-2" />{/if}
 					</div>
 				{/if}
 				<div class="flex flex-row gap-2 rounded-lg p-0">
@@ -50,7 +61,16 @@
 <Dialog.Root bind:open={drawerOpen}>
 	<Dialog.Content class={!online && 'bg-muted'}>
 		<Dialog.Header>
-			<Dialog.Title>{cardTitle}</Dialog.Title>
+			<Dialog.Title>
+				{cardTitle}
+				<Button variant="ghost" size="icon" class="rounded-full px-1.5 py-1.5 hover:bg-muted cursor-pointer" on:click={toggleFavorite}>
+					{#if favorite}
+					<Heart class="h-4 w-4" />
+					{:else}
+					<HeartOff class="h-4 w-4" />
+					{/if}
+				</Button>
+			</Dialog.Title>
 			<!-- <Dialog.Description>This action cannot be undone.</Dialog.Description> -->
 		</Dialog.Header>
 		<slot name="dialog-desktop">

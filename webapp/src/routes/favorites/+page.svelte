@@ -62,7 +62,7 @@
 		{/if}
 	{:else}
 		<div>
-			<p>No devices!</p>
+			<p>No favorites!</p>
 		</div>
 	{/each}
 </main>

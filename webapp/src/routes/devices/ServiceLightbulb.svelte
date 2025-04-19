@@ -25,6 +25,7 @@
 	export let online: boolean;
 	export let service: Service;
 	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => Promise<void>) | undefined;
+	export let onSetFavorite: ((serviceID: string, fave: boolean) => Promise<void>) | undefined;
 
 	let attrOn: BoolAttribute | undefined;
 	let attrBrightness: IntAttribute | undefined;
@@ -33,6 +34,7 @@
 	let attrTransition: DurationAttribute | undefined;
 	let attrOthers: AttributeType[];
 	let actionPending: boolean = false;
+	let favorite: boolean = false;
 
 	const foregroundLight = 'hsl(0 0% 100%)';
 	const foregroundDark = 'hsl(240 10% 3.9%)';
@@ -58,6 +60,7 @@
 				attrOthers = [...attrOthers, attr];
 			}
 		}
+		favorite = service.favorite;
 
 		let color: any;
 		if (!online || !attrOn?.value) {
@@ -131,10 +134,18 @@
 			]);
 		}
 	};
+
+	let handleSetFavorite = async(fave: boolean) => {
+		if (onSetFavorite) {
+			actionPending=true;
+			await onSetFavorite(service.id, fave);
+			actionPending=false;
+		}
+	};
 </script>
 
 {#if service.typ === Service_ServiceType.LIGHTBULB}
-	<ServiceRoot title={title} alias={service.alias} online={online}>
+	<ServiceRoot title={title} alias={service.alias} online={online} favorite={favorite} onSetFavorite={handleSetFavorite}>
 		<span slot="icon">
 			{#if displayOn}
 				<button

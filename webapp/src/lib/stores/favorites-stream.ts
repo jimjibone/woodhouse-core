@@ -66,7 +66,7 @@ const streamFavorites = async (client: PromiseClient<typeof UserService>, abortS
 
 			// All fields will be empty if this is a keepalive message.
 			if (response.deviceService !== undefined) {
-				// console.log("streamFavorites: device: " + response.toJsonString());
+				// console.log("streamFavorites: update: " + response.toJsonString());
 				update((prev: FavoritesStoreType) => {
 					let foundDeviceService = false;
 					for (let d = 0; d < prev.deviceServices.length; d++) {
@@ -93,7 +93,20 @@ const streamFavorites = async (client: PromiseClient<typeof UserService>, abortS
 					return prev;
 				});
 			} else if (response.keyRemoved !== '') {
-				// TODO: key removed...
+				console.log("streamFavorites: removed: " + response.toJsonString());
+				update((prev: FavoritesStoreType) => {
+					for (let d = 0; d < prev.deviceServices.length; d++) {
+						if (prev.deviceServices[d].key === response.keyRemoved) {
+							console.log("streamFavorites: removed: found " + response.keyRemoved);
+							prev.deviceServices.splice(d, 1);
+							break;
+						}
+					}
+
+					prev.connected = true;
+
+					return prev;
+				});
 			} else {
 				update((prev: FavoritesStoreType) => {
 					prev.connected = true;

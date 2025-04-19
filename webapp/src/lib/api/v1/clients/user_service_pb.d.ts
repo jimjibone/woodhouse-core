@@ -179,3 +179,99 @@ export declare class FavoritesStreamResponse extends Message<FavoritesStreamResp
   static equals(a: FavoritesStreamResponse | PlainMessage<FavoritesStreamResponse> | undefined, b: FavoritesStreamResponse | PlainMessage<FavoritesStreamResponse> | undefined): boolean;
 }
 
+/**
+ * @generated from message woodhouse.api.v1.clients.AddFavoriteRequest
+ */
+export declare class AddFavoriteRequest extends Message<AddFavoriteRequest> {
+  /**
+   * @generated from field: string device_id = 1;
+   */
+  deviceId: string;
+
+  /**
+   * @generated from field: string service_id = 2;
+   */
+  serviceId: string;
+
+  constructor(data?: PartialMessage<AddFavoriteRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.AddFavoriteRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddFavoriteRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddFavoriteRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddFavoriteRequest;
+
+  static equals(a: AddFavoriteRequest | PlainMessage<AddFavoriteRequest> | undefined, b: AddFavoriteRequest | PlainMessage<AddFavoriteRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AddFavoriteResponse
+ */
+export declare class AddFavoriteResponse extends Message<AddFavoriteResponse> {
+  constructor(data?: PartialMessage<AddFavoriteResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.AddFavoriteResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddFavoriteResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddFavoriteResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddFavoriteResponse;
+
+  static equals(a: AddFavoriteResponse | PlainMessage<AddFavoriteResponse> | undefined, b: AddFavoriteResponse | PlainMessage<AddFavoriteResponse> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveFavoriteRequest
+ */
+export declare class RemoveFavoriteRequest extends Message<RemoveFavoriteRequest> {
+  /**
+   * @generated from field: string device_id = 1;
+   */
+  deviceId: string;
+
+  /**
+   * @generated from field: string service_id = 2;
+   */
+  serviceId: string;
+
+  constructor(data?: PartialMessage<RemoveFavoriteRequest>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.RemoveFavoriteRequest";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RemoveFavoriteRequest;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RemoveFavoriteRequest;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RemoveFavoriteRequest;
+
+  static equals(a: RemoveFavoriteRequest | PlainMessage<RemoveFavoriteRequest> | undefined, b: RemoveFavoriteRequest | PlainMessage<RemoveFavoriteRequest> | undefined): boolean;
+}
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveFavoriteResponse
+ */
+export declare class RemoveFavoriteResponse extends Message<RemoveFavoriteResponse> {
+  constructor(data?: PartialMessage<RemoveFavoriteResponse>);
+
+  static readonly runtime: typeof proto3;
+  static readonly typeName = "woodhouse.api.v1.clients.RemoveFavoriteResponse";
+  static readonly fields: FieldList;
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RemoveFavoriteResponse;
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RemoveFavoriteResponse;
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RemoveFavoriteResponse;
+
+  static equals(a: RemoveFavoriteResponse | PlainMessage<RemoveFavoriteResponse> | undefined, b: RemoveFavoriteResponse | PlainMessage<RemoveFavoriteResponse> | undefined): boolean;
+}
+

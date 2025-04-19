@@ -60,3 +60,41 @@ export const FavoritesStreamResponse = /*@__PURE__*/ proto3.makeMessageType(
   ],
 );
 
+/**
+ * @generated from message woodhouse.api.v1.clients.AddFavoriteRequest
+ */
+export const AddFavoriteRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.AddFavoriteRequest",
+  () => [
+    { no: 1, name: "device_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AddFavoriteResponse
+ */
+export const AddFavoriteResponse = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.AddFavoriteResponse",
+  [],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveFavoriteRequest
+ */
+export const RemoveFavoriteRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.RemoveFavoriteRequest",
+  () => [
+    { no: 1, name: "device_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ],
+);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveFavoriteResponse
+ */
+export const RemoveFavoriteResponse = /*@__PURE__*/ proto3.makeMessageType(
+  "woodhouse.api.v1.clients.RemoveFavoriteResponse",
+  [],
+);
+

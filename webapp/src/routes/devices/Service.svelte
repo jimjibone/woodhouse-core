@@ -2,7 +2,7 @@
 	import { ActionResponse, Service, Service_ServiceType, Value } from '$lib/api/v1/clients/client_service_pb';
 
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
-	import { SendActionRequest } from '$lib/stores';
+	import { SendActionRequest, SendFavoriteRequest } from '$lib/stores';
 	import ServiceHeader from './ServiceHeader.svelte';
 	import ServiceInput2 from './ServiceInput2.svelte';
 	import ServiceRelay2 from './ServiceRelay2.svelte';
@@ -36,6 +36,10 @@
 	let legacyAction = async (vals: Value[]) => {
 		onActionNoHandler(service.id, vals);
 	};
+
+	let handleSetFavorite = async (serviceID: string, fave: boolean) => {
+		SendFavoriteRequest(deviceID, serviceID, fave);
+	};
 </script>
 
 {#if !(service.typ === Service_ServiceType.INFO || service.typ === Service_ServiceType.ONLINE)}
@@ -44,11 +48,11 @@
 	{:else if service.typ === Service_ServiceType.INPUT}
 		<ServiceInput2 {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.LIGHTBULB}
-		<ServiceLightbulb {title} {online} {service} onAction={onActionWithHandler} />
+		<ServiceLightbulb {title} {online} {service} onAction={onActionWithHandler} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.BATTERY}
-		<ServiceBattery {title} {online} {service} />
+		<ServiceBattery {title} {online} {service} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.CLIMATE}
-		<ServiceClimate {title} {online} {service} onAction={onActionNoHandler} />
+		<ServiceClimate {title} {online} {service} onAction={onActionNoHandler} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.BUTTON}
 		<ServiceButton {title} {online} {service} {expandable} />
 	{:else if service.typ === Service_ServiceType.ENVIRONMENT}

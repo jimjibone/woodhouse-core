@@ -1,6 +1,6 @@
 import { type DeviceStoreType, DeviceStore } from "./devices-stream";
 import { type FavoritesStoreType, FavoritesStore } from "./favorites-stream";
-import { SendActionRequest, SendImageRequest } from "./requests";
+import { SendActionRequest, SendImageRequest, SendFavoriteRequest } from "./requests";
 export {
 	type DeviceStoreType,
 	DeviceStore,
@@ -8,5 +8,6 @@ export {
 	FavoritesStore,
 	SendActionRequest as DeviceAction,
 	SendActionRequest,
-	SendImageRequest
+	SendImageRequest,
+	SendFavoriteRequest
 };

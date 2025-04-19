@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { DeviceStore, type DeviceStoreType } from '$lib/stores';
+	import { FavoritesStore, type FavoritesStoreType } from '$lib/stores';
 	import ServiceComponent from './devices/Service.svelte';
 	import { getDeviceInfo } from '$lib/apitools';
 	import * as Menubar from "$lib/components/ui/menubar";
@@ -8,8 +8,8 @@
 	import { cn } from "$lib/utils.js";
 	import { Service_ServiceType } from '$lib/api/v1/clients/client_service_pb';
 
-	let store: DeviceStoreType;
-	const unsubscribe = DeviceStore.subscribe((val: DeviceStoreType) => store = val);
+	let store: FavoritesStoreType;
+	const unsubscribe = FavoritesStore.subscribe((val: FavoritesStoreType) => store = val);
 	onDestroy(unsubscribe);
 
 	let filterServiceTypes: Service_ServiceType[] = [];
@@ -36,7 +36,7 @@
 </script>
 
 <header class="bg-background sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b px-4">
-	<h1 class="text-xl font-semibold">Dashboard{store.connected ? "" : " - Disconnected (backoff=" + store.backoff + "ms)"}</h1>
+	<h1 class="text-xl font-semibold">Favorites{store.connected ? "" : " - Disconnected (backoff=" + store.backoff + "ms)"}</h1>
 </header>
 
 <Menubar.Root class="fixed bottom-5 self-center shadow-lg rounded-full h-12">
@@ -54,13 +54,12 @@
 </Menubar.Root>
 
 <main class="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 mb-20">
-	{#each store.devices as dev, i (dev.id)}
-		{#each dev.services as srv, i (srv.id)}
-			{#if showServiceType(true, srv.typ)}
-			{@const info = getDeviceInfo(dev)}
-			<ServiceComponent deviceID={dev.id} title={info.name} online={info.online} service={srv} expandable={false}/>
+	{#each store.deviceServices as dev, i (dev.key)}
+		{#if dev.service !== undefined}
+			{#if showServiceType(true, dev.service.typ)}
+				<ServiceComponent deviceID={dev.deviceId} title={dev.deviceName} online={dev.online} service={dev.service} expandable={false}/>
 			{/if}
-		{/each}
+		{/if}
 	{:else}
 		<div>
 			<p>No devices!</p>

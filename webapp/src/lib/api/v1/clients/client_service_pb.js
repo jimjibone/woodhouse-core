@@ -213,6 +213,7 @@ export const Service = /*@__PURE__*/ proto3.makeMessageType(
     { no: 2, name: "typ", kind: "enum", T: proto3.getEnumType(Service_ServiceType) },
     { no: 3, name: "alias", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "attrs", kind: "message", T: Attribute, repeated: true },
+    { no: 5, name: "favorite", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ],
 );
 

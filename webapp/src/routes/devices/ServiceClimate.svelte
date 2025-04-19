@@ -7,23 +7,21 @@
 		Value,
 		FloatAttribute,
 		IntAttribute,
-
 		FloatValue
-
 	} from '$lib/api/v1/clients/client_service_pb';
-	import { Gauge, Power, Thermometer, Minus, Plus } from 'lucide-svelte';
-	import { cn } from '$lib/utils.js';
+	import { Thermometer, Minus, Plus } from 'lucide-svelte';
 
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
 	export let onAction: ((serviceID: string, vals: Value[]) => Promise<void>) | undefined;
+	export let onSetFavorite: ((serviceID: string, fave: boolean) => Promise<void>) | undefined;
 
-	$: alias = title ? title + (service.alias !== '' ? ': ' + service.alias : '') : service.alias;
 	let attrHeatingSetpoint: FloatAttribute | undefined;
 	let attrLocalTemperature: FloatAttribute | undefined;
 	let attrPIHeatingDemand: IntAttribute | undefined;
 	let actionPending: boolean = false;
+	let favorite: boolean = false;
 
 	$: {
 		for (const attr of service.attrs) {
@@ -35,6 +33,7 @@
 				attrPIHeatingDemand = attr.int;
 			}
 		}
+		favorite = service.favorite;
 	}
 
 	let action = async (vals: Value[]) => {
@@ -42,6 +41,14 @@
 			actionPending = true;
 			await onAction(service.id, vals);
 			actionPending = false;
+		}
+	};
+
+	let handleSetFavorite = async(fave: boolean) => {
+		if (onSetFavorite) {
+			actionPending=true;
+			await onSetFavorite(service.id, fave);
+			actionPending=false;
 		}
 	};
 
@@ -64,7 +71,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.CLIMATE}
-	<ServiceRoot title={title} alias={service.alias} online={online}>
+	<ServiceRoot title={title} alias={service.alias} online={online} favorite={favorite} onSetFavorite={handleSetFavorite}>
 		<span slot="icon">
 			<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
 				<Thermometer/>

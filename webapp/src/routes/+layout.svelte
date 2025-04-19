@@ -46,7 +46,7 @@
 			</Button>
 		</div>
 		<nav class="grid gap-1 p-2">
-			<Tooltip.Root>
+			<!-- <Tooltip.Root>
 				<Tooltip.Trigger>
 					<a
 						href="/"
@@ -58,7 +58,7 @@
 					</a>
 				</Tooltip.Trigger>
 				<Tooltip.Content side="right" sideOffset={5}>Dashboard</Tooltip.Content>
-			</Tooltip.Root>
+			</Tooltip.Root> -->
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					<a

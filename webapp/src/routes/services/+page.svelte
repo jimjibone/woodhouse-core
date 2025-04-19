@@ -36,7 +36,7 @@
 </script>
 
 <header class="bg-background sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b px-4">
-	<h1 class="text-xl font-semibold">Dashboard{store.connected ? "" : " - Disconnected (backoff=" + store.backoff + "ms)"}</h1>
+	<h1 class="text-xl font-semibold">Services{store.connected ? "" : " - Disconnected (backoff=" + store.backoff + "ms)"}</h1>
 </header>
 
 <Menubar.Root class="fixed bottom-5 self-center shadow-lg rounded-full h-12">

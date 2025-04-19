@@ -663,6 +663,13 @@ export declare class Service extends Message<Service> {
    */
   attrs: Attribute[];
 
+  /**
+   * Indicates if this service is a favorite.
+   *
+   * @generated from field: bool favorite = 5;
+   */
+  favorite: boolean;
+
   constructor(data?: PartialMessage<Service>);
 
   static readonly runtime: typeof proto3;
