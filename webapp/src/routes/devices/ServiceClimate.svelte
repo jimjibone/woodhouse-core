@@ -71,7 +71,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.CLIMATE}
-	<ServiceRoot title={title} alias={service.alias} online={online} favorite={favorite} onSetFavorite={handleSetFavorite}>
+	<ServiceRoot deviceName={title} online={online} service={service} onSetFavorite={handleSetFavorite}>
 		<span slot="icon">
 			<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
 				<Thermometer/>

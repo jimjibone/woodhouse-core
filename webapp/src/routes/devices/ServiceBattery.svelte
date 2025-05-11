@@ -42,7 +42,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.BATTERY}
-	<ServiceRoot title={title} alias={service.alias} online={online} favorite={favorite} onSetFavorite={handleSetFavorite}>
+	<ServiceRoot deviceName={title} online={online} service={service} onSetFavorite={handleSetFavorite}>
 		<span slot="icon">
 			<div class={cn("p-2 rounded-full", level < 10 ? "bg-red-400 text-black" : "bg-secondary text-secondary-foreground")}>
 				{#if level < 20}

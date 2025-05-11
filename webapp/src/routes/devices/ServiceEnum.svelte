@@ -62,7 +62,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.ENUM}
-<ServiceRoot title={title} alias={service.alias} online={online}>
+<ServiceRoot deviceName={title} online={online} service={service}>
 	<span slot="icon">
 		<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
 			{#if true}

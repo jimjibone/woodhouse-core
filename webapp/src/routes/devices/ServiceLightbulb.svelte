@@ -145,7 +145,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.LIGHTBULB}
-	<ServiceRoot title={title} alias={service.alias} online={online} favorite={favorite} onSetFavorite={handleSetFavorite}>
+	<ServiceRoot deviceName={title} online={online} service={service} onSetFavorite={handleSetFavorite}>
 		<span slot="icon">
 			{#if displayOn}
 				<button
