@@ -18,7 +18,6 @@
 	let attrLevel: IntAttribute | undefined;
 	let attrVoltage: FloatAttribute | undefined;
 	let level = 0n;
-	let favorite: boolean = false;
 
 	$: {
 		for (const attr of service.attrs) {
@@ -31,18 +30,11 @@
 				attrVoltage = attr.float;
 			}
 		}
-		favorite = service.favorite;
 	}
-
-	let handleSetFavorite = async(fave: boolean) => {
-		if (onSetFavorite) {
-			await onSetFavorite(service.id, fave);
-		}
-	};
 </script>
 
 {#if service.typ === Service_ServiceType.BATTERY}
-	<ServiceRoot deviceName={title} online={online} service={service} onSetFavorite={handleSetFavorite}>
+	<ServiceRoot deviceName={title} online={online} service={service} {onSetFavorite}>
 		<span slot="icon">
 			<div class={cn("p-2 rounded-full", level < 10 ? "bg-red-400 text-black" : "bg-secondary text-secondary-foreground")}>
 				{#if level < 20}
@@ -57,8 +49,9 @@
 			</div>
 		</span>
 		<span slot="details">
-			<div class="flex h-full flex-col justify-center gap-0">
-				<div class="flex flex-row gap-2 rounded-lg p-0">
+		<!-- <span slot="details" class="flex h-full flex-col justify-center gap-0 wh-inner"> -->
+			<!-- <div class="flex h-full flex-col justify-center gap-0"> -->
+				<!-- <div class="flex flex-row gap-2 rounded-lg p-0"> -->
 					{#if attrLevel !== undefined}
 						<p>
 							{attrLevel.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
@@ -69,8 +62,8 @@
 							{attrVoltage.value.toLocaleString(undefined, { maximumFractionDigits: 1 })}V
 						</p>
 					{/if}
-				</div>
-			</div>
+				<!-- </div> -->
+			<!-- </div> -->
 		</span>
 		<span slot="dialog-desktop">
 			{#if attrLevel !== undefined}

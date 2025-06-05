@@ -134,18 +134,10 @@
 			]);
 		}
 	};
-
-	let handleSetFavorite = async(fave: boolean) => {
-		if (onSetFavorite) {
-			actionPending=true;
-			await onSetFavorite(service.id, fave);
-			actionPending=false;
-		}
-	};
 </script>
 
 {#if service.typ === Service_ServiceType.LIGHTBULB}
-	<ServiceRoot deviceName={title} online={online} service={service} onSetFavorite={handleSetFavorite}>
+	<ServiceRoot deviceName={title} online={online} service={service} {onSetFavorite}>
 		<span slot="icon">
 			{#if displayOn}
 				<button

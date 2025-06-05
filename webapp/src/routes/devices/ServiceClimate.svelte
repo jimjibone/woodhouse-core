@@ -44,14 +44,6 @@
 		}
 	};
 
-	let handleSetFavorite = async(fave: boolean) => {
-		if (onSetFavorite) {
-			actionPending=true;
-			await onSetFavorite(service.id, fave);
-			actionPending=false;
-		}
-	};
-
 	let actionSetHeatingSetpoint = async (ev: MouseEvent, adjustment: number) => {
 		ev.stopPropagation();
 		if (attrHeatingSetpoint !== undefined) {
@@ -71,7 +63,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.CLIMATE}
-	<ServiceRoot deviceName={title} online={online} service={service} onSetFavorite={handleSetFavorite}>
+	<ServiceRoot deviceName={title} online={online} service={service} {onSetFavorite}>
 		<span slot="icon">
 			<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
 				<Thermometer/>

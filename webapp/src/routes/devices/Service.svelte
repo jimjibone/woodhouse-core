@@ -54,17 +54,17 @@
 	{:else if service.typ === Service_ServiceType.CLIMATE}
 		<ServiceClimate {title} {online} {service} onAction={onActionNoHandler} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.BUTTON}
-		<ServiceButton {title} {online} {service} {expandable} />
+		<ServiceButton {title} {online} {service} {expandable} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.ENVIRONMENT}
 		<ServiceEnvironment {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.CONTACT}
-		<ServiceContact {title} {online} {service} />
+		<ServiceContact {title} {online} {service} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.UPDATE}
 		<ServiceUpdate {title} {online} {service} />
 	{:else if service.typ === Service_ServiceType.ENUM}
-		<ServiceEnum {title} {online} {service} onAction={onActionNoHandler} />
+		<ServiceEnum {title} {online} {service} onAction={onActionNoHandler} onSetFavorite={handleSetFavorite} />
 	{:else if service.typ === Service_ServiceType.CAMERA}
-		<ServiceCamera deviceID={deviceID} {title} {online} {service} onAction={onActionWithHandler} />
+		<ServiceCamera deviceID={deviceID} {title} {online} {service} onAction={onActionWithHandler} onSetFavorite={handleSetFavorite} />
 	{:else if expandable}
 		<div class={online ? '' : 'bg-muted'}>
 			<div class="pb-3">

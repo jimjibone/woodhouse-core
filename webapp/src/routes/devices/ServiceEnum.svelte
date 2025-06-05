@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from "svelte";
-	import { ServiceRoot } from '$lib/components/wh/service'
+	import { ServiceRoot, ServiceDetails } from '$lib/components/wh/service'
 	import { Rows3, Check, ChevronsUpDown } from 'lucide-svelte';
 	import { cn } from "$lib/utils.js";
 
@@ -20,9 +20,9 @@
 	export let online: boolean;
 	export let service: Service;
 	export let onAction: ((serviceID: string, vals: Value[]) => Promise<void>) | undefined;
+	export let onSetFavorite: ((serviceID: string, fave: boolean) => Promise<void>) | undefined;
 
 	let attrValue: EnumAttribute | undefined;
-	let showOptions: boolean = false;
 
 	$: {
 		for (const attr of service.attrs) {
@@ -62,7 +62,7 @@
 </script>
 
 {#if service.typ === Service_ServiceType.ENUM}
-<ServiceRoot deviceName={title} online={online} service={service}>
+<ServiceRoot deviceName={title} online={online} service={service} expandable={true} {onSetFavorite}>
 	<span slot="icon">
 		<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
 			{#if true}
@@ -70,7 +70,7 @@
 			{/if}
 		</div>
 	</span>
-	<span slot="details">
+	<ServiceDetails slot="details" let:expanded>
 		{#if attrValue !== undefined}
 			{#if attrValue.value === ""}
 			<p>
@@ -82,7 +82,7 @@
 			</p>
 			{/if}
 		{/if}
-		{#if attrValue !== undefined && showOptions}
+		{#if attrValue !== undefined && expanded}
 			<p class="text-muted-foreground">
 				{"["}
 				{#each attrValue.options as opt, index}
@@ -92,7 +92,7 @@
 				{"]"}
 			</p>
 		{/if}
-	</span>
+	</ServiceDetails>
 	<span slot="dialog-desktop">
 		{#if attrValue !== undefined}
 			<Popover.Root bind:open={comboOpen} let:ids>

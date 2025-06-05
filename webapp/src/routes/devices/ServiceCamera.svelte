@@ -24,6 +24,7 @@
 	export let title: string | undefined = undefined;
 	export let online: boolean;
 	export let service: Service;
+	export let onSetFavorite: ((serviceID: string, fave: boolean) => Promise<void>) | undefined;
 	export let onAction: ((serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => Promise<void>) | undefined;
 
 	let attrImage: ImageAttribute | undefined;
@@ -92,29 +93,29 @@
   </style>
 
 {#if service.typ === Service_ServiceType.CAMERA}
-<ServiceRoot deviceName={title} online={online} service={service}>
-	<span slot="icon">
-		<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
-			{#if true}
-			<Rows3 />
-			{/if}
-		</div>
-	</span>
-	<span slot="details">
-		{#if attrImage !== undefined}
-			<Button on:click={getImage}>Get</Button>
-			<div class="image-container">
-				{#if imageSrc}
-					<img src={imageSrc} alt="Your Thing" />
-				{:else}
-					<p>Image</p>
+	<ServiceRoot deviceName={title} online={online} service={service} {onSetFavorite}>
+		<span slot="icon">
+			<div class="p-2 rounded-full bg-secondary text-secondary-foreground">
+				{#if true}
+				<Rows3 />
 				{/if}
 			</div>
-		{:else}
-			<p>no image</p>
-		{/if}
-	</span>
-</ServiceRoot>
+		</span>
+		<span slot="details">
+			{#if attrImage !== undefined}
+				<Button on:click={getImage}>Get</Button>
+				<div class="image-container">
+					{#if imageSrc}
+						<img src={imageSrc} alt="Your Thing" />
+					{:else}
+						<p>Image</p>
+					{/if}
+				</div>
+			{:else}
+				<p>no image</p>
+			{/if}
+		</span>
+	</ServiceRoot>
 {:else}
 	<p>ERROR Service Type {Service_ServiceType[service.typ]} is not CAMERA</p>
 {/if}
