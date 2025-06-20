@@ -1,36 +1,75 @@
 <script lang="ts">
 	import "../app.css";
-	import { ModeWatcher, toggleMode, mode } from "mode-watcher";
-	import Button from "@/components/ui/button/button.svelte";
-	import { Sun, Moon } from "@lucide/svelte";
+	import { ModeWatcher } from "mode-watcher";
+	import { HeartIcon, Rows3Icon, LampIcon, BugIcon } from "@lucide/svelte";
+	import AppSidebar, { type Dashboards } from "$lib/components/app-sidebar.svelte";
+	import * as Breadcrumb from "$lib/components/ui/breadcrumb/index.js";
+	import { Separator } from "$lib/components/ui/separator/index.js";
+	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import { page } from "$app/state";
 
 	let { children } = $props();
+
+	const dashboards: Dashboards = [
+		{
+			name: "Favorites",
+			url: "/favorites",
+			icon: HeartIcon,
+		},
+		{
+			name: "Services",
+			url: "/services",
+			icon: Rows3Icon,
+		},
+		{
+			name: "Devices",
+			url: "/devices",
+			icon: LampIcon,
+		},
+		{
+			name: "Debug",
+			url: "/debug",
+			icon: BugIcon,
+		},
+	];
+
+	let activeDashboard: string = $derived.by(() => {
+		return dashboards.find(item => item.url === page.url.pathname)?.name ?? 'Unknown';
+	});
 </script>
 
 <ModeWatcher themeColors={{ dark: "#09090b", light: "#ffffff" }} />
 
-<Button onclick={toggleMode}>
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		width="24"
-		height="24"
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="2"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		class="size-4.5"
-		><path
-			stroke="none"
-			d="M0 0h24v24H0z"
-			fill="none"
-		></path><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
-		></path><path d="M12 3l0 18"></path><path d="M12 9l4.65 -4.65"
-		></path><path d="M12 14.3l7.37 -7.37"></path><path
-			d="M12 19.6l8.85 -8.85"
-		></path></svg
-	>
-</Button>
-
-{@render children()}
+<Sidebar.Provider>
+	<AppSidebar {dashboards} />
+	<Sidebar.Inset>
+		<header class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear">
+			<div class="flex items-center gap-2 px-4">
+				<Sidebar.Trigger class="-ml-1" />
+				<Separator orientation="vertical" class="mr-2 data-[orientation=vertical]:h-4" />
+				<Breadcrumb.Root>
+					<Breadcrumb.List>
+						<!-- <Breadcrumb.Item class="hidden md:block">
+							<Breadcrumb.Link href="#">Building Your Application</Breadcrumb.Link>
+						</Breadcrumb.Item>
+						<Breadcrumb.Separator class="hidden md:block" /> -->
+						<Breadcrumb.Item>
+							<Breadcrumb.Page>{activeDashboard}</Breadcrumb.Page>
+						</Breadcrumb.Item>
+					</Breadcrumb.List>
+				</Breadcrumb.Root>
+			</div>
+		</header>
+		<!-- <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
+			<div class="grid auto-rows-min gap-4 md:grid-cols-3">
+				<div class="bg-muted/50 aspect-video rounded-xl"></div>
+				<div class="bg-muted/50 aspect-video rounded-xl"></div>
+				<div class="bg-muted/50 aspect-video rounded-xl"></div>
+			</div>
+			<div class="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min"></div>
+		</div> -->
+		<div class="p-4">
+			{@render children()}
+		</div>
+	</Sidebar.Inset>
+</Sidebar.Provider>
