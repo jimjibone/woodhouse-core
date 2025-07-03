@@ -25,8 +25,8 @@
 		icon = undefined,
 		iconstyle = "",
 		oniconclick,
+		details = undefined,
 		children = undefined,
-		drawerContent = undefined,
 		drawerOpen = $bindable(false)
 	}: {
 		deviceName: string,
@@ -44,8 +44,8 @@
 		icon?: Snippet,
 		iconstyle?: string,
 		oniconclick?: ()=>void,
+		details?: Snippet,
 		children?: Snippet<[]>,
-		drawerContent?: Snippet,
 		drawerOpen?: boolean
 	} = $props();
 
@@ -79,7 +79,7 @@
 	});
 </script>
 
-<button class={cn('rounded-lg border bg-card hover:bg-card/80 p-2 text-card-foreground shadow-sm text-left cursor-pointer', !online && 'bg-muted', isError && 'shake')} onclick={openDrawer}>
+<button class={cn('rounded-lg border bg-card hover:bg-card/90 p-2 text-card-foreground shadow-sm text-left cursor-pointer', !online && 'bg-muted', isError && 'shake')} onclick={openDrawer}>
 	<div class="flex flex-row gap-2">
 		<div class="shrink">
 			<div class="grid h-full place-content-center">
@@ -121,10 +121,10 @@
 						<p class="font-semibold">{serviceTitle}</p>
 					</div>
 				{/if}
-				{#if children}
+				{#if details}
 					<div class="flex h-full flex-col justify-center gap-0">
 						<div class="flex flex-row gap-2 rounded-lg p-0">
-							{@render children()}
+							{@render details()}
 						</div>
 					</div>
 				{/if}
@@ -154,7 +154,7 @@
 						</Drawer.Title>
 					</Drawer.Header>
 
-					<div class="px-4 flex flex-col">
+					<div class="px-4 pb-4 flex flex-col">
 						{#if actionPending}
 							<span transition:slide={{ duration: 200 }} class="p-2 mb-4 bg-warning rounded-md flex gap-1">
 								<Loader2Icon class="animate-spin"/>
@@ -162,10 +162,10 @@
 							</span>
 						{/if}
 
-						{#if drawerContent}
-							{@render drawerContent()}
+						{#if children}
+							{@render children()}
 						{:else}
-							<p>Unimplemented...</p>
+							{@render rawContent()}
 						{/if}
 					</div>
 				</div>
@@ -173,7 +173,7 @@
 		</Drawer.Root>
 	{:else}
 		<Dialog.Root bind:open={drawerOpen}>
-			<Dialog.Content showCloseButton={false}>
+			<Dialog.Content class="max-h-[90%] overflow-y-auto" showCloseButton={false}>
 				<div class={cn("", isError && 'shake')}>
 					<Dialog.Header>
 						<Dialog.Title class="flex flex-row gap-2 items-center">
@@ -202,11 +202,10 @@
 					{/if}
 
 					<div class="pt-4">
-						{#if drawerContent}
-							{@render drawerContent()}
+						{#if children}
+							{@render children()}
 						{:else}
-							<!-- {@render rawContent()} -->
-							 <p>Unimplemented...</p>
+							{@render rawContent()}
 						{/if}
 					</div>
 				</div>
@@ -214,24 +213,16 @@
 		</Dialog.Root>
 	{/if}
 	<Dialog.Root bind:open={rawPanelOpen}>
-		<Dialog.Content class="max-h-[90%]">
+		<Dialog.Content class="max-h-[90%] overflow-y-auto">
 			<!-- {@render rawContent()} -->
-			 <div class={cn("grid gap-1 max-h-90", isError && 'shake')}>
+			 <div class={cn("grid gap-1", isError && 'shake')}>
 				<Dialog.Header>
 					<Dialog.Title class="pb-3">
 							Raw Service
 					</Dialog.Title>
 				</Dialog.Header>
 
-				<div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-center">
-					<div>Device Name</div><div class="font-mono bg-muted p-1 rounded-md">{deviceName}</div>
-					<div>Device ID</div><div class="font-mono bg-muted p-1 rounded-md">{deviceID}</div>
-					<div>Online</div><div class="font-mono bg-muted p-1 rounded-md">{online}</div>
-					<div class="col-span-2">Service:</div>
-				</div>
-				<div class="no-scrollbar min-w-0 overflow-x-auto font-mono bg-muted px-4 py-2 rounded-md whitespace-pre text-sm">
-					{toJsonString(ServiceSchema, service, {prettySpaces: 2})}
-				</div>
+				{@render rawContent()}
 			</div>
 		</Dialog.Content>
 	</Dialog.Root>
@@ -259,24 +250,14 @@
 	</DropdownMenu.Root>
 {/snippet}
 
-<!-- {#snippet rawContent()}
-<div class="no-scrollbar min-w-0 overflow-y-auto">
-	<div class={cn("grid gap-1", isError && 'shake')}>
-		<Dialog.Header>
-			<Dialog.Title class="pb-3">
-					Raw Service
-			</Dialog.Title>
-		</Dialog.Header>
-
-		<div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-center">
-			<div>Device Name</div><div class="font-mono bg-muted p-1 rounded-md">{deviceName}</div>
-			<div>Device ID</div><div class="font-mono bg-muted p-1 rounded-md">{deviceID}</div>
-			<div>Online</div><div class="font-mono bg-muted p-1 rounded-md">{online}</div>
-			<div class="col-span-2">Service:</div>
-		</div>
-		<div class="font-mono bg-muted px-4 py-2 rounded-md whitespace-pre text-sm">
-			{toJsonString(ServiceSchema, service, {prettySpaces: 2})}
-		</div>
-	</div>
+{#snippet rawContent()}
+<div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-center">
+	<div>Device Name</div><div class="font-mono bg-muted p-1 rounded-md">{deviceName}</div>
+	<div>Device ID</div><div class="font-mono bg-muted p-1 rounded-md">{deviceID}</div>
+	<div>Online</div><div class="font-mono bg-muted p-1 rounded-md">{online}</div>
+	<div class="col-span-2">Service:</div>
 </div>
-{/snippet} -->
+<div class="min-w-0 overflow-x-auto font-mono bg-muted px-4 py-2 rounded-md whitespace-pre text-sm">
+	{toJsonString(ServiceSchema, service, {prettySpaces: 2})}
+</div>
+{/snippet}

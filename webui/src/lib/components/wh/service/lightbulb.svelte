@@ -7,7 +7,7 @@
 	import chroma from 'chroma-js';
 	import { mode } from "mode-watcher";
 	import { create } from '@bufbuild/protobuf';
-	import { BoolContent, DurationContent, IntContent, FloatContent } from '$lib/components/wh/attributes';
+	import { BoolContent, DurationContent, IntContent, FloatContent, OthersContent } from '$lib/components/wh/attributes';
 
 	let {
 		deviceName,
@@ -26,7 +26,7 @@
 	let attrColorTemp: IntAttribute | undefined = $state(undefined);
 	let attrColor: ColorAttribute | undefined = $state(undefined);
 	let attrTransition: DurationAttribute | undefined = $state(undefined);
-	let attrOthers: Attribute[];
+	let attrOthers: Attribute[] = $state([]);
 
 	const foregroundLight = 'hsl(0 0% 100%)';
 	const foregroundDark = 'hsl(240 10% 3.9%)';
@@ -178,7 +178,39 @@
 	{/if}
 {/snippet}
 
-{#snippet drawerContent()}
+{#snippet details()}
+	{#if attrOn !== undefined}
+		<p>{attrOn.value ? 'On' : 'Off'}</p>
+	{/if}
+	{#if attrBrightness !== undefined}
+		<p class="text-muted-foreground">
+			{attrBrightness.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
+		</p>
+	{/if}
+	{#if attrColorTemp !== undefined}
+		<p class="text-muted-foreground">
+			{(1000000.0 / Number(attrColorTemp.value)).toLocaleString(undefined, { maximumFractionDigits: 0 })}°K
+		</p>
+	{/if}
+	{#if attrColor !== undefined && attrColor.hueSat !== undefined}
+		<p class="text-muted-foreground">Hue {attrColor.hueSat.hue.toFixed(0)}°</p>
+		<p class="text-muted-foreground">Sat {attrColor.hueSat.sat.toFixed(0)}%</p>
+	{/if}
+{/snippet}
+
+<ServiceRoot
+	deviceName={deviceName}
+	deviceID={deviceID}
+	online={online}
+	service={service}
+	actionPending={serviceAction.pending}
+	errorSignal={serviceAction.error}
+	icon={icon}
+	iconstyle="color: {buttonForeground}; background-color: {buttonBackground};"
+	oniconclick={oniconclick}
+	details={details}
+	bind:drawerOpen={drawerOpen}
+>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrOn !== undefined}
 			<BoolContent
@@ -233,37 +265,6 @@
 				onaction={sendActionTransition}
 			/>
 		{/if}
+		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
-{/snippet}
-
-<ServiceRoot
-	deviceName={deviceName}
-	deviceID={deviceID}
-	online={online}
-	service={service}
-	actionPending={serviceAction.pending}
-	errorSignal={serviceAction.error}
-	icon={icon}
-	iconstyle="color: {buttonForeground}; background-color: {buttonBackground};"
-	oniconclick={oniconclick}
-	{drawerContent}
-	bind:drawerOpen={drawerOpen}
->
-	{#if attrOn !== undefined}
-		<p>{attrOn.value ? 'On' : 'Off'}</p>
-	{/if}
-	{#if attrBrightness !== undefined}
-		<p class="text-muted-foreground">
-			{attrBrightness.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
-		</p>
-	{/if}
-	{#if attrColorTemp !== undefined}
-		<p class="text-muted-foreground">
-			{(1000000.0 / Number(attrColorTemp.value)).toLocaleString(undefined, { maximumFractionDigits: 0 })}°K
-		</p>
-	{/if}
-	{#if attrColor !== undefined && attrColor.hueSat !== undefined}
-		<p class="text-muted-foreground">Hue {attrColor.hueSat.hue.toFixed(0)}°</p>
-		<p class="text-muted-foreground">Sat {attrColor.hueSat.sat.toFixed(0)}%</p>
-	{/if}
 </ServiceRoot>

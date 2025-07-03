@@ -7,6 +7,7 @@
 		value,
 		min,
 		max,
+		step = 1,
 		onaction,
 		transform = (value) => value,
 		maximumFractionDigits = 0,
@@ -16,6 +17,7 @@
 		value: number,
 		min: number,
 		max: number,
+		step?: number,
 		onaction: (value: number)=>void,
 		transform?: (value: number)=>number,
 		maximumFractionDigits?: number,
@@ -49,7 +51,7 @@
 <Slider
 	class="shrink"
 	type="single"
-	step={1}
+	step={step}
 	min={min}
 	max={max}
 	value={value}
