@@ -1,0 +1,37 @@
+version: '3'
+
+tasks:
+  default:
+    deps:
+      - proto
+
+  proto:
+    run: when_changed
+    sources:
+      - ./buf.gen.yaml
+      - ../api/v1/*/*.proto
+    generates:
+      - ./src/api/v1/*/*.pb.go
+    cmds:
+      - mkdir -p ./src/lib/api/v1
+      - npx buf generate ../api/v1
+
+  icons:
+    cmds:
+      - inkscape ../logo/icon-24.svg --export-type=png --export-filename=./static/favicon.png --export-width=24
+      - inkscape ../logo/icon-bold.svg --export-type=png --export-filename=./static/favicon-128.png --export-width=128
+      - inkscape ../logo/icon-bold.svg --export-type=png --export-filename=./static/favicon-256.png --export-width=256
+      - inkscape ../logo/icon-bold.svg --export-type=png --export-filename=./static/favicon-512.png --export-width=512
+      - inkscape ../logo/icon-app.svg --export-type=png --export-filename=./static/apple-touch-icon.png --export-width=512
+
+  build:
+    deps:
+      - proto
+    cmds:
+      - npm run build
+
+  dev:
+    deps:
+      - proto
+    cmds:
+      - npm run dev -- --host

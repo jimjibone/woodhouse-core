@@ -7,6 +7,7 @@
 	import { Separator } from "$lib/components/ui/separator/index.js";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import { page } from "$app/state";
+	import { Toaster } from "$lib/components/ui/sonner/index.js";
 
 	let { children } = $props();
 
@@ -39,6 +40,8 @@
 </script>
 
 <ModeWatcher themeColors={{ dark: "#09090b", light: "#ffffff" }} />
+
+<Toaster closeButton richColors position="top-right" expand={true} />
 
 <Sidebar.Provider>
 	<AppSidebar {dashboards} />
