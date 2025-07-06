@@ -1,19 +1,21 @@
 <script lang="ts">
-	import { BoolValueSchema, ValueSchema, FloatValueSchema, AttributeSchema } from '$lib/api/v1/clients/client_service_pb';
-	import type { Attribute, BoolAttribute, FloatAttribute, IntAttribute, Service, Value } from '$lib/api/v1/clients/client_service_pb';
+	import { ValueSchema, FloatValueSchema } from '$lib/api/v1/clients/client_service_pb';
+	import type { Attribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
 	import ServiceRoot from "./service-root.svelte";
 	import ServiceAction from './service-action.svelte';
 	import { ThermometerIcon } from '@lucide/svelte';
-	import { create, toJsonString } from '@bufbuild/protobuf';
-	import { BoolContent, FloatContent, OthersContent } from '$lib/components/wh/attributes';
+	import { create } from '@bufbuild/protobuf';
+	import { FloatContent, OthersContent } from '$lib/components/wh/attributes';
 
 	let {
 		deviceName,
+		showDeviceName,
 		deviceID,
 		online,
 		service
 	}: {
 		deviceName: string,
+		showDeviceName?: boolean,
 		deviceID: string,
 		online: boolean,
 		service: Service
@@ -81,6 +83,7 @@
 
 <ServiceRoot
 	deviceName={deviceName}
+	showDeviceName={showDeviceName}
 	deviceID={deviceID}
 	online={online}
 	service={service}

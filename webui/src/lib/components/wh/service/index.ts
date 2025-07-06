@@ -1,11 +1,17 @@
-import Climate from './climate.svelte';
-import Lightbulb from './lightbulb.svelte';
+import BatteryService from './battery.svelte';
+import ClimateService from './climate.svelte';
+import EnumService from './enum.svelte';
+import LightbulbService from './lightbulb.svelte';
 import ServiceAction from './service-action.svelte';
+import ServiceEnumerator from './service-enumerator.svelte';
 import ServiceRoot from './service-root.svelte';
 
 export {
-    Climate,
-    Lightbulb,
-    ServiceAction,
-    ServiceRoot,
+	BatteryService,
+	ClimateService,
+	EnumService,
+	LightbulbService,
+	ServiceAction,
+	ServiceEnumerator,
+	ServiceRoot,
 };

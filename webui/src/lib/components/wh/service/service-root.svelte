@@ -12,17 +12,20 @@
 	import { TooltipIcon } from "$lib/components/wh/buttons";
 	import { toJsonString } from "@bufbuild/protobuf";
 	import { slide } from 'svelte/transition';
+    import Bool from "../attributes/bool.svelte";
 
 	const isMobile = new IsMobile();
 
 	let {
 		deviceName,
+		showDeviceName = true,
 		deviceID,
 		online,
 		service,
-		actionPending,
+		actionPending = false,
 		errorSignal = null,
 		icon = undefined,
+		iconclass = false,
 		iconstyle = "",
 		oniconclick,
 		details = undefined,
@@ -30,18 +33,20 @@
 		drawerOpen = $bindable(false)
 	}: {
 		deviceName: string,
+		showDeviceName?: boolean,
 		deviceID: string,
 		online: boolean,
 		service: Service,
-		actionPending: boolean,
+		actionPending?: boolean,
 		/**
 		 * A signal from the parent indicating that an error occurred.
 		 * Used to temporarily flash the component red.
 		 *
 		 * Recommended format: a timestamp or counter that changes on each error - e.g. `Date.now()`
 		 */
-		errorSignal: number | null,
+		errorSignal?: number | null,
 		icon?: Snippet,
+		iconclass?: string | boolean,
 		iconstyle?: string,
 		oniconclick?: ()=>void,
 		details?: Snippet,
@@ -50,6 +55,15 @@
 	} = $props();
 
 	let serviceTitle = $derived.by(() => {
+		if (showDeviceName) {
+			let dev = deviceName !== "" ? deviceName : deviceID;
+			let srv = service.alias ? ": "+service.alias : "";
+			return dev + srv;
+		}
+		return service.alias ? service.alias : "";
+	});
+
+	let popupTitle = $derived.by(() => {
 		let dev = deviceName !== "" ? deviceName : deviceID;
 		let srv = service.alias ? ": "+service.alias : "";
 		return dev + srv;
@@ -79,13 +93,13 @@
 	});
 </script>
 
-<button class={cn('rounded-lg border bg-card hover:bg-card/90 p-2 text-card-foreground shadow-sm text-left cursor-pointer', !online && 'bg-muted', isError && 'shake')} onclick={openDrawer}>
-	<div class="flex flex-row gap-2">
+<button class={cn('w-full rounded-lg border bg-card/50 hover:bg-card/70 p-2 text-card-foreground shadow-sm text-left cursor-pointer', !online && 'bg-muted/80 hover:bg-muted/90', isError && 'shake')} onclick={openDrawer}>
+	<div class="flex flex-row">
 		<div class="shrink">
 			<div class="grid h-full place-content-center">
 				{#if oniconclick !== undefined}
 					<span
-						class="p-3 rounded-full bg-secondary text-secondary-foreground transition-[background-color,color] duration-200 ease-linear cursor-pointer"
+						class={cn("p-3 rounded-full bg-secondary text-secondary-foreground transition-[background-color,color] duration-200 ease-linear cursor-pointer", iconclass)}
 						style={iconstyle}
 						onclick={(event) => {
 							event.stopPropagation();
@@ -104,7 +118,7 @@
 						{/if}
 					</span>
 				{:else}
-					<span class="p-3 rounded-full bg-secondary text-secondary-foreground" style={iconstyle}>
+					<span class={cn("p-3 rounded-full bg-secondary text-secondary-foreground", iconclass)} style={iconstyle}>
 						{#if icon}
 							{@render icon()}
 						{:else}
@@ -117,13 +131,13 @@
 		<div class="grow">
 			<div class="flex h-full flex-col justify-center gap-0">
 				{#if serviceTitle !== ''}
-					<div class="rounded-lg p-0 flex flex-row items-center">
-						<p class="font-semibold">{serviceTitle}</p>
+					<div class="pl-2 pr-1 flex flex-row items-center">
+						<p class="font-semibold whitespace-pre">{serviceTitle}</p>
 					</div>
 				{/if}
 				{#if details}
-					<div class="flex h-full flex-col justify-center gap-0">
-						<div class="flex flex-row gap-2 rounded-lg p-0">
+					<div class="pl-2 pr-1 flex h-full flex-col justify-center gap-0">
+						<div class="flex flex-row gap-2 whitespace-pre">
 							{@render details()}
 						</div>
 					</div>
@@ -138,7 +152,7 @@
 					<Drawer.Header>
 						<Drawer.Title class="flex flex-row gap-2 items-center">
 							<span class="grow text-lg">
-								{serviceTitle}
+								{popupTitle}
 							</span>
 							{#if service.favorite}
 								<TooltipIcon variant="default" tooltip="Favorite">
@@ -174,11 +188,11 @@
 	{:else}
 		<Dialog.Root bind:open={drawerOpen}>
 			<Dialog.Content class="max-h-[90%] overflow-y-auto" showCloseButton={false}>
-				<div class={cn("", isError && 'shake')}>
+				<div class={cn("grid gap-1", isError && 'shake')}>
 					<Dialog.Header>
 						<Dialog.Title class="flex flex-row gap-2 items-center">
 							<span class="grow">
-								{serviceTitle}
+								{popupTitle}
 							</span>
 							{#if service.favorite}
 								<TooltipIcon variant="default" tooltip="Favorite">
@@ -201,24 +215,22 @@
 						</span>
 					{/if}
 
-					<div class="pt-4">
-						{#if children}
-							{@render children()}
-						{:else}
-							{@render rawContent()}
-						{/if}
-					</div>
+					<div class="pt-4"></div>
+					{#if children}
+						{@render children()}
+					{:else}
+						{@render rawContent()}
+					{/if}
 				</div>
 			</Dialog.Content>
 		</Dialog.Root>
 	{/if}
 	<Dialog.Root bind:open={rawPanelOpen}>
 		<Dialog.Content class="max-h-[90%] overflow-y-auto">
-			<!-- {@render rawContent()} -->
-			 <div class={cn("grid gap-1", isError && 'shake')}>
+			<div class={cn("grid gap-1", isError && 'shake')}>
 				<Dialog.Header>
 					<Dialog.Title class="pb-3">
-							Raw Service
+						Raw Service
 					</Dialog.Title>
 				</Dialog.Header>
 
@@ -257,7 +269,7 @@
 	<div>Online</div><div class="font-mono bg-muted p-1 rounded-md">{online}</div>
 	<div class="col-span-2">Service:</div>
 </div>
-<div class="min-w-0 overflow-x-auto font-mono bg-muted px-4 py-2 rounded-md whitespace-pre text-sm">
+<div class="min-w-0 overflow-x-scroll font-mono bg-muted px-4 py-2 rounded-md whitespace-pre text-sm">
 	{toJsonString(ServiceSchema, service, {prettySpaces: 2})}
 </div>
 {/snippet}

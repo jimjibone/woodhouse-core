@@ -11,11 +11,13 @@
 
 	let {
 		deviceName,
+		showDeviceName,
 		deviceID,
 		online,
 		service
 	}: {
 		deviceName: string,
+		showDeviceName?: boolean,
 		deviceID: string,
 		online: boolean,
 		service: Service
@@ -200,6 +202,7 @@
 
 <ServiceRoot
 	deviceName={deviceName}
+	showDeviceName={showDeviceName}
 	deviceID={deviceID}
 	online={online}
 	service={service}

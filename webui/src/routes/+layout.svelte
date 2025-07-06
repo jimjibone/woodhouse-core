@@ -1,13 +1,16 @@
 <script lang="ts">
 	import "../app.css";
 	import { ModeWatcher } from "mode-watcher";
-	import { HeartIcon, Rows3Icon, LampIcon, BugIcon } from "@lucide/svelte";
+	import { HeartIcon, Rows3Icon, LampIcon, BugIcon, LightbulbIcon } from "@lucide/svelte";
+	import { WoodhouseIcon } from "$lib/components/wh/icons";
 	import AppSidebar, { type Dashboards } from "$lib/components/app-sidebar.svelte";
-	import * as Breadcrumb from "$lib/components/ui/breadcrumb/index.js";
-	import { Separator } from "$lib/components/ui/separator/index.js";
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import AppMobilebar from "$lib/components/app-mobilebar.svelte";
+	import * as Breadcrumb from "$lib/components/ui/breadcrumb";
+	import { Separator } from "$lib/components/ui/separator";
+	import * as Sidebar from "$lib/components/ui/sidebar";
 	import { page } from "$app/state";
-	import { Toaster } from "$lib/components/ui/sonner/index.js";
+	import { Toaster } from "$lib/components/ui/sonner";
+	import type { Snippet } from "svelte";
 
 	let { children } = $props();
 
@@ -17,21 +20,21 @@
 			url: "/favorites",
 			icon: HeartIcon,
 		},
-		{
-			name: "Services",
-			url: "/services",
-			icon: Rows3Icon,
-		},
+		// {
+		// 	name: "Services",
+		// 	url: "/services",
+		// 	icon: Rows3Icon,
+		// },
 		{
 			name: "Devices",
 			url: "/devices",
 			icon: LampIcon,
 		},
-		{
-			name: "Debug",
-			url: "/debug",
-			icon: BugIcon,
-		},
+		// {
+		// 	name: "Debug",
+		// 	url: "/debug",
+		// 	icon: BugIcon,
+		// },
 	];
 
 	let activeDashboard: string = $derived.by(() => {
@@ -43,8 +46,22 @@
 
 <Toaster closeButton richColors position="top-right" expand={true} />
 
+<!-- <Menubar.Root class="fixed bottom-5 self-center shadow-lg rounded-full h-12">
+	<Menubar.Menu>
+		<Menubar.Item on:click={filterAll} class={cn("rounded-full px-1.5 py-1.5 hover:bg-muted cursor-pointer", filterServiceTypes.length === 0 && "bg-secondary")}>
+			<Asterisk class="size-6"/>
+		</Menubar.Item>
+		<Menubar.Item on:click={filterLightbulb} class={cn("rounded-full px-1.5 py-1.5 hover:bg-muted cursor-pointer", showServiceType(false, Service_ServiceType.LIGHTBULB) && "bg-secondary")}>
+			<Lightbulb class="size-6"/>
+		</Menubar.Item>
+		<Menubar.Item on:click={filterClimate} class={cn("rounded-full px-1.5 py-1.5 hover:bg-muted cursor-pointer", showServiceType(false, Service_ServiceType.CLIMATE) && "bg-secondary")}>
+			<Thermometer class="size-6"/>
+		</Menubar.Item>
+	</Menubar.Menu>
+</Menubar.Root> -->
+
 <Sidebar.Provider>
-	<AppSidebar {dashboards} />
+	<AppSidebar {dashboards}/>
 	<Sidebar.Inset>
 		<header class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear">
 			<div class="flex items-center gap-2 px-4">
@@ -74,5 +91,7 @@
 		<div class="p-4">
 			{@render children()}
 		</div>
+
+		<AppMobilebar {dashboards}/>
 	</Sidebar.Inset>
 </Sidebar.Provider>
