@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { cn } from "$lib/utils";
-	import { ServiceSchema, type Service } from '$lib/api/v1/clients/client_service_pb';
+	import { ServiceSchema, type Service, type TimeValue } from '$lib/api/v1/clients/client_service_pb';
 	import { type Snippet } from "svelte";
-	import { HeartIcon, HeartOffIcon, EllipsisIcon, UnplugIcon, BugIcon, Loader2Icon, SquareDashedIcon } from '@lucide/svelte';
+	import { HeartIcon, HeartOffIcon, EllipsisIcon, UnplugIcon, BugIcon, Loader2Icon, SquareDashedIcon, LampIcon, BatteryWarningIcon, BatteryLowIcon, BatteryMediumIcon, BatteryFullIcon } from '@lucide/svelte';
 	import { IsMobile } from "$lib/hooks/is-mobile.svelte.js";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Drawer from "$lib/components/ui/drawer";
@@ -12,31 +12,22 @@
 	import { TooltipIcon } from "$lib/components/wh/buttons";
 	import { toJsonString } from "@bufbuild/protobuf";
 	import { slide } from 'svelte/transition';
-    import Bool from "../attributes/bool.svelte";
+	import { toHeadlineCase } from '$lib/tools/headline-case';
+	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 
 	const isMobile = new IsMobile();
 
-	let {
-		deviceName,
-		showDeviceName = true,
-		deviceID,
-		online,
-		service,
-		actionPending = false,
-		errorSignal = null,
-		icon = undefined,
-		iconclass = false,
-		iconstyle = "",
-		oniconclick,
-		details = undefined,
-		children = undefined,
-		drawerOpen = $bindable(false)
-	}: {
+	export type StandardProps = {
 		deviceName: string,
 		showDeviceName?: boolean,
 		deviceID: string,
 		online: boolean,
-		service: Service,
+		lastSeen?: Date,
+		batteryLevel?: bigint,
+		service: Service
+	};
+
+	export type Props = StandardProps & {
 		actionPending?: boolean,
 		/**
 		 * A signal from the parent indicating that an error occurred.
@@ -52,12 +43,31 @@
 		details?: Snippet,
 		children?: Snippet<[]>,
 		drawerOpen?: boolean
-	} = $props();
+	};
+
+	let {
+		deviceName,
+		showDeviceName = true,
+		deviceID,
+		online,
+		lastSeen = undefined,
+		batteryLevel = undefined,
+		service,
+		actionPending = false,
+		errorSignal = null,
+		icon = undefined,
+		iconclass = false,
+		iconstyle = "",
+		oniconclick,
+		details = undefined,
+		children = undefined,
+		drawerOpen = $bindable(false)
+	} : Props = $props();
 
 	let serviceTitle = $derived.by(() => {
 		if (showDeviceName) {
 			let dev = deviceName !== "" ? deviceName : deviceID;
-			let srv = service.alias ? ": "+service.alias : "";
+			let srv = service.alias ? ": " + toHeadlineCase(service.alias) : "";
 			return dev + srv;
 		}
 		return service.alias ? service.alias : "";
@@ -65,14 +75,9 @@
 
 	let popupTitle = $derived.by(() => {
 		let dev = deviceName !== "" ? deviceName : deviceID;
-		let srv = service.alias ? ": "+service.alias : "";
+		let srv = ": " + toHeadlineCase(service.alias ? service.alias : service.id);
 		return dev + srv;
 	});
-
-	// let drawerOpen = $state(false);
-	let openDrawer = () => {
-		drawerOpen = true;
-	};
 
 	let rawPanelOpen = $state(false);
 
@@ -93,7 +98,10 @@
 	});
 </script>
 
-<button class={cn('w-full rounded-lg border bg-card/50 hover:bg-card/70 p-2 text-card-foreground shadow-sm text-left cursor-pointer', !online && 'bg-muted/80 hover:bg-muted/90', isError && 'shake')} onclick={openDrawer}>
+<button class={cn('w-full max-w-full rounded-lg border bg-card/50 hover:bg-card/70 p-2 text-card-foreground shadow-sm text-left cursor-pointer', !online && 'bg-muted/80 hover:bg-muted/90', isError && 'shake')} onclick={(event) => {
+	event.stopPropagation();
+	drawerOpen = true;
+}}>
 	<div class="flex flex-row">
 		<div class="shrink">
 			<div class="grid h-full place-content-center">
@@ -129,17 +137,41 @@
 			</div>
 		</div>
 		<div class="grow">
-			<div class="flex h-full flex-col justify-center gap-0">
+			<div class="h-full max-w-full flex flex-col justify-center gap-0">
 				{#if serviceTitle !== ''}
-					<div class="pl-2 pr-1 flex flex-row items-center">
-						<p class="font-semibold whitespace-pre">{serviceTitle}</p>
+					<div class="pl-2 pr-1 grid grid-cols-[1fr_auto] gap-1 max-w-full">
+						<span class="font-semibold whitespace-pre overflow-x-auto">
+							{serviceTitle}
+						</span>
+						<span class="flex flex-row gap-2 text-sm items-center whitespace-pre">
+							{#if lastSeen}
+								<TimeSince past={lastSeen} class="text-sm"/>
+							{/if}
+						</span>
 					</div>
+					<!-- </div> -->
 				{/if}
 				{#if details}
-					<div class="pl-2 pr-1 flex h-full flex-col justify-center gap-0">
-						<div class="flex flex-row gap-2 whitespace-pre">
+					<!-- <div class="pl-2 pr-1 flex h-full flex-col justify-center gap-0"> -->
+					<div class="pl-2 pr-1 grid grid-cols-[1fr_auto] gap-1 max-w-full">
+						<div class="flex flex-row gap-2 whitespace-pre overflow-x-auto">
 							{@render details()}
 						</div>
+						{#if batteryLevel}
+							<!-- <span class={cn("shrink flex flex-row gap-1 text-sm items-center text-muted-foreground", batteryLevel < 33 && "text-warning-foreground", batteryLevel < 20 && "text-error-foreground")}> -->
+							<span class={cn("flex flex-row gap-0 text-sm text-muted-foreground", batteryLevel < 33 && "text-warning-foreground", batteryLevel < 20 && "text-error-foreground")}>
+								{#if batteryLevel < 20}
+									<BatteryWarningIcon class="size-5"/>
+								{:else if batteryLevel < 33}
+									<BatteryLowIcon class="size-5"/>
+								{:else if batteryLevel < 66}
+									<BatteryMediumIcon class="size-5"/>
+								{:else}
+									<BatteryFullIcon class="size-5"/>
+								{/if}
+								{Number(batteryLevel)}%
+							</span>
+						{/if}
 					</div>
 				{/if}
 			</div>
@@ -258,6 +290,13 @@
 			<DropdownMenu.Item onclick={() => {rawPanelOpen = true}}>
 				<BugIcon/> Raw View
 			</DropdownMenu.Item>
+			<DropdownMenu.Item>
+				{#snippet child({ props })}
+					<a {...props} onclick={(event) => event.stopPropagation()} href={"/devices/"+deviceID}>
+						<LampIcon/> Go to Device
+					</a>
+				{/snippet}
+			</DropdownMenu.Item>
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 {/snippet}
@@ -267,6 +306,12 @@
 	<div>Device Name</div><div class="font-mono bg-muted p-1 rounded-md">{deviceName}</div>
 	<div>Device ID</div><div class="font-mono bg-muted p-1 rounded-md">{deviceID}</div>
 	<div>Online</div><div class="font-mono bg-muted p-1 rounded-md">{online}</div>
+	{#if lastSeen}
+		<div>Last Seen</div><div class="font-mono bg-muted p-1 rounded-md">{lastSeen.toLocaleString()}</div>
+	{/if}
+	{#if batteryLevel}
+		<div>Battery</div><div class="font-mono bg-muted p-1 rounded-md">{Number(batteryLevel)}%</div>
+	{/if}
 	<div class="col-span-2">Service:</div>
 </div>
 <div class="min-w-0 overflow-x-scroll font-mono bg-muted px-4 py-2 rounded-md whitespace-pre text-sm">

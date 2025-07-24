@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { BoolValueSchema, IntValueSchema, ValueSchema, ColorValueSchema, DurationValueSchema } from '$lib/api/v1/clients/client_service_pb';
 	import type { Attribute, BoolAttribute, ColorAttribute, ColorHueSat, DurationAttribute, IntAttribute, Service, Value } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
 	import ServiceAction from './service-action.svelte';
 	import { LightbulbIcon, LightbulbOffIcon } from '@lucide/svelte';
 	import chroma from 'chroma-js';
@@ -10,18 +10,11 @@
 	import { BoolContent, DurationContent, IntContent, FloatContent, OthersContent } from '$lib/components/wh/attributes';
 
 	let {
-		deviceName,
-		showDeviceName,
 		deviceID,
 		online,
-		service
-	}: {
-		deviceName: string,
-		showDeviceName?: boolean,
-		deviceID: string,
-		online: boolean,
-		service: Service
-	} = $props();
+		service,
+		...rest
+	}: StandardProps = $props();
 
 	let attrOn: BoolAttribute | undefined = $state(undefined);
 	let attrBrightness: IntAttribute | undefined = $state(undefined);
@@ -201,10 +194,9 @@
 {/snippet}
 
 <ServiceRoot
-	deviceName={deviceName}
-	showDeviceName={showDeviceName}
-	deviceID={deviceID}
-	online={online}
+	{deviceID}
+	{online}
+	{...rest}
 	service={service}
 	actionPending={serviceAction.pending}
 	errorSignal={serviceAction.error}

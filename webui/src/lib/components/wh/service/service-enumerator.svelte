@@ -1,22 +1,13 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-	import { DevicesStore, type DevicesStoreType } from '$lib/stores/devices-stream';
-	import { ServiceRoot, BatteryService, ClimateService, EnumService, LightbulbService } from '$lib/components/wh/service';
-	import { Service_ServiceType, type Service } from '$lib/api/v1/clients/client_service_pb';
+	import { cn } from "$lib/utils";
+	import * as Services from '$lib/components/wh/service';
+	import { Service_ServiceType } from '$lib/api/v1/clients/client_service_pb';
 
 	let {
-		deviceName,
-		showDeviceName,
-		deviceID,
-		online,
+		class: className,
 		service,
-		class: className
-	}: {
-		deviceName: string,
-		showDeviceName?: boolean,
-		deviceID: string,
-		online: boolean,
-		service: Service,
+		...rest
+	} : Services.StandardProps & {
 		class?: string | undefined
 	} = $props();
 </script>
@@ -25,45 +16,26 @@
 	service.typ !== Service_ServiceType.INFO &&
 	service.typ !== Service_ServiceType.ONLINE
 }
-	<div class={className}>
+	<div class={cn(className)}>
 		{#if service.typ == Service_ServiceType.BATTERY}
-			<BatteryService
-				{deviceName}
-				{showDeviceName}
-				{deviceID}
-				{online}
-				{service}/>
+			<Services.BatteryService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.BUTTON}
+			<Services.ButtonService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.CLIMATE}
-			<ClimateService
-				{deviceName}
-				{showDeviceName}
-				{deviceID}
-				{online}
-				{service}/>
+			<Services.ClimateService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.ENUM}
-			<EnumService
-				{deviceName}
-				{showDeviceName}
-				{deviceID}
-				{online}
-				{service}/>
+			<Services.EnumService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.ENVIRONMENT}
+			<Services.EnvironmentService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.LIGHTBULB}
-			<LightbulbService
-				{deviceName}
-				{showDeviceName}
-				{deviceID}
-				{online}
-				{service}/>
+			<Services.LightbulbService {service} {...rest}/>
 		{:else}
-			<ServiceRoot
-				{deviceName}
-				{showDeviceName}
-				{deviceID}
-				{online}
+			<Services.ServiceRoot
 				{service}
+				{...rest}
 				actionPending={false}
 				errorSignal={null}>
-			</ServiceRoot>
+			</Services.ServiceRoot>
 		{/if}
 	</div>
 {/if}

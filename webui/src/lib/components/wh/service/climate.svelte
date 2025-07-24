@@ -1,25 +1,17 @@
 <script lang="ts">
 	import { ValueSchema, FloatValueSchema } from '$lib/api/v1/clients/client_service_pb';
 	import type { Attribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
 	import ServiceAction from './service-action.svelte';
-	import { ThermometerIcon } from '@lucide/svelte';
+	import { FlameIcon } from '@lucide/svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { FloatContent, OthersContent } from '$lib/components/wh/attributes';
 
 	let {
-		deviceName,
-		showDeviceName,
 		deviceID,
-		online,
-		service
-	}: {
-		deviceName: string,
-		showDeviceName?: boolean,
-		deviceID: string,
-		online: boolean,
-		service: Service
-	} = $props();
+		service,
+		...rest
+	}: StandardProps = $props();
 
 	let attrHeatingSetpoint: FloatAttribute | undefined = $state(undefined);
 	let attrLocalTemperature: FloatAttribute | undefined = $state(undefined);
@@ -57,7 +49,7 @@
 </script>
 
 {#snippet icon()}
-	<ThermometerIcon/>
+	<FlameIcon/>
 {/snippet}
 
 {#snippet details()}
@@ -82,10 +74,8 @@
 {/snippet}
 
 <ServiceRoot
-	deviceName={deviceName}
-	showDeviceName={showDeviceName}
-	deviceID={deviceID}
-	online={online}
+	{deviceID}
+	{...rest}
 	service={service}
 	actionPending={serviceAction.pending}
 	errorSignal={serviceAction.error}

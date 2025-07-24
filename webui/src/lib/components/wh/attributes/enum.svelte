@@ -6,21 +6,32 @@
 	import { tick } from "svelte";
 	import { ChevronsUpDownIcon, CheckIcon } from '@lucide/svelte';
 	import { cn } from "$lib/utils.js";
+	import { toast } from "svelte-sonner";
 
 	let {
 		name,
 		attr,
-		onaction,
+		onaction = undefined,
 		class: className = ""
 	}: {
 		name: string,
 		attr: EnumAttribute,
-		onaction: (value: string)=>void,
+		onaction?: (value: string)=>void,
 		class?: string
 	} = $props();
 
 	let open = $state(false);
 	let triggerRef = $state<HTMLButtonElement>(null!);
+
+	async function copyToClipboard(val: string) {
+		try {
+			await navigator.clipboard.writeText(val);
+			toast.info(`Copied ${val} to clipboard`);
+		} catch (err) {
+			toast.error(`Failed to copy ${val} to clipboard: ` + err, {duration: 30000});
+			console.error(`Failed to copy ${val} to clipboard: `, err);
+		}
+	}
 
 	// We want to refocus the trigger button when the user selects
 	// an item from the list so users can continue navigating the
@@ -56,11 +67,19 @@
 				<Command.List>
 					<Command.Empty>No framework found.</Command.Empty>
 					<Command.Group value="options">
+						<Command.Item disabled>
+							<CheckIcon class="text-transparent"/>
+							Read Only - Select to Copy
+						</Command.Item>
 						{#each attr.options as option (option)}
 							<Command.Item
 								value={option}
 								onSelect={() => {
-									onaction(option);
+									if (onaction) {
+										onaction(option);
+									} else {
+										copyToClipboard(option);
+									}
 									closeAndFocusTrigger();
 								}}
 							>

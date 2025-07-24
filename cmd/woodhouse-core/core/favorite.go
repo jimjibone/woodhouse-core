@@ -1,6 +1,8 @@
 package core
 
 import (
+	"time"
+
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/log"
 	"google.golang.org/protobuf/proto"
@@ -15,14 +17,27 @@ func (f FavoriteID) Key() string {
 	return f.DeviceID + "." + f.ServiceID
 }
 
+type Optional[T any] struct {
+	set bool
+	val T
+}
+
+func (o *Optional[T]) Has() bool { return o.set }
+func (o *Optional[T]) Get() T    { return o.val }
+func (o *Optional[T]) Unset()    { o.set = false }
+func (o *Optional[T]) Set(val T) {
+	o.set = true
+	o.val = val
+}
+
 type Favorite struct {
-	DeviceID  string
-	ServiceID string
-	HasName   bool
-	Name      string
-	HasOnline bool
-	Online    bool
-	Service   *clientsapi.Service
+	DeviceID     string
+	ServiceID    string
+	Name         Optional[string]
+	Online       Optional[bool]
+	LastSeen     Optional[time.Time]
+	BatteryLevel Optional[int64]
+	Service      *clientsapi.Service
 }
 
 func (favorite *Favorite) Update(update *clientsapi.Device) bool {
@@ -38,24 +53,43 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 			if update.GetTyp() == clientsapi.Service_INFO {
 				gotInfo = true
 				for _, attr := range update.GetAttrs() {
-					if attr.GetId() == "name" {
-						if favorite.Name != attr.GetText().GetValue() {
+					switch attr.GetId() {
+					case "name":
+						if favorite.Name.Get() != attr.GetText().GetValue() {
 							changed = true
 						}
-						favorite.HasName = true
-						favorite.Name = attr.GetText().GetValue()
+						favorite.Name.Set(attr.GetText().GetValue())
 					}
 				}
 			}
 			if update.GetTyp() == clientsapi.Service_ONLINE {
 				gotOnline = true
 				for _, attr := range update.GetAttrs() {
-					if attr.GetId() == "online" {
-						if favorite.Online != attr.GetBool().GetValue() {
+					switch attr.GetId() {
+					case "online":
+						if favorite.Online.Get() != attr.GetBool().GetValue() {
 							changed = true
 						}
-						favorite.HasOnline = true
-						favorite.Online = attr.GetBool().GetValue()
+						favorite.Online.Set(attr.GetBool().GetValue())
+
+					case "last_seen":
+						attrTime := time.Unix(attr.GetTime().GetSeconds(), int64(attr.GetTime().GetNanos()))
+						if !favorite.LastSeen.Get().Equal(attrTime) {
+							changed = true
+						}
+						favorite.LastSeen.Set(attrTime)
+					}
+				}
+			}
+			if update.GetTyp() == clientsapi.Service_BATTERY {
+				for _, attr := range update.GetAttrs() {
+					switch attr.GetId() {
+					case "level":
+						attrLevel := attr.GetInt().GetValue()
+						if favorite.BatteryLevel.Get() != attrLevel {
+							changed = true
+						}
+						favorite.BatteryLevel.Set(attrLevel)
 					}
 				}
 			}
@@ -116,25 +150,47 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 
 func (favorite *Favorite) Clone() *Favorite {
 	return &Favorite{
-		DeviceID:  favorite.DeviceID,
-		ServiceID: favorite.ServiceID,
-		HasName:   favorite.HasName,
-		Name:      favorite.Name,
-		HasOnline: favorite.HasOnline,
-		Online:    favorite.Online,
-		Service:   proto.Clone(favorite.Service).(*clientsapi.Service),
+		DeviceID:     favorite.DeviceID,
+		ServiceID:    favorite.ServiceID,
+		Name:         favorite.Name,
+		Online:       favorite.Online,
+		LastSeen:     favorite.LastSeen,
+		BatteryLevel: favorite.BatteryLevel,
+		Service:      proto.Clone(favorite.Service).(*clientsapi.Service),
 	}
 }
 
 func (favorite *Favorite) Pb() *clientsapi.DeviceService {
-	return &clientsapi.DeviceService{
-		Key:           favorite.DeviceID + "." + favorite.ServiceID,
-		DeviceId:      favorite.DeviceID,
-		FullState:     true,
-		HasDeviceName: favorite.HasName,
-		DeviceName:    favorite.Name,
-		HasOnline:     favorite.HasOnline,
-		Online:        favorite.Online,
-		Service:       proto.Clone(favorite.Service).(*clientsapi.Service),
+	srv := &clientsapi.DeviceService{
+		Key:       favorite.DeviceID + "." + favorite.ServiceID,
+		DeviceId:  favorite.DeviceID,
+		FullState: true,
+		// DeviceName:   new(string),
+		// Online:       new(bool),
+		// LastSeen:     &clientsapi.TimeValue{},
+		// BatteryLevel: new(int64),
+		Service: proto.Clone(favorite.Service).(*clientsapi.Service),
 	}
+
+	if favorite.Name.Has() {
+		srv.DeviceName = proto.String(favorite.Name.Get())
+	}
+	if favorite.Online.Has() {
+		srv.Online = proto.Bool(favorite.Online.Get())
+	}
+	if favorite.LastSeen.Has() {
+		secs, nanos := favorite.LastSeen.Get().Unix(), int32(favorite.LastSeen.Get().Nanosecond())
+		if favorite.LastSeen.Get().IsZero() {
+			secs, nanos = 0, 0
+		}
+		srv.LastSeen = &clientsapi.TimeValue{
+			Seconds: secs,
+			Nanos:   nanos,
+		}
+	}
+	if favorite.BatteryLevel.Has() {
+		srv.BatteryLevel = proto.Int64(favorite.BatteryLevel.Get())
+	}
+
+	return srv
 }

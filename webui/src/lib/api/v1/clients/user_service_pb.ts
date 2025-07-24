@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { ActionRequestSchema, ActionResponseSchema, DeviceSchema, ImageRequestSchema, ImageResponseSchema, Service } from "./client_service_pb";
+import type { ActionRequestSchema, ActionResponseSchema, DeviceSchema, ImageRequestSchema, ImageResponseSchema, Service, TimeValue } from "./client_service_pb";
 import { file_clients_client_service } from "./client_service_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/user_service.proto.
  */
 export const file_clients_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSLJAQoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSFwoPaGFzX2RldmljZV9uYW1lGAQgASgIEhMKC2RldmljZV9uYW1lGAUgASgJEhIKCmhhc19vbmxpbmUYBiABKAgSDgoGb25saW5lGAcgASgIEjIKB3NlcnZpY2UYCCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZSIYChZGYXZvcml0ZXNTdHJlYW1SZXF1ZXN0Im8KF0Zhdm9yaXRlc1N0cmVhbVJlc3BvbnNlEj8KDmRldmljZV9zZXJ2aWNlGAEgASgLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZVNlcnZpY2USEwoLa2V5X3JlbW92ZWQYAiABKAkiOwoSQWRkRmF2b3JpdGVSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJIhUKE0FkZEZhdm9yaXRlUmVzcG9uc2UiPgoVUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJIhgKFlJlbW92ZUZhdm9yaXRlUmVzcG9uc2Uy9gUKC1VzZXJTZXJ2aWNlEl0KCkdldERldmljZXMSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0RGV2aWNlc1JlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlMAESYwoNRGV2aWNlc1N0cmVhbRIuLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJ4Cg9GYXZvcml0ZXNTdHJlYW0SMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmF2b3JpdGVzU3RyZWFtUmVxdWVzdBoxLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXNwb25zZTABEmoKC0FkZEZhdm9yaXRlEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRGYXZvcml0ZVJlc3BvbnNlEnMKDlJlbW92ZUZhdm9yaXRlEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVGYXZvcml0ZVJlc3BvbnNlEmEKClNlbmRBY3Rpb24SJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVxdWVzdBooLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXNwb25zZTABEmUKEFNlbmRJbWFnZVJlcXVlc3QSJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXF1ZXN0Gicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVzcG9uc2UwAUI/Wj1naXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtNC9hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM", [file_clients_client_service]);
+  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSK6AgoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZUIOCgxfZGV2aWNlX25hbWVCCQoHX29ubGluZUIMCgpfbGFzdF9zZWVuQhAKDl9iYXR0ZXJ5X2xldmVsIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZTL2BQoLVXNlclNlcnZpY2USXQoKR2V0RGV2aWNlcxIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXREZXZpY2VzUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJjCg1EZXZpY2VzU3RyZWFtEi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZXNTdHJlYW1SZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZTABEngKD0Zhdm9yaXRlc1N0cmVhbRIwLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXF1ZXN0GjEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZhdm9yaXRlc1N0cmVhbVJlc3BvbnNlMAESagoLQWRkRmF2b3JpdGUSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkRmF2b3JpdGVSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVzcG9uc2UScwoOUmVtb3ZlRmF2b3JpdGUSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVzcG9uc2USYQoKU2VuZEFjdGlvbhInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlc3BvbnNlMAESZQoQU2VuZEltYWdlUmVxdWVzdBImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlcXVlc3QaJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXNwb25zZTABQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw", [file_clients_client_service]);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -72,37 +72,40 @@ export type DeviceService = Message<"woodhouse.api.v1.clients.DeviceService"> & 
   fullState: boolean;
 
   /**
-   * True if the device_name value is set. May be false if the device_name value has not changed and full_state is false.
+   * The device name from the info service. May not be set if the value has not changed and full_state is false.
    *
-   * @generated from field: bool has_device_name = 4;
+   * @generated from field: optional string device_name = 5;
    */
-  hasDeviceName: boolean;
+  deviceName?: string;
 
   /**
-   * The device name from the info service.
+   * The device online state from the online service. May not be set if the value has not changed and full_state is
+   * false.
    *
-   * @generated from field: string device_name = 5;
+   * @generated from field: optional bool online = 7;
    */
-  deviceName: string;
+  online?: boolean;
 
   /**
-   * True if the online value is set. May be false if the online value has not changed and full_state is false.
+   * The device last seen time from the online service. May not be set if the last_seen value has not changed and
+   * full_state is false.
    *
-   * @generated from field: bool has_online = 6;
+   * @generated from field: optional woodhouse.api.v1.clients.TimeValue last_seen = 9;
    */
-  hasOnline: boolean;
+  lastSeen?: TimeValue;
 
   /**
-   * The device online state from the online service.
+   * The device battery level state from the battery service. May not be set if the battery_level value has not
+   * changed and full_state is false, or if the device does not have the battery service.
    *
-   * @generated from field: bool online = 7;
+   * @generated from field: optional int64 battery_level = 11;
    */
-  online: boolean;
+  batteryLevel?: bigint;
 
   /**
    * A service belonging to the device.
    *
-   * @generated from field: woodhouse.api.v1.clients.Service service = 8;
+   * @generated from field: woodhouse.api.v1.clients.Service service = 12;
    */
   service?: Service;
 };

@@ -1,25 +1,17 @@
 <script lang="ts">
 	import { ValueSchema, EnumValueSchema } from '$lib/api/v1/clients/client_service_pb';
 	import type { Attribute, EnumAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
 	import ServiceAction from './service-action.svelte';
 	import { Rows3Icon } from '@lucide/svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { EnumContent, OthersContent } from '$lib/components/wh/attributes';
 
 	let {
-		deviceName,
-		showDeviceName,
 		deviceID,
-		online,
-		service
-	}: {
-		deviceName: string,
-		showDeviceName?: boolean,
-		deviceID: string,
-		online: boolean,
-		service: Service
-	} = $props();
+		service,
+		...rest
+	}: StandardProps = $props();
 
 	let attrValue: EnumAttribute | undefined = $state(undefined);
 	let attrOthers: Attribute[] = $state([]);
@@ -67,10 +59,8 @@
 {/snippet}
 
 <ServiceRoot
-	deviceName={deviceName}
-	showDeviceName={showDeviceName}
-	deviceID={deviceID}
-	online={online}
+	{deviceID}
+	{...rest}
 	service={service}
 	actionPending={serviceAction.pending}
 	errorSignal={serviceAction.error}

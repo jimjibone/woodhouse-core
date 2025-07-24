@@ -12,25 +12,33 @@ export class Streamer<ServiceT extends DescService> {
 	 * @param streamerFunc A function to run the streaming call. The function should use the abortSignal with the streaming RPC to cancel it early. The heartbeat function should be called to let the Streamer know that the connection is still alive and not to trigger an abort due to timeout. When the stream finishes the function should return true if a connection was established (to reset the backoff).
 	 * @param backoffFunc A callback function which can be used to update the UI with the current backoff duration.
 	 */
-	constructor(client: Client<ServiceT>, streamerFunc: StreamerHandler<ServiceT>, backoffFunc: BackoffHandler) {
+	constructor(name: string, client: Client<ServiceT>, streamerFunc: StreamerHandler<ServiceT>, backoffFunc: BackoffHandler) {
+		this.#name = name;
+		// console.log("streamer "+this.#name+": new");
+		this.#client = client;
 		this.#streamFunc = streamerFunc;
 		this.#backoffFunc = backoffFunc;
-		this.#retry(client);
+		this.#controller = new AbortController();
+		this.#retry();
 	}
 
+	#name = "unknown";
+	#client: Client<ServiceT>;
 	#backoff = 1000;
 	#minBackoff = 1000;
 	#maxBackoff = 4000;
 	#streamFunc = async (client: Client<ServiceT>, abortSignal: AbortSignal, heartbeat: HeartbeatHandler) => { return false; };
 	#backoffFunc = (backoff: number) => {};
-	#controller = new AbortController();
+	#controller: AbortController;
+	#stop = false;
+	#timeout = 0;
 
-	#retry = async (client: Client<ServiceT>) => {
+	#retry = async () => {
+		// console.log("streamer "+this.#name+": retry");
 		// Use a timer to periodically check if the connection has died. If it
 		// has then trigger the abort controller to cancel the stream and then
 		// fire up another one after a backoff delay.
 		let lastrx = Date.now();
-		let didConnect = false;
 		this.#controller = new AbortController();
 		const interval = setInterval(() => {
 			const now = Date.now();
@@ -43,7 +51,14 @@ export class Streamer<ServiceT extends DescService> {
 			lastrx = Date.now();
 		};
 
-		const resetBackoff = await this.#streamFunc(client, this.#controller.signal, onHeartbeat);
+		const resetBackoff = await this.#streamFunc(this.#client, this.#controller.signal, onHeartbeat);
+
+		clearInterval(interval);
+
+		if (this.#stop) {
+			// console.log("streamer "+this.#name+": actually stopped");
+			return;
+		}
 
 		if (resetBackoff) {
 			this.#backoff = 0;
@@ -57,20 +72,38 @@ export class Streamer<ServiceT extends DescService> {
 				}
 			}
 		}
+		// console.log("streamer "+this.#name+": backoff");
 		this.#backoffFunc(this.#backoff);
 		if (this.#backoff === 0) {
-			this.#retry(client);
+			this.#retry();
 		} else {
 			setTimeout(() => {
-				this.#retry(client);
+				this.#retry();
 			}, this.#backoff);
 		}
-
-		clearInterval(interval);
 	};
+
+	restart = () => {
+		clearTimeout(this.#timeout);
+		if (this.#stop === true) {
+			// console.log("streamer "+this.#name+": restart");
+			this.#stop = false;
+			this.#retry();
+		} else {
+			// console.log("streamer "+this.#name+": cancel stop");
+			this.#stop = false;
+		}
+	}
 
 	/** Triggers the streamer to stop via the abort handler. */
 	stop = () => {
-		this.#controller.abort();
+		// console.log("streamer "+this.#name+": stopping...");
+
+		clearTimeout(this.#timeout);
+		this.#timeout = setTimeout(() => {
+			// console.log("streamer "+this.#name+": stopped");
+			this.#stop = true;
+			this.#controller.abort();
+		}, 500);
 	}
 }

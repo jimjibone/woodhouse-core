@@ -1,23 +1,15 @@
 <script lang="ts">
 	import type { Attribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
 	import ServiceAction from './service-action.svelte';
 	import { BatteryFullIcon, BatteryLowIcon, BatteryMediumIcon, BatteryWarningIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
 
 	let {
-		deviceName,
-		showDeviceName,
 		deviceID,
-		online,
-		service
-	}: {
-		deviceName: string,
-		showDeviceName?: boolean,
-		deviceID: string,
-		online: boolean,
-		service: Service
-	} = $props();
+		service,
+		...rest
+	}: StandardProps = $props();
 
 	let attrLevel: IntAttribute | undefined = $state(undefined);
 	let attrVoltage: FloatAttribute | undefined = $state(undefined);
@@ -70,13 +62,11 @@
 {/snippet}
 
 <ServiceRoot
-	deviceName={deviceName}
-	showDeviceName={showDeviceName}
-	deviceID={deviceID}
-	online={online}
+	{deviceID}
+	{...rest}
 	service={service}
 	icon={icon}
-	iconclass={level < 10 ? "bg-red-400 text-black" : level < 20 ? "bg-yellow-400 text-black" : false}
+	iconclass={level < 20 ? "bg-red-400 text-black" : level < 33 ? "bg-yellow-400 text-black" : false}
 	details={details}
 >
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">

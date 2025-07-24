@@ -23,7 +23,9 @@ const { subscribe, set, update } = writable<FavoritesStoreType>(
 		console.log("favorites stream subscriber started");
 
 		if (streamer === undefined) {
-			streamer = new Streamer(UserServiceClient, streamFavorites, backoffHandler);
+			streamer = new Streamer("faves", UserServiceClient, streamFavorites, backoffHandler);
+		} else {
+			streamer.restart();
 		}
 
 		return () => {
@@ -45,7 +47,7 @@ const updateDeviceService = (prev: DeviceService, next: DeviceService): DeviceSe
 };
 
 const getDeviceServiceName = (ds: DeviceService): string => {
-	if (ds.hasDeviceName && ds.service !== undefined) {
+	if (ds.deviceName !== undefined && ds.service !== undefined) {
 		if (ds.service.alias!=='') {
 			return ds.deviceName+": "+ds.service.alias
 		}
@@ -115,7 +117,7 @@ const streamFavorites = async (client: Client<typeof UserService>, abortSignal: 
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
 				console.error('streamDevices: error stream: (' + err.code + ') ' + err.message);
 			}
 		}

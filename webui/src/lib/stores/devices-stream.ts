@@ -2,7 +2,7 @@ import { type Subscriber, writable } from 'svelte/store';
 import { ConnectError, Code, type Client } from '@connectrpc/connect';
 import { create, toJsonString } from "@bufbuild/protobuf";
 import { DevicesStreamRequestSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
-import { Device_DeviceType, DeviceSchema, Service_ServiceType, type Device, type Service } from '$lib/api/v1/clients/client_service_pb';
+import { Device_DeviceType, DeviceSchema, Service_ServiceType, type Device, type Service, type TimeAttribute } from '$lib/api/v1/clients/client_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
 
@@ -17,6 +17,8 @@ export type DevicesStoreDevice = {
 	typ: Device_DeviceType;
 	name: string | undefined;
 	online: boolean;
+	batteryLevel: bigint | undefined;
+	lastSeen: TimeAttribute | undefined;
 	services: Service[];
 };
 
@@ -31,7 +33,9 @@ const { subscribe, set, update } = writable<DevicesStoreType>(
 		console.log("devices stream subscriber started");
 
 		if (streamer === undefined) {
-			streamer = new Streamer(UserServiceClient, streamDevices, backoffHandler);
+			streamer = new Streamer("devices", UserServiceClient, streamDevices, backoffHandler);
+		} else {
+			streamer.restart();
 		}
 
 		return () => {
@@ -53,6 +57,8 @@ const createDevice = (next: Device): DevicesStoreDevice => {
 		typ: next.typ,
 		name: next.id,
 		online: false,
+		lastSeen: undefined,
+		batteryLevel: undefined,
 		services: next.services
 	};
 	return updateDevice(prev, next);
@@ -64,27 +70,39 @@ const updateDevice = (prev: DevicesStoreDevice, next: Device): DevicesStoreDevic
 		// Remove all services as we're about to receive the complete new set.
 		prev.name = next.id;
 		prev.online = false;
+		prev.lastSeen = undefined;
+		prev.batteryLevel = undefined;
 		prev.services = [];
 	}
 	for (let i = 0; i < next.services.length; i++) {
+		if (next.services[i].typ === Service_ServiceType.INFO) {
+			for (const attr of next.services[i].attrs) {
+				if (attr.id === "name") {
+					prev.name = attr.text!.value;
+					break;
+				}
+			}
+		}
+		if (next.services[i].typ === Service_ServiceType.ONLINE) {
+			for (const attr of next.services[i].attrs) {
+				if (attr.id === "online") {
+					prev.online = attr.bool!.value;
+				} else if (attr.id === "last_seen") {
+					prev.lastSeen = attr.time;
+				}
+			}
+		}
+		if (next.services[i].typ === Service_ServiceType.BATTERY) {
+			for (const attr of next.services[i].attrs) {
+				if (attr.id === "level") {
+					prev.batteryLevel = attr.int!.value;
+					break;
+				}
+			}
+		}
+
 		let foundService = false;
 		for (let j = 0; j < prev.services.length; j++) {
-			if (next.services[i].typ === Service_ServiceType.INFO) {
-				for (const attr of next.services[i].attrs) {
-					if (attr.id === "name") {
-						prev.name = attr.text!.value;
-						break;
-					}
-				}
-			}
-			if (next.services[i].typ === Service_ServiceType.ONLINE) {
-				for (const attr of next.services[i].attrs) {
-					if (attr.id === "online") {
-						prev.online = attr.bool!.value;
-						break;
-					}
-				}
-			}
 			if (next.services[i].id === prev.services[j].id) {
 				foundService = true;
 				prev.services[j] = updateService(prev.services[j], next.services[i]);
@@ -163,7 +181,7 @@ const streamDevices = async (client: Client<typeof UserService>, abortSignal: Ab
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
 				console.error('streamDevices: error stream: (' + err.code + ') ' + err.message);
 			}
 		}
