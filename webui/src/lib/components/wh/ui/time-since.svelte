@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { clock } from '$lib/stores/clock';
-	import { cn } from '$lib/utils'
+	import { cn } from '$lib/utils';
+    import { onDestroy } from 'svelte';
 
 	let {
 		past,
@@ -10,7 +11,11 @@
 		class?: string
 	} = $props();
 
-	let text: string = $state("");
+	let time: number = $state(0);
+	const unsub = clock.subscribe(v => time = v);
+	onDestroy(unsub);
+
+	let text: string = $state("none");
 	let isWarning: boolean = $state(false);
 	let isDanger: boolean = $state(false);
 	$effect(() => {
@@ -20,7 +25,7 @@
 			isDanger = false;
 			return;
 		}
-		const seconds = Math.max(Math.floor(($clock - past.getTime()) / 1000), 0);
+		const seconds = Math.max(Math.floor((time - past.getTime()) / 1000), 0);
 		if (seconds < 60) {
 			text = `${seconds}s ago`;
 			isWarning = false;
