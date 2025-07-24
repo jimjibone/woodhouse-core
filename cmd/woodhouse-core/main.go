@@ -24,7 +24,7 @@ import (
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/paths"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
-	"github.com/jimjibone/woodhouse-4/webapp"
+	"github.com/jimjibone/woodhouse-4/webui"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -195,7 +195,7 @@ func main() {
 			go func() {
 				wrappedServer := grpcweb.WrapServer(insecureServer)
 				mux := http.NewServeMux()
-				buildfs, err := fs.Sub(webapp.Content, "build")
+				buildfs, err := fs.Sub(webui.Content, "build")
 				if err != nil {
 					panic(err)
 				}
