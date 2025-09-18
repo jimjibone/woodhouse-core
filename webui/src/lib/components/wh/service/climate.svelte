@@ -91,6 +91,7 @@
 				max={attrHeatingSetpoint.max}
 				step={attrHeatingSetpoint.step}
 				onaction={sendActionHeatingSetpoint}
+				maximumFractionDigits={1}
 				units="°C"
 			/>
 		{/if}

@@ -32,7 +32,7 @@
 	});
 
 	let formatNumber = (val: number) => {
-		return val.toLocaleString(undefined, { maximumFractionDigits: maximumFractionDigits });
+		return val.toLocaleString(undefined, { minimumFractionDigits:maximumFractionDigits, maximumFractionDigits: maximumFractionDigits });
 	};
 
 	let changing: number | null = $state(null);
