@@ -23,6 +23,8 @@
 			<Services.ButtonService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.CLIMATE}
 			<Services.ClimateService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.COVER}
+			<Services.CoverService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.ENUM}
 			<Services.EnumService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.ENVIRONMENT}
