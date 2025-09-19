@@ -63,7 +63,7 @@
 	{#if attrPosition !== undefined}
 		<!-- <GaugeIcon class="size-5"/> -->
 		<p>
-			{attrPosition.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%
+			{attrPosition.value.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}%
 		</p>
 	{/if}
 	{#if attrState !== undefined}
