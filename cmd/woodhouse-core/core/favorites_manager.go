@@ -4,21 +4,20 @@ import (
 	"context"
 	"sync"
 
+	"github.com/jimjibone/queue/v2"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
 )
 
 type FavoritesManager struct {
-	log            *log.Context
-	wg             sync.WaitGroup
-	ctx            context.Context
-	close          func()
-	deviceManager  *DeviceManager
-	listenerAdd    chan FavoritesListener
-	listenerRemove chan FavoritesListener
+	log           *log.Context
+	wg            sync.WaitGroup
+	ctx           context.Context
+	close         func()
+	deviceManager *DeviceManager
+	publisher     *queue.Pub[FavoriteUpdate]
+	listenerAdd   chan *queue.Sub[FavoriteUpdate]
 }
-
-type FavoritesListener chan FavoriteUpdate
 
 type FavoriteUpdate struct {
 	Updated *Favorite
@@ -28,12 +27,12 @@ type FavoriteUpdate struct {
 func NewFavoritesManager(store stores.Store, deviceManager *DeviceManager) (*FavoritesManager, error) {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &FavoritesManager{
-		log:            log.NewContext(log.DefaultLogger, "favorites-manager", log.DebugLevel),
-		ctx:            ctx,
-		close:          close,
-		deviceManager:  deviceManager,
-		listenerAdd:    make(chan FavoritesListener),
-		listenerRemove: make(chan FavoritesListener),
+		log:           log.NewContext(log.DefaultLogger, "favorites-manager", log.DebugLevel),
+		ctx:           ctx,
+		close:         close,
+		deviceManager: deviceManager,
+		publisher:     queue.NewPub[FavoriteUpdate](),
+		listenerAdd:   make(chan *queue.Sub[FavoriteUpdate], 1),
 	}
 
 	manager.wg.Add(1)
@@ -46,12 +45,10 @@ func (manager *FavoritesManager) Close() {
 	manager.wg.Wait()
 }
 
-func (manager *FavoritesManager) AddListener(lis FavoritesListener) {
-	manager.listenerAdd <- lis
-}
-
-func (manager *FavoritesManager) RemoveListener(lis FavoritesListener) {
-	manager.listenerRemove <- lis
+func (manager *FavoritesManager) GetListener() *queue.Sub[FavoriteUpdate] {
+	sub := manager.publisher.NewSub()
+	manager.listenerAdd <- sub
+	return sub
 }
 
 func (manager *FavoritesManager) run(ctx context.Context) {
@@ -60,7 +57,6 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 	deviceUpdates := manager.deviceManager.GetDeviceUpdates()
 	defer deviceUpdates.Close()
 
-	listeners := make(map[FavoritesListener]struct{})
 	faves := make(map[string]*Favorite)
 
 	// Build up faves from initial deviceManager state.
@@ -94,9 +90,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 				if fave.DeviceID == update.GetId() {
 					if fave.Update(update) {
 						// Publish the updated fave to the listeners.
-						for lis := range listeners {
-							lis <- FavoriteUpdate{Updated: fave.Clone()}
-						}
+						manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
 					}
 				}
 			}
@@ -121,9 +115,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 						faves[faveID.Key()] = fave
 
 						// Publish the new fave to the listeners.
-						for lis := range listeners {
-							lis <- FavoriteUpdate{Updated: fave.Clone()}
-						}
+						manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
 					}
 				} else {
 					if _, found := faves[faveID.Key()]; found {
@@ -131,29 +123,19 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 						delete(faves, faveID.Key())
 
 						// Publish the removed fave to the listeners.
-						for lis := range listeners {
-							lis <- FavoriteUpdate{Removed: &faveID}
-						}
+						manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
 					}
 				}
 			}
 
 		case lis := <-manager.listenerAdd:
-			if _, found := listeners[lis]; !found {
-				listeners[lis] = struct{}{}
-
-				// Publish all faves to the new listener.
-				for _, fave := range faves {
-					lis <- FavoriteUpdate{Updated: fave.Clone()}
-				}
-
-				// Send and empty fave to indicate the end of the initial list.
-				lis <- FavoriteUpdate{}
+			// Publish all faves to the new listener.
+			for _, fave := range faves {
+				manager.publisher.Send(lis, FavoriteUpdate{Updated: fave.Clone()})
 			}
 
-		case lis := <-manager.listenerRemove:
-			// Remove the listener.
-			delete(listeners, lis)
+			// Send and empty fave to indicate the end of the initial list.
+			manager.publisher.Send(lis, FavoriteUpdate{})
 		}
 	}
 }

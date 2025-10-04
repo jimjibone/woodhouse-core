@@ -110,9 +110,8 @@ func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamReque
 	service.log.Infof("favorites stream started")
 	defer service.log.Infof("favorites stream finished")
 
-	lis := make(chan core.FavoriteUpdate)
-	service.favoritesManager.AddListener(lis)
-	defer service.favoritesManager.RemoveListener(lis)
+	lis := service.favoritesManager.GetListener()
+	defer lis.Close()
 
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -130,7 +129,7 @@ func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamReque
 				return status.Errorf(codes.Internal, "failed to send keepalive")
 			}
 
-		case update := <-lis:
+		case update := <-lis.Sub():
 			msg := &clientsapi.FavoritesStreamResponse{}
 			if update.Updated != nil {
 				msg.DeviceService = update.Updated.Pb()
