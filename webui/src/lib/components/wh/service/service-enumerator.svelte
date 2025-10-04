@@ -23,14 +23,22 @@
 			<Services.ButtonService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.CLIMATE}
 			<Services.ClimateService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.CONTACT}
+			<Services.ContactService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.COVER}
 			<Services.CoverService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.ENUM}
 			<Services.EnumService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.ENVIRONMENT}
 			<Services.EnvironmentService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.INPUT}
+			<Services.InputService {service} {...rest}/>
 		{:else if service.typ == Service_ServiceType.LIGHTBULB}
 			<Services.LightbulbService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.RELAY}
+			<Services.RelayService {service} {...rest}/>
+		{:else if service.typ == Service_ServiceType.UPDATE}
+			<Services.UpdateService {service} {...rest}/>
 		{:else}
 			<Services.ServiceRoot
 				{service}
