@@ -12,6 +12,6 @@
 	} = $props();
 </script>
 
-<a class={cn("h-10 rounded-full aspect-square hover:bg-muted/90 cursor-pointer flex items-center justify-center", page.url.pathname === href && "bg-muted")} href={href}>
+<a class={cn("h-12 rounded-full aspect-square hover:bg-muted/50 hover:backdrop-blur-md cursor-pointer flex items-center justify-center", page.url.pathname === href && "bg-muted/70 backdrop-blur-md")} href={href}>
 	{@render children()}
 </a>
