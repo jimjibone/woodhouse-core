@@ -3,7 +3,7 @@
 	import type { Attribute, BoolAttribute, FloatAttribute } from '$lib/api/v1/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
 	import ServiceAction from './service-action.svelte';
-	import { LogInIcon } from '@lucide/svelte';
+	import { PowerIcon } from '@lucide/svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { BoolContent, OthersContent } from '$lib/components/wh/attributes';
 
@@ -57,7 +57,7 @@
 </script>
 
 {#snippet icon()}
-	<LogInIcon/>
+	<PowerIcon/>
 {/snippet}
 
 {#snippet details()}
