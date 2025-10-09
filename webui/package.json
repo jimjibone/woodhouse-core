@@ -41,6 +41,7 @@
 		"@connectrpc/connect-web": "^2.0.2",
 		"@types/chroma-js": "^3.1.1",
 		"chroma-js": "^3.1.2",
+		"fuse.js": "^7.1.0",
 		"mode-watcher": "^1.0.8"
 	}
 }

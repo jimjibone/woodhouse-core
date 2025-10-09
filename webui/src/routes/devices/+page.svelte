@@ -1,19 +1,40 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-	import { DevicesStore, type DevicesStoreType } from '$lib/stores/devices-stream';
+	import { DevicesStore as store, type DevicesStoreDevice } from '$lib/stores/devices-stream';
 	import { ServiceEnumerator } from '$lib/components/wh/service';
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 	import { attributeToDate } from '$lib/tools/time';
 	import { cn } from "$lib/utils";
 	import { BatteryWarningIcon, BatteryLowIcon, BatteryMediumIcon, BatteryFullIcon } from '@lucide/svelte';
+	import { search } from '$lib/stores/search';
+	import Fuse from 'fuse.js';
+	import { onDestroy } from 'svelte';
 
-	let store: DevicesStoreType;
-	const unsubscribe = DevicesStore.subscribe((val) => store = val);
-	onDestroy(unsubscribe);
+	let devices = $state<DevicesStoreDevice[]>([]);
+	let query = $state("");
+	onDestroy(store.subscribe((update) => devices = update.devices));
+	onDestroy(search.subscribe((update) => query = update.query));
+
+	let filtered = $derived.by(() => {
+		if (!fuse) return devices;
+		if (!query.trim()) return devices;
+
+		return fuse.search(query).map(r => r.item);
+	});
+
+	let fuse: Fuse<DevicesStoreDevice> | null = $state(null);
+
+	// Reactively rebuild Fuse whenever `devices` changes.
+	$effect(() => {
+		fuse = new Fuse(devices, {
+			threshold: 0.3,
+			includeScore: true,
+			keys: ['name']
+		});
+	});
 </script>
 
 <main class="grid gap-4 md:grid-cols-1 lg:grid-cols-2 mb-20 md:mb-0">
-	{#each store.devices as dev, i (dev.id)}
+	{#each filtered as dev, i (dev.id)}
 		{@const deviceName = dev.name ? dev.name : dev.id}
 		<div class={cn('rounded-lg border bg-card/50 p-2 text-card-foreground shadow-sm text-left overflow-clip', !dev.online && 'bg-muted/80')}>
 			<div class="flex flex-col gap-2">
@@ -66,7 +87,7 @@
 </main>
 
 <div class="pt-4">
-	<p>Connected: {store.connected}</p>
-	<p>Backoff: {store.backoff}</p>
-	<p>Devices: {store.devices.length}</p>
+	<p>Connected: {$store.connected}</p>
+	<p>Backoff: {$store.backoff}</p>
+	<p>Devices: {$store.devices.length}</p>
 </div>
