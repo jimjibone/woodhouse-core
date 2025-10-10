@@ -7,132 +7,154 @@ vars:
     sh: go env GOARCH
   BUILD_DIR: "build-{{.GOOS}}-{{.GOARCH}}"
 
+dotenv:
+  - '.env'
+
 includes:
   api:
-    taskfile: ./api/Taskfile.yml
+    taskfile: ./api
     dir: ./api
-  webapp:
-    taskfile: ./webapp/Taskfile.yaml
-    dir: ./webapp
 
 tasks:
-  default:
-    deps:
-      - build
-
-  proto:
-    deps:
-      - api:proto-go-v1
-
-  proto-all:
-    deps:
-      - proto
-      - webapp:proto
-
-  build-dir:
+  build-api:
+    desc: Generate API code from protos
     cmds:
-      - mkdir -p "{{.BUILD_DIR}}"
+      - task api:proto-go-v1
 
-  build-all:
-    deps:
-      - proto
-      - build-dir
-      - webapp:proto
-      - webapp:proto
+  generate-env:
+    desc: Generate the default .env file
+    status:
+      - test -f .env
     cmds:
-      - task: build-web
-      - task: build
-  build:
-    deps:
-      - build-core
-      - build-shelly
-      - build-tasmota
-      - build-zigbee
-
-  run:
-    deps:
-      - run-core
-
-  build-web:
-    cmds:
-      - task: webapp:build
+      - cp dot-env .env
 
   build-core:
+    desc: Build woodhouse-core
     cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-core{{exeExt}} ./cmd/woodhouse-core
+      - task: build-api
+      # - task: webapp:build
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-core" }
 
-  run-core:
-    deps:
-      - build-core
+  deploy-core:
+    desc: Deploy woodhouse-core to your confiugred system (use 'generate-env' to configure)
     cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
+      - task: build-api
+      # - task: webapp:build
+      - task: build-and-deploy-component
+        vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-core" }
 
-  build-frigate:
-    cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-frigate{{exeExt}} ./cmd/woodhouse-frigate
+  # run-core:
+  #   deps:
+  #     - build-core
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
-  run-frigate:
-    deps:
-      - build-frigate
-    cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-frigate{{exeExt}} {{.CLI_ARGS}}
+  # build-frigate:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/woodhouse-frigate{{exeExt}} ./cmd/woodhouse-frigate
 
-  build-whctl:
-    cmds:
-      - go build -o {{.BUILD_DIR}}/whctl{{exeExt}} ./cmd/whctl
+  # run-frigate:
+  #   deps:
+  #     - build-frigate
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-frigate{{exeExt}} {{.CLI_ARGS}}
 
-  run-whctl:
-    deps:
-      - build-whctl
-    cmds:
-      - cd {{.BUILD_DIR}} && ./whctl{{exeExt}} {{.CLI_ARGS}}
+  # build-whctl:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/whctl{{exeExt}} ./cmd/whctl
 
-  build-client:
-    cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-client{{exeExt}} ./cmd/woodhouse-client
+  # run-whctl:
+  #   deps:
+  #     - build-whctl
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./whctl{{exeExt}} {{.CLI_ARGS}}
 
-  run-client:
-    deps:
-      - build-client
-    cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
+  # build-client:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/woodhouse-client{{exeExt}} ./cmd/woodhouse-client
 
-  build-reactor:
-    cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-reactor{{exeExt}} ./cmd/woodhouse-reactor
+  # run-client:
+  #   deps:
+  #     - build-client
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
 
-  run-reactor:
-    deps:
-      - build-reactor
-    cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-reactor{{exeExt}} {{.CLI_ARGS}}
+  # build-reactor:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/woodhouse-reactor{{exeExt}} ./cmd/woodhouse-reactor
 
-  build-shelly:
-    cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-shelly{{exeExt}} ./cmd/woodhouse-shelly
+  # run-reactor:
+  #   deps:
+  #     - build-reactor
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-reactor{{exeExt}} {{.CLI_ARGS}}
 
-  run-shelly:
-    deps:
-      - build-shelly
-    cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
+  # build-shelly:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/woodhouse-shelly{{exeExt}} ./cmd/woodhouse-shelly
 
-  build-tasmota:
-    cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-tasmota{{exeExt}} ./cmd/woodhouse-tasmota
+  # run-shelly:
+  #   deps:
+  #     - build-shelly
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
 
-  run-tasmota:
-    deps:
-      - build-tasmota
-    cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-tasmota{{exeExt}} {{.CLI_ARGS}}
+  # build-tasmota:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/woodhouse-tasmota{{exeExt}} ./cmd/woodhouse-tasmota
+
+  # run-tasmota:
+  #   deps:
+  #     - build-tasmota
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-tasmota{{exeExt}} {{.CLI_ARGS}}
+
+  # build-zigbee:
+  #   cmds:
+  #     - go build -o {{.BUILD_DIR}}/woodhouse-zigbee{{exeExt}} ./cmd/woodhouse-zigbee
+
+  # run-zigbee:
+  #   deps:
+  #     - build-zigbee
+  #   cmds:
+  #     - cd {{.BUILD_DIR}} && ./woodhouse-zigbee{{exeExt}} {{.CLI_ARGS}}
 
   build-zigbee:
     cmds:
-      - go build -o {{.BUILD_DIR}}/woodhouse-zigbee{{exeExt}} ./cmd/woodhouse-zigbee
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-zigbee" }
 
-  run-zigbee:
-    deps:
-      - build-zigbee
+  deploy-zigbee:
     cmds:
-      - cd {{.BUILD_DIR}} && ./woodhouse-zigbee{{exeExt}} {{.CLI_ARGS}}
+      - task: build-and-deploy-component
+        vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-zigbee" }
+
+  build-component:
+    env:
+      GOOS: '{{.GOOS}}'
+      GOARCH: '{{.GOARCH}}'
+    vars:
+      BUILD_DIR: "build-{{.GOOS}}-{{.GOARCH}}"
+    requires:
+      vars: [COMPONENT]
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.COMPONENT}}{{exeExt}} ./cmd/{{.COMPONENT}}
+
+  build-and-deploy-component:
+    env:
+      GOOS: '{{.GOOS}}'
+      GOARCH: '{{.GOARCH}}'
+    vars:
+      BUILD_DIR: "build-{{.GOOS}}-{{.GOARCH}}"
+    requires:
+      vars: [COMPONENT]
+    cmds:
+      - test "$DEPLOY_HOST"
+      - test "$DEPLOY_USER"
+      - test "$DEPLOY_DIR"
+      - test "$DEPLOY_GOOS"
+      - test "$DEPLOY_GOARCH"
+      - go build -o {{.BUILD_DIR}}/{{.COMPONENT}}{{exeExt}} ./cmd/{{.COMPONENT}}
+      - rsync {{.BUILD_DIR}}/{{.COMPONENT}}{{exeExt}} $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/{{.BUILD_DIR}}/
+      - ssh $DEPLOY_USER@$DEPLOY_HOST systemctl --user restart {{.COMPONENT}}.service
