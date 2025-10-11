@@ -14,12 +14,16 @@ includes:
   api:
     taskfile: ./api
     dir: ./api
+  web:
+    taskfile: ./webui
+    dir: ./webui
 
 tasks:
   build-api:
     desc: Generate API code from protos
     cmds:
       - task api:proto-go-v1
+      - task web:proto-web-v1
 
   generate-env:
     desc: Generate the default .env file
@@ -44,11 +48,12 @@ tasks:
       - task: build-and-deploy-component
         vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-core" }
 
-  # run-core:
-  #   deps:
-  #     - build-core
-  #   cmds:
-  #     - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
+  run-core:
+    desc: Run woodhouse-core
+    deps:
+      - build-core
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
   # build-frigate:
   #   cmds:

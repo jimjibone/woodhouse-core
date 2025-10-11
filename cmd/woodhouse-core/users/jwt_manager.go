@@ -1,8 +1,9 @@
-package clients
+package users
 
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/random"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
@@ -18,8 +20,9 @@ import (
 )
 
 const (
-	refreshTokenDuration = 30 * 24 * time.Hour
-	accessTokenDuration  = 15 * time.Minute
+	refreshTokenDurationDays = 30
+	refreshTokenDuration     = refreshTokenDurationDays * 24 * time.Hour
+	accessTokenDuration      = 15 * time.Minute
 )
 
 type JWTManager struct {
@@ -29,15 +32,15 @@ type JWTManager struct {
 	mu               sync.RWMutex
 	close            func()
 	changed          bool
-	refreshSecret    string
-	accessSecret     string
+	refreshSecret    []byte
+	accessSecret     []byte
 	tokenAllocations map[string]TokenAllocation // kwy: refresh token
 }
 
 func NewJWTManager(store stores.Store) (*JWTManager, error) {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &JWTManager{
-		log:              log.NewContext(log.DefaultLogger, "clients-jwt", log.DebugLevel),
+		log:              log.NewContext(log.DefaultLogger, "users-jwt", log.DebugLevel),
 		store:            store,
 		close:            close,
 		tokenAllocations: make(map[string]TokenAllocation),
@@ -50,16 +53,16 @@ func NewJWTManager(store stores.Store) (*JWTManager, error) {
 	}
 
 	// Generate refresh and access tokens if necessary.
-	if manager.refreshSecret == "" {
-		key, err := random.GenerateRandomString(64)
+	if len(manager.refreshSecret) == 0 {
+		key, err := random.GenerateRandomBytes(64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate refresh secret: %w", err)
 		}
 		manager.refreshSecret = key
 		manager.changed = true
 	}
-	if manager.accessSecret == "" {
-		key, err := random.GenerateRandomString(64)
+	if len(manager.accessSecret) == 0 {
+		key, err := random.GenerateRandomBytes(64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate access secret: %w", err)
 		}
@@ -82,6 +85,17 @@ func NewJWTManager(store stores.Store) (*JWTManager, error) {
 		for {
 			select {
 			case <-ticker.C:
+				// Clean expired tokens.
+				manager.mu.Lock()
+				for token, alloc := range manager.tokenAllocations {
+					if time.Now().After(alloc.Expires) {
+						delete(manager.tokenAllocations, token)
+						manager.changed = true
+					}
+				}
+				manager.mu.Unlock()
+
+				// Save if changed.
 				err := manager.saveIfChanged()
 				if err != nil {
 					manager.log.Fatalf("failed to save config: %s", err)
@@ -107,9 +121,9 @@ func (manager *JWTManager) Close() {
 }
 
 func (manager *JWTManager) load() error {
-	if manager.store.Has("clients-jwt") {
+	if manager.store.Has("users-jwt") {
 		// Load it.
-		data, err := manager.store.Get("clients-jwt")
+		data, err := manager.store.Get("users-jwt")
 		if err != nil {
 			return err
 		}
@@ -135,8 +149,14 @@ func (manager *JWTManager) load() error {
 		}
 
 		// Read the config into the manager.
-		manager.refreshSecret = config.RefreshSecret
-		manager.accessSecret = config.AccessSecret
+		manager.refreshSecret, err = base64.RawURLEncoding.DecodeString(config.RefreshSecret)
+		if err != nil {
+			return fmt.Errorf("refresh secret: %w", err)
+		}
+		manager.accessSecret, err = base64.RawURLEncoding.DecodeString(config.AccessSecret)
+		if err != nil {
+			return fmt.Errorf("access secret: %w", err)
+		}
 		manager.tokenAllocations = config.TokenAllocations
 
 		// Maps may be nil after reading an empty list from the file. Why?
@@ -154,8 +174,8 @@ func (manager *JWTManager) save() error {
 		AccessSecret     string                     `yaml:"access-secret"`
 		TokenAllocations map[string]TokenAllocation `yaml:"token-allocations"`
 	}{
-		RefreshSecret:    manager.refreshSecret,
-		AccessSecret:     manager.accessSecret,
+		RefreshSecret:    base64.RawURLEncoding.EncodeToString(manager.refreshSecret),
+		AccessSecret:     base64.RawURLEncoding.EncodeToString(manager.accessSecret),
 		TokenAllocations: manager.tokenAllocations,
 	}
 	data := &bytes.Buffer{}
@@ -165,7 +185,7 @@ func (manager *JWTManager) save() error {
 	}
 
 	// Save it.
-	err = manager.store.Set("clients-jwt", data.Bytes())
+	err = manager.store.Set("users-jwt", data.Bytes())
 	if err != nil {
 		return err
 	}
@@ -189,7 +209,7 @@ func (manager *JWTManager) saveIfChanged() error {
 }
 
 type TokenAllocation struct {
-	ClientID string    `yaml:"client_id"`
+	Username string    `yaml:"username"`
 	Expires  time.Time `yaml:"expires"`
 }
 
@@ -205,17 +225,17 @@ type TokenDetails struct {
 type RefreshTokenClaims struct {
 	jwt.RegisteredClaims
 	RefreshUUID string `json:"refresh_uuid"`
-	ClientID    string `json:"client_id"`
+	Username    string `json:"username"`
 }
 
 type AccessTokenClaims struct {
 	jwt.RegisteredClaims
-	AccessUUID string `json:"access_uuid"`
-	ClientID   string `json:"client_id"`
-	// Perms      []perms.Perm `json:"perms"`
+	AccessUUID string    `json:"access_uuid"`
+	Username   string    `json:"username"`
+	Role       auth.Role `json:"role"`
 }
 
-func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -225,11 +245,14 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
 	}
 
-	td := &TokenDetails{}
-	td.AccessExpires = time.Now().Add(accessTokenDuration)
-	td.AccessUUID = u1.String()
-	td.RefreshExpires = time.Now().Add(refreshTokenDuration)
-	td.RefreshUUID = u2.String()
+	td := &TokenDetails{
+		AccessToken:    "",
+		RefreshToken:   "",
+		AccessUUID:     u1.String(),
+		RefreshUUID:    u2.String(),
+		AccessExpires:  time.Now().Add(accessTokenDuration),
+		RefreshExpires: time.Now().Add(refreshTokenDuration),
+	}
 
 	// Create Access Token
 	atClaims := AccessTokenClaims{
@@ -237,11 +260,11 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 			ExpiresAt: jwt.NewNumericDate(td.AccessExpires),
 		},
 		AccessUUID: td.AccessUUID,
-		ClientID:   id,
-		// Perms:      perms,
+		Username:   username,
+		Role:       role,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	td.AccessToken, err = at.SignedString([]byte(manager.accessSecret))
+	td.AccessToken, err = at.SignedString(manager.accessSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -252,20 +275,20 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 			ExpiresAt: jwt.NewNumericDate(td.RefreshExpires),
 		},
 		RefreshUUID: td.RefreshUUID,
-		ClientID:    id,
+		Username:    username,
 	}
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
-	td.RefreshToken, err = rt.SignedString([]byte(manager.refreshSecret))
+	td.RefreshToken, err = rt.SignedString(manager.refreshSecret)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the new token allocation.
 	manager.mu.Lock()
-	manager.log.Debugf("generated tokens for %s", id)
+	manager.log.Debugf("generated tokens for %s", username)
 	manager.changed = true
 	manager.tokenAllocations[td.RefreshUUID] = TokenAllocation{
-		ClientID: id,
+		Username: username,
 		Expires:  td.RefreshExpires,
 	}
 	manager.mu.Unlock()
@@ -273,10 +296,10 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 	return td, nil
 }
 
-func (manager *JWTManager) GenerateAccessToken(id string) (string, error) {
+func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
-		return "", fmt.Errorf("failed to generate UUID: %v", err)
+		return nil, fmt.Errorf("failed to generate UUID: %v", err)
 	}
 
 	accessExpires := time.Now().Add(accessTokenDuration)
@@ -288,21 +311,27 @@ func (manager *JWTManager) GenerateAccessToken(id string) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(accessExpires),
 		},
 		AccessUUID: accessUUID,
-		ClientID:   id,
-		// Perms:      perms,
+		Username:   username,
+		Role:       role,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	accessToken, err := at.SignedString([]byte(manager.accessSecret))
+	accessToken, err := at.SignedString(manager.accessSecret)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	manager.log.Debugf("generated access token for %s", id)
+	manager.log.Debugf("generated access token for %s", username)
 
-	return accessToken, nil
+	td := &TokenDetails{
+		AccessToken:   accessToken,
+		AccessUUID:    accessUUID,
+		AccessExpires: accessExpires,
+	}
+
+	return td, nil
 }
 
-func (manager *JWTManager) RevokeToken(refreshUUID string) {
+func (manager *JWTManager) RevokeRefreshToken(refreshUUID string) {
 	manager.mu.Lock()
 	manager.changed = true
 	delete(manager.tokenAllocations, refreshUUID)
@@ -319,7 +348,7 @@ func (manager *JWTManager) VerifyRefreshToken(refreshToken string) (*RefreshToke
 				return nil, fmt.Errorf("unexpected refresh token signing method")
 			}
 
-			return []byte(manager.refreshSecret), nil
+			return manager.refreshSecret, nil
 		},
 	)
 
@@ -352,12 +381,12 @@ func (manager *JWTManager) VerifyAccessToken(accessToken string) (*AccessTokenCl
 				return nil, fmt.Errorf("unexpected access token signing method")
 			}
 
-			return []byte(manager.accessSecret), nil
+			return manager.accessSecret, nil
 		},
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("invalid access token %q: %w", accessToken, err)
+		return nil, fmt.Errorf("invalid access token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*AccessTokenClaims)

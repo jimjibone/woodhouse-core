@@ -10,7 +10,8 @@
 	import LogOutIcon from "@lucide/svelte/icons/log-out";
 	import SparklesIcon from "@lucide/svelte/icons/sparkles";
 	import { toggleMode } from "mode-watcher";
-	import { LightDarkIcon } from "@/components/wh/icons";
+	import { LightDarkIcon } from "$lib/components/wh/icons";
+	import { doLogout, userData } from "$lib/stores/auth-store";
 
 	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
 	const sidebar = useSidebar();
@@ -27,12 +28,12 @@
 						{...props}
 					>
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
+							<Avatar.Image src={user.avatar} alt={$userData.username} />
 							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-medium">{$userData.username}</span>
+							<span class="truncate text-xs">{$userData.role}</span>
 						</div>
 						<ChevronsUpDownIcon class="ml-auto size-4" />
 					</Sidebar.MenuButton>
@@ -47,12 +48,12 @@
 				<DropdownMenu.Label class="p-0 font-normal">
 					<div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
+							<Avatar.Image src={user.avatar} alt={$userData.username} />
 							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-medium">{$userData.username}</span>
+							<span class="truncate text-xs">{$userData.role}</span>
 						</div>
 					</div>
 				</DropdownMenu.Label>
@@ -83,7 +84,7 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item onclick={() => doLogout()}>
 					<LogOutIcon />
 					Log out
 				</DropdownMenu.Item>

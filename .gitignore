@@ -1,8 +1,7 @@
 .bin
+.env
 .task
 /build*
 *.log
-webapp/node_modules/
-examples/
 TODO.md
 personal/

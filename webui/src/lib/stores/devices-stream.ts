@@ -1,10 +1,11 @@
 import { type Subscriber, writable } from 'svelte/store';
-import { ConnectError, Code, type Client } from '@connectrpc/connect';
-import { create, toJsonString } from "@bufbuild/protobuf";
+import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
+import { create } from "@bufbuild/protobuf";
 import { DevicesStreamRequestSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
-import { Device_DeviceType, DeviceSchema, Service_ServiceType, type Device, type Service, type TimeAttribute } from '$lib/api/v1/clients/client_service_pb';
+import { Device_DeviceType, Service_ServiceType, type Device, type Service, type TimeAttribute } from '$lib/api/v1/clients/client_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
+import { getAccessToken } from '$lib/stores/auth-store';
 
 export type DevicesStoreType = {
 	connected: boolean;
@@ -140,7 +141,11 @@ const streamDevices = async (client: Client<typeof UserService>, abortSignal: Ab
 	const request = create(DevicesStreamRequestSchema, {});
 	try {
 		// console.log("streamDevices: starting stream");
-		for await (const response of client.devicesStream(request, { signal: abortSignal })) {
+		const options: CallOptions = {
+			signal: abortSignal,
+			headers: { "authorization": getAccessToken() }
+		};
+		for await (const response of client.devicesStream(request, options)) {
 			heartbeat();
 			didConnect = true;
 

@@ -231,6 +231,10 @@ export const RemoveFavoriteResponseSchema: GenMessage<RemoveFavoriteResponse> = 
  */
 export const UserService: GenService<{
   /**
+   * Get the current device states. This returns a stream of devices which
+   * will close once all devices are sent. Use DevicesStream method to get a
+   * stream of current device states and updates.
+   *
    * @generated from rpc woodhouse.api.v1.clients.UserService.GetDevices
    */
   getDevices: {

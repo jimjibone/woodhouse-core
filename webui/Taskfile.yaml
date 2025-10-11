@@ -5,7 +5,7 @@ tasks:
     deps:
       - proto
 
-  proto:
+  proto-web-v1:
     run: when_changed
     sources:
       - ./buf.gen.yaml
@@ -26,12 +26,12 @@ tasks:
 
   build:
     deps:
-      - proto
+      - proto-web-v1
     cmds:
       - npm run build
 
   dev:
     deps:
-      - proto
+      - proto-web-v1
     cmds:
       - npm run dev -- --host

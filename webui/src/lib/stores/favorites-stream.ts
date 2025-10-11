@@ -1,10 +1,11 @@
 import { type Subscriber, writable } from 'svelte/store';
-import { ConnectError, Code, type Client } from '@connectrpc/connect';
+import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
 import { create, toJsonString } from "@bufbuild/protobuf";
 import { FavoritesStreamResponseSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
 import { type DeviceService, FavoritesStreamRequestSchema } from '$lib/api/v1/clients/user_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
+import { getAccessToken } from '$lib/stores/auth-store';
 
 export type FavoritesStoreType = {
 	connected: boolean;
@@ -61,7 +62,11 @@ const streamFavorites = async (client: Client<typeof UserService>, abortSignal: 
 	const request = create(FavoritesStreamRequestSchema, {});
 	try {
 		// console.log("streamFavorites: starting stream");
-		for await (const response of client.favoritesStream(request, { signal: abortSignal })) {
+		const options: CallOptions = {
+			signal: abortSignal,
+			headers: { "authorization": getAccessToken() }
+		};
+		for await (const response of client.favoritesStream(request, options)) {
 			heartbeat();
 			didConnect = true;
 
@@ -118,7 +123,7 @@ const streamFavorites = async (client: Client<typeof UserService>, abortSignal: 
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
-				console.error('streamDevices: error stream: (' + err.code + ') ' + err.message);
+				console.error('streamFavorites: error stream: (' + err.code + ') ' + err.message);
 			}
 		}
 	}

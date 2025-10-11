@@ -1,9 +1,12 @@
-package clients
+package main
 
 import (
 	"context"
+	"strings"
 
-	"github.com/jimjibone/woodhouse-4/apitools"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-4/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,14 +15,16 @@ import (
 )
 
 type AuthInterceptor struct {
-	log *log.Context
-	jwt *JWTManager
+	log     *log.Context
+	clients *clients.JWTManager
+	users   *users.JWTManager
 }
 
-func NewAuthInterceptor(jwt *JWTManager) *AuthInterceptor {
+func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager) *AuthInterceptor {
 	interceptor := &AuthInterceptor{
-		log: log.NewContext(log.DefaultLogger, "clients-interceptor", log.DebugLevel),
-		jwt: jwt,
+		log:     log.NewContext(log.DefaultLogger, "auth-interceptor", log.DebugLevel),
+		clients: clients,
+		users:   users,
 	}
 
 	return interceptor
@@ -33,17 +38,18 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if apitools.RequiresAuth(info.FullMethod) {
+		if auth.RequiresAuth(info.FullMethod) {
 			clientID, ctx2, err := interceptor.authorize(ctx, info.FullMethod)
 			if err != nil {
+				interceptor.log.Warnf("--> unary %s: %q not authorized: %s", info.FullMethod, clientID, err)
 				return nil, err
 			}
-			interceptor.log.Debugf("--> unary: %s (authorized %s)", info.FullMethod, clientID)
+			interceptor.log.Infof("--> unary %s: %q authorized", info.FullMethod, clientID)
 			return handler(ctx2, req)
 		}
 
 		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
-			interceptor.log.Debugf("--> unary: %s (no auth)", info.FullMethod)
+			interceptor.log.Infof("--> unary %s: no auth required", info.FullMethod)
 		}
 		return handler(ctx, req)
 	}
@@ -57,17 +63,18 @@ func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
 	) error {
-		if apitools.RequiresAuth(info.FullMethod) {
+		if auth.RequiresAuth(info.FullMethod) {
 			clientID, ctx2, err := interceptor.authorize(stream.Context(), info.FullMethod)
 			if err != nil {
+				interceptor.log.Warnf("--> stream %s: %q not authorized: %s", info.FullMethod, clientID, err)
 				return err
 			}
-			interceptor.log.Debugf("--> stream: %s (authorized %s)", info.FullMethod, clientID)
+			interceptor.log.Infof("--> stream %s: %q authorized", info.FullMethod, clientID)
 			return handler(srv, newWrappedStream(stream, ctx2))
 		}
 
 		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
-			interceptor.log.Debugf("--> stream: %s (no auth)", info.FullMethod)
+			interceptor.log.Infof("--> stream %s: no auth required", info.FullMethod)
 		}
 		return handler(srv, stream)
 	}
@@ -90,6 +97,11 @@ func (stream *wrappedStream) Context() context.Context {
 // checks that the access token is still authorized. Returns the client id,
 // context containing the access token claims, or possibly an error.
 func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) (string, context.Context, error) {
+	// gRPC-Web requests don't have a leading `/`.
+	if !strings.HasPrefix(method, "/") {
+		method = "/" + method
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
@@ -100,33 +112,26 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 		return "", nil, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
 	}
 
-	// if accessibleMethod.IsUserMethod() {
-	// 	accessToken := values[0]
-	// 	claims, err := i.userJWTManager.VerifyAccessToken(accessToken)
-	// 	if err != nil {
-	// 		return nil, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
-	// 	}
-	//
-	// 	for _, role := range accessibleMethod.Roles {
-	// 		if role == claims.Role {
-	// 			return context.WithValue(ctx, "claims", claims), nil
-	// 		}
-	// 	}
-	// } else if accessibleMethod.IsBridgeMethod() {
-	accessToken := values[0]
-	claims, err := interceptor.jwt.VerifyAccessToken(accessToken)
-	if err != nil {
-		return "", nil, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
+	if auth.IsUserMethod(method) {
+		accessToken := values[0]
+		claims, err := interceptor.users.VerifyAccessToken(accessToken)
+		if err != nil {
+			return "", nil, status.Errorf(codes.Unauthenticated, "client access token is invalid: %v", err)
+		}
+
+		if auth.IsUserAuthorised(method, claims.Role) {
+			return claims.Username, context.WithValue(ctx, "claims", claims), nil
+		}
+
+		return claims.Username, nil, status.Error(codes.PermissionDenied, "no permission to access this RPC")
 	}
 
-	// for _, perm := range accessibleMethod.Perms {
-	// 	for _, claimPerm := range claims.Perms {
-	// 		if perm == perms.Perm(claimPerm) {
-	return claims.ClientID, context.WithValue(ctx, "claims", claims), nil
-	// 			}
-	// 		}
-	// 	}
-	// // }
+	// Must be a client.
+	accessToken := values[0]
+	claims, err := interceptor.clients.VerifyAccessToken(accessToken)
+	if err != nil {
+		return "", nil, status.Errorf(codes.Unauthenticated, "client access token is invalid: %v", err)
+	}
 
-	//return nil, status.Error(codes.PermissionDenied, "no permission to access this RPC")
+	return claims.ClientID, context.WithValue(ctx, "claims", claims), nil
 }

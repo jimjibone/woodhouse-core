@@ -213,7 +213,7 @@ func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshReque
 		// Generate both tokens.
 		tokens, err := as.jwt.GenerateTokens(claims.ClientID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to generate tokens")
+			return nil, status.Errorf(codes.Internal, "failed to generate tokens: %s", err)
 		}
 		refreshToken = tokens.RefreshToken
 		accessToken = tokens.AccessToken
@@ -221,7 +221,7 @@ func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshReque
 		// Generate only the access token.
 		token, err := as.jwt.GenerateAccessToken(claims.ClientID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to generate access token")
+			return nil, status.Errorf(codes.Internal, "failed to generate access token: %s", err)
 		}
 		refreshToken = req.RefreshToken
 		accessToken = token

@@ -19,4 +19,22 @@ export function toHeadlineCase(input: string): string {
 		}
 		})
 		.join(" ");
-};
+}
+
+export function toSentenceCase(str: string): string {
+	if (!str) return '';
+	return str.replace(/^\s*([a-z])/, (_, c) => c.toUpperCase());
+}
+
+export function toSentenceCaseLocalized(str: string, locale: string = navigator.language): string {
+	if (!str) return '';
+
+	// Trim only the start (don't alter internal spacing)
+	const trimmed = str.trimStart();
+
+	// Find the first letter and capitalize it using locale rules
+	return trimmed.replace(
+		/^(\p{L})/u, // match first Unicode letter
+		(c) => c.toLocaleUpperCase(locale)
+	);
+}

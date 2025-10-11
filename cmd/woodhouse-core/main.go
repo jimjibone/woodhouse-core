@@ -108,10 +108,6 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("failed to listen on api addr: %w", err)
 			}
-			insecureApiLis, err := net.Listen("tcp", "127.0.0.1:4001")
-			if err != nil {
-				return fmt.Errorf("failed to listen on insecure api addr: %w", err)
-			}
 			webLis, err := net.Listen("tcp", config.LoadedConfig.Server.WebAddr)
 			if err != nil {
 				return fmt.Errorf("failed to listen on http addr: %w", err)
@@ -126,12 +122,10 @@ func main() {
 			}
 			clientJwtManager, err := clients.NewJWTManager(store)
 			if err != nil {
-				return fmt.Errorf("failed to create jwt manager: %s", err)
+				return fmt.Errorf("failed to create client jwt manager: %s", err)
 			}
 			defer clientJwtManager.Close()
 			clientAuthService := clients.NewAuthService(certManager, clientJwtManager)
-
-			authInterceptor := clients.NewAuthInterceptor(clientJwtManager)
 
 			deviceManager, err := core.NewDeviceManager(store)
 			if err != nil {
@@ -144,6 +138,19 @@ func main() {
 				return fmt.Errorf("failed to create favorites manager: %s", err)
 			}
 			defer favoritesManager.Close()
+
+			userManager, err := core.NewUserManager(store)
+			if err != nil {
+				return fmt.Errorf("failed to create user manager: %s", err)
+			}
+			defer userManager.Close()
+
+			userJwtManager, err := users.NewJWTManager(store)
+			if err != nil {
+				return fmt.Errorf("failed to create user jwt manager: %s", err)
+			}
+			defer userJwtManager.Close()
+			userAuthService := users.NewAuthService(userManager, userJwtManager)
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager)
@@ -158,20 +165,19 @@ func main() {
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
+			authInterceptor := NewAuthInterceptor(clientJwtManager, userJwtManager)
 			server := grpc.NewServer(
 				grpc.Creds(creds),
 				grpc.UnaryInterceptor(authInterceptor.Unary()),
 				grpc.StreamInterceptor(authInterceptor.Stream()),
 			)
-			insecureServer := grpc.NewServer()
 
 			// Register services.
 			clientsapi.RegisterAuthServiceServer(server, clientAuthService)
 			clientsapi.RegisterClientServiceServer(server, clientService)
-			clientsapi.RegisterUserServiceServer(insecureServer, userService)
+			clientsapi.RegisterUserServiceServer(server, userService)
+			clientsapi.RegisterUserAuthServiceServer(server, userAuthService)
 			reflection.Register(server)
-			clientsapi.RegisterAuthServiceServer(insecureServer, clientAuthService)
-			reflection.Register(insecureServer)
 
 			// Run the gRPC server.
 			serverErr := make(chan error, 1)
@@ -182,18 +188,11 @@ func main() {
 				}
 				server.GracefulStop()
 			}()
-			go func() {
-				log.Infof("insecure api server ready at grpc://%s", insecureApiLis.Addr())
-				if err := insecureServer.Serve(insecureApiLis); err != nil {
-					serverErr <- fmt.Errorf("grpc insecure server: %w", err)
-				}
-				insecureServer.GracefulStop()
-			}()
 
 			// Run the web server with grpc-web support.
 			webServerErr := make(chan error, 1)
 			go func() {
-				wrappedServer := grpcweb.WrapServer(insecureServer)
+				wrappedServer := grpcweb.WrapServer(server)
 				mux := http.NewServeMux()
 				buildfs, err := fs.Sub(webui.Content, "build")
 				if err != nil {
@@ -222,6 +221,9 @@ func main() {
 				mux.Handle("/favicon-512.png", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/apple-touch-icon.png", http.FileServer(http.FS(buildfs)))
 				mux.Handle("/_app/", http.FileServer(http.FS(buildfs)))
+				mux.HandleFunc("/api/login", userAuthService.LoginWeb)
+				mux.HandleFunc("/api/refresh", userAuthService.RefreshWeb)
+				mux.HandleFunc("/api/logout", userAuthService.LogoutWeb)
 				mux.Handle("/api/", http.StripPrefix("/api/", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 					wrappedServer.ServeHTTP(res, req)
 				})))

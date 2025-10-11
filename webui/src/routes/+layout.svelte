@@ -1,8 +1,7 @@
 <script lang="ts">
 	import "../app.css";
 	import { ModeWatcher } from "mode-watcher";
-	import { HeartIcon, Rows3Icon, LampIcon, BugIcon, LightbulbIcon } from "@lucide/svelte";
-	import { WoodhouseIcon } from "$lib/components/wh/icons";
+	import { HeartIcon, LampIcon } from "@lucide/svelte";
 	import AppSidebar, { type Dashboards } from "$lib/components/app-sidebar.svelte";
 	import AppMobilebar from "$lib/components/app-mobilebar.svelte";
 	import * as Breadcrumb from "$lib/components/ui/breadcrumb";
@@ -10,7 +9,8 @@
 	import * as Sidebar from "$lib/components/ui/sidebar";
 	import { page } from "$app/state";
 	import { Toaster } from "$lib/components/ui/sonner";
-	import type { Snippet } from "svelte";
+	import { loggedIn } from "$lib/stores/auth-store";
+	import LoginForm from "$lib/components/login-form.svelte";
 
 	let { children } = $props();
 
@@ -20,21 +20,11 @@
 			url: "/favorites",
 			icon: HeartIcon,
 		},
-		// {
-		// 	name: "Services",
-		// 	url: "/services",
-		// 	icon: Rows3Icon,
-		// },
 		{
 			name: "Devices",
 			url: "/devices",
 			icon: LampIcon,
 		},
-		// {
-		// 	name: "Debug",
-		// 	url: "/debug",
-		// 	icon: BugIcon,
-		// },
 	];
 
 	let activeDashboard: string = $derived.by(() => {
@@ -60,6 +50,13 @@
 	</Menubar.Menu>
 </Menubar.Root> -->
 
+{#if !$loggedIn}
+<div class="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+	<div class="w-full max-w-sm">
+		<LoginForm />
+	</div>
+</div>
+{:else}
 <Sidebar.Provider>
 	<AppSidebar {dashboards}/>
 	<Sidebar.Inset>
@@ -95,3 +92,4 @@
 		<AppMobilebar {dashboards}/>
 	</Sidebar.Inset>
 </Sidebar.Provider>
+{/if}

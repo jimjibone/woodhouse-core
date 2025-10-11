@@ -1,0 +1,6 @@
+# This file defines the variables used in 'task deploy-*' commands - i.e. where does it deploy to.
+DEPLOY_HOST=your-host.local
+DEPLOY_USER=username
+DEPLOY_DIR=~/woodhouse/
+DEPLOY_GOOS=linux
+DEPLOY_GOARCH=amd64
