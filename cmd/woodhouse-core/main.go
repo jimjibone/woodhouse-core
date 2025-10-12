@@ -225,7 +225,11 @@ func main() {
 				mux.HandleFunc("/api/refresh", userAuthService.RefreshWeb)
 				mux.HandleFunc("/api/logout", userAuthService.LogoutWeb)
 				mux.Handle("/api/", http.StripPrefix("/api/", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-					wrappedServer.ServeHTTP(res, req)
+					if wrappedServer.IsGrpcWebRequest(req) || wrappedServer.IsAcceptableGrpcCorsRequest(req) {
+						wrappedServer.ServeHTTP(res, req)
+						return
+					}
+					http.NotFound(res, req)
 				})))
 
 				httpServer := &http.Server{

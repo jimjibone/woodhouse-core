@@ -19,6 +19,8 @@ const refreshResultValue = writable<RefreshResultType>({ errorCode: 0, errorMsg:
 
 const doneFirstAttemptValue = writable<boolean>(false);
 
+const noAdminsRegisteredValue = writable<boolean>(false);
+
 const loggedInValue = writable<boolean>(false, () => {
     doRefresh();
     const interval = setInterval(() => {
@@ -56,6 +58,10 @@ export function getAccessToken() : string {
 
 export const doneFirstAuthAttempt : { subscribe: (subscription: (value: boolean) => void) => (() => void) } = {
     subscribe: doneFirstAttemptValue.subscribe
+};
+
+export const noAdminsRegistered : { subscribe: (subscription: (value: boolean) => void) => (() => void) } = {
+    subscribe: noAdminsRegisteredValue.subscribe
 };
 
 export const loggedIn : { subscribe: (subscription: (value: boolean) => void) => (() => void) } = {
@@ -148,6 +154,11 @@ export async function doRefresh() {
     } else {
         const msg = await response.text();
         console.error("doRefresh response failed:", response.status, msg);
+        if (response.status === 412) { // Precondition Failed
+            noAdminsRegisteredValue.set(true);
+        } else {
+            noAdminsRegisteredValue.set(false);
+        }
         // doneFirstAttemptValue.set(false);
         refreshResultValue.set({ errorCode: response.status, errorMsg: msg });
     }
@@ -159,6 +170,7 @@ export const AuthStore = {
     // refreshResult: { subscribe: refreshResultValue.subscribe },
     loggedIn,
     doneFirstAuthAttempt,
+    noAdminsRegisteredValue,
     // doLogin,
     // doLogout,
     // renewAccessToken,

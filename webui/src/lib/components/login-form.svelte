@@ -11,7 +11,7 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { cn, type WithElementRef } from "$lib/utils.js";
 	import { WoodhouseIcon } from "./wh/icons";
-	import { doLogin, type RefreshResultType } from "@/stores/auth-store";
+	import { doLogin, noAdminsRegistered, type RefreshResultType } from "@/stores/auth-store";
     import { toSentenceCase } from "@/tools/headline-case";
 
 	let {
@@ -50,9 +50,11 @@
 					<span class="sr-only">Woodhouse</span>
 				</a>
 				<h1 class="text-xl font-bold">Welcome to Woodhouse</h1>
-				<FieldDescription>
-					Don't have an account? <a href="##">Sign up</a>
-				</FieldDescription>
+				{#if $noAdminsRegistered}
+					<FieldDescription>
+						Please create your admin account below.
+					</FieldDescription>
+				{/if}
 			</div>
 			<Field>
 				<FieldLabel for="username-{id}">Username</FieldLabel>
@@ -66,12 +68,12 @@
 				<FieldError>{toSentenceCase(loginError.errorMsg)}</FieldError>
 			{/if}
 			<Field>
-				<Button type="submit">Login</Button>
+				<Button type="submit">{$noAdminsRegistered ? "Create User" : "Login"}</Button>
 			</Field>
 		</FieldGroup>
 	</form>
-	<FieldDescription class="px-6 text-center">
+	<!-- <FieldDescription class="px-6 text-center">
 		By clicking continue, you agree to our <a href="##">Terms of Service</a> and
 		<a href="##">Privacy Policy</a>.
-	</FieldDescription>
+	</FieldDescription> -->
 </div>

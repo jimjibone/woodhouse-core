@@ -125,6 +125,11 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenDetails, error) {
+	// Special case. If there are no admins then the webui needs to present the onboarding UI.
+	if !srv.users.HasAnAdmin() {
+		return nil, status.Errorf(codes.FailedPrecondition, "no admins registered")
+	}
+
 	// Verify and parse the JWT into claims.
 	claims, err := srv.jwt.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
@@ -318,6 +323,8 @@ func writeGRPCError(w http.ResponseWriter, err error) {
 		code = http.StatusInternalServerError
 	case codes.InvalidArgument:
 		code = http.StatusBadRequest
+	case codes.FailedPrecondition:
+		code = http.StatusPreconditionFailed
 	default:
 		code = http.StatusTeapot
 	}
