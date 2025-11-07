@@ -240,9 +240,9 @@ func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID st
 		return "", "", status.Error(codes.Unavailable, "device has no client")
 	}
 
-	if !dev.isOnline() {
-		return "", "", status.Error(codes.Unavailable, "device is offline")
-	}
+	// if !dev.isOnline() {
+	// 	return "", "", status.Error(codes.Unavailable, "device is offline")
+	// }
 
 	actionID, err = random.GenerateRandomPin(10)
 	if err != nil {
