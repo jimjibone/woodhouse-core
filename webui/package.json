@@ -24,6 +24,7 @@
 		"@tailwindcss/vite": "^4.0.0",
 		"bits-ui": "^2.11.5",
 		"clsx": "^2.1.1",
+		"prettier-plugin-svelte": "^3.4.0",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"svelte-sonner": "^1.0.5",
