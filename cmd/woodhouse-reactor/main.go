@@ -8,7 +8,6 @@ import (
 
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
-	"github.com/jimjibone/woodhouse-4/wh/v1"
 	"github.com/jimjibone/woodhouse-4/wh/v1/reactors"
 	"github.com/urfave/cli/v2"
 )
@@ -49,7 +48,7 @@ func main() {
 			store := stores.NewFSStore(args.String("store"))
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"), wh.WithReactors())
+			client := reactors.NewClient(store, args.String("addr"))
 
 			go reactorFunc(client)
 
@@ -68,25 +67,35 @@ func main() {
 	}
 }
 
-func reactorFunc(client *wh.Client) {
-	relayReactor := reactors.NewDevice("fake2")
-	client.AddReactor(relayReactor)
+func reactorFunc(client *reactors.Client) {
+	relay := client.GetRelay("fake2")
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	relayReactor.OnOnlineUpdated(func(srv *reactors.OnlineService) {
-		log.Infof("relay %q online changed %t %s", relayReactor.Info().Name(), srv.Online(), srv.LastSeen())
-	})
-	relayReactor.OnRelayUpdated("relay", func(srv *reactors.RelayService) {
-		log.Infof("relay %q relay changed on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C", relayReactor.Info().Name(), srv.On(), srv.Voltage(), srv.Current(), srv.Power(), srv.Temperature())
+	relay.OnUpdate(func(changed bool) {
+		log.Infof("relay %q changed on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C",
+			relay.DeviceName(),
+			relay.On(),
+			relay.Voltage(),
+			relay.Current(),
+			relay.Power(),
+			relay.Temperature(),
+		)
 	})
 
 	count := 0
 	for range ticker.C {
-		relay := relayReactor.Relay("relay")
 		if relay != nil {
-			log.Infof("relay %q online: %t, on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C", relayReactor.Info().Name(), relayReactor.Online().Online(), relay.On(), relay.Voltage(), relay.Current(), relay.Power(), relay.Temperature())
+			log.Infof("relay %q online: %t, on: %t, voltage: %.0fV, current: %.0fA, power: %.0fW, temperature: %.0f°C",
+				relay.DeviceName(),
+				relay.Online(),
+				relay.On(),
+				relay.Voltage(),
+				relay.Current(),
+				relay.Power(),
+				relay.Temperature(),
+			)
 
 			if count%5 == 0 {
 				err := relay.SetOn(context.Background(), !relay.On())
