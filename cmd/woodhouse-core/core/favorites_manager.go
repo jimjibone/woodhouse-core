@@ -67,7 +67,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 					DeviceID:  dev.GetId(),
 					ServiceID: srv.GetId(),
 				}
-				manager.log.Errorf("prior fave: %v", faveID)
+				// manager.log.Errorf("prior fave: %v", faveID)
 				fave := &Favorite{
 					DeviceID:  faveID.DeviceID,
 					ServiceID: faveID.ServiceID,
@@ -77,7 +77,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 			}
 		}
 	}
-	manager.log.Errorf("prior faves is: %v", len(faves))
+	// manager.log.Debugf("prior faves is: %v", len(faves))
 
 	for {
 		select {
@@ -134,7 +134,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 				manager.publisher.Send(lis, FavoriteUpdate{Updated: fave.Clone()})
 			}
 
-			// Send and empty fave to indicate the end of the initial list.
+			// Send and empty update to indicate the end of the initial list.
 			manager.publisher.Send(lis, FavoriteUpdate{})
 		}
 	}
