@@ -1,7 +1,5 @@
-import TooltipButton from "./tooltip-button.svelte";
-import TooltipIcon from "./tooltip-icon.svelte";
+import Combobox from './combobox.svelte';
+import TooltipButton from './tooltip-button.svelte';
+import TooltipIcon from './tooltip-icon.svelte';
 
-export {
-    TooltipButton,
-    TooltipIcon
-};
+export { Combobox, TooltipButton, TooltipIcon };

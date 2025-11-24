@@ -2,8 +2,8 @@
 // @generated from file clients/user_service.proto (package woodhouse.api.v1.clients, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { ActionRequestSchema, ActionResponseSchema, DeviceSchema, ImageRequestSchema, ImageResponseSchema, Service, TimeValue } from "./client_service_pb";
 import { file_clients_client_service } from "./client_service_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/user_service.proto.
  */
 export const file_clients_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSK6AgoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZUIOCgxfZGV2aWNlX25hbWVCCQoHX29ubGluZUIMCgpfbGFzdF9zZWVuQhAKDl9iYXR0ZXJ5X2xldmVsIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZTL2BQoLVXNlclNlcnZpY2USXQoKR2V0RGV2aWNlcxIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXREZXZpY2VzUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJjCg1EZXZpY2VzU3RyZWFtEi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZXNTdHJlYW1SZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZTABEngKD0Zhdm9yaXRlc1N0cmVhbRIwLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXF1ZXN0GjEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZhdm9yaXRlc1N0cmVhbVJlc3BvbnNlMAESagoLQWRkRmF2b3JpdGUSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkRmF2b3JpdGVSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVzcG9uc2UScwoOUmVtb3ZlRmF2b3JpdGUSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVzcG9uc2USYQoKU2VuZEFjdGlvbhInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlc3BvbnNlMAESZQoQU2VuZEltYWdlUmVxdWVzdBImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlcXVlc3QaJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXNwb25zZTABQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw", [file_clients_client_service]);
+  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSK6AgoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZUIOCgxfZGV2aWNlX25hbWVCCQoHX29ubGluZUIMCgpfbGFzdF9zZWVuQhAKDl9iYXR0ZXJ5X2xldmVsIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZSIUChJVc2Vyc1N0cmVhbVJlcXVlc3QiWQoTVXNlcnNTdHJlYW1SZXNwb25zZRIsCgR1c2VyGAEgASgLMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXISFAoMdXNlcl9yZW1vdmVkGAIgASgJIoABCg5BZGRVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghmdWxsbmFtZRgCIAEoCRIwCgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlEhgKEGluaXRpYWxfcGFzc3dvcmQYBCABKAkiEQoPQWRkVXNlclJlc3BvbnNlIq0BChFVcGRhdGVVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIVCghmdWxsbmFtZRgCIAEoCUgAiAEBEjUKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGVIAYgBARIVCghwYXNzd29yZBgEIAEoCUgCiAEBQgsKCV9mdWxsbmFtZUIHCgVfcm9sZUILCglfcGFzc3dvcmQiFAoSVXBkYXRlVXNlclJlc3BvbnNlIiUKEVJlbW92ZVVzZXJSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJIhQKElJlbW92ZVVzZXJSZXNwb25zZSJcCgRVc2VyEhAKCHVzZXJuYW1lGAEgASgJEhAKCGZ1bGxuYW1lGAIgASgJEjAKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGUqTAoIVXNlclJvbGUSFwoTVVNFUl9ST0xFX1VOREVGSU5FRBAAEhMKD1VTRVJfUk9MRV9BRE1JThABEhIKDlVTRVJfUk9MRV9VU0VSEAIylgkKC1VzZXJTZXJ2aWNlEl0KCkdldERldmljZXMSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0RGV2aWNlc1JlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlMAESYwoNRGV2aWNlc1N0cmVhbRIuLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJ4Cg9GYXZvcml0ZXNTdHJlYW0SMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmF2b3JpdGVzU3RyZWFtUmVxdWVzdBoxLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXNwb25zZTABEmoKC0FkZEZhdm9yaXRlEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRGYXZvcml0ZVJlc3BvbnNlEnMKDlJlbW92ZUZhdm9yaXRlEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVGYXZvcml0ZVJlc3BvbnNlEmEKClNlbmRBY3Rpb24SJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVxdWVzdBooLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXNwb25zZTABEmUKEFNlbmRJbWFnZVJlcXVlc3QSJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXF1ZXN0Gicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVzcG9uc2UwARJsCgtVc2Vyc1N0cmVhbRIsLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2Vyc1N0cmVhbVJlcXVlc3QaLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlcnNTdHJlYW1SZXNwb25zZTABEl4KB0FkZFVzZXISKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkVXNlclJlcXVlc3QaKS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkVXNlclJlc3BvbnNlEmcKClVwZGF0ZVVzZXISKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlVXNlclJlcXVlc3QaLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlVXNlclJlc3BvbnNlEmcKClJlbW92ZVVzZXISKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlVXNlclJlcXVlc3QaLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlVXNlclJlc3BvbnNlQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw", [file_clients_client_service]);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -227,6 +227,218 @@ export const RemoveFavoriteResponseSchema: GenMessage<RemoveFavoriteResponse> = 
   messageDesc(file_clients_user_service, 8);
 
 /**
+ * @generated from message woodhouse.api.v1.clients.UsersStreamRequest
+ */
+export type UsersStreamRequest = Message<"woodhouse.api.v1.clients.UsersStreamRequest"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.UsersStreamRequest.
+ * Use `create(UsersStreamRequestSchema)` to create a new message.
+ */
+export const UsersStreamRequestSchema: GenMessage<UsersStreamRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 9);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.UsersStreamResponse
+ */
+export type UsersStreamResponse = Message<"woodhouse.api.v1.clients.UsersStreamResponse"> & {
+  /**
+   * Optional: A User update, possibly containing the full state.
+   *
+   * @generated from field: woodhouse.api.v1.clients.User user = 1;
+   */
+  user?: User;
+
+  /**
+   * Optional: Indicates the key of a User that was removed.
+   *
+   * @generated from field: string user_removed = 2;
+   */
+  userRemoved: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.UsersStreamResponse.
+ * Use `create(UsersStreamResponseSchema)` to create a new message.
+ */
+export const UsersStreamResponseSchema: GenMessage<UsersStreamResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 10);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AddUserRequest
+ */
+export type AddUserRequest = Message<"woodhouse.api.v1.clients.AddUserRequest"> & {
+  /**
+   * @generated from field: string username = 1;
+   */
+  username: string;
+
+  /**
+   * @generated from field: string fullname = 2;
+   */
+  fullname: string;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.UserRole role = 3;
+   */
+  role: UserRole;
+
+  /**
+   * @generated from field: string initial_password = 4;
+   */
+  initialPassword: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.AddUserRequest.
+ * Use `create(AddUserRequestSchema)` to create a new message.
+ */
+export const AddUserRequestSchema: GenMessage<AddUserRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 11);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AddUserResponse
+ */
+export type AddUserResponse = Message<"woodhouse.api.v1.clients.AddUserResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.AddUserResponse.
+ * Use `create(AddUserResponseSchema)` to create a new message.
+ */
+export const AddUserResponseSchema: GenMessage<AddUserResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 12);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.UpdateUserRequest
+ */
+export type UpdateUserRequest = Message<"woodhouse.api.v1.clients.UpdateUserRequest"> & {
+  /**
+   * @generated from field: string username = 1;
+   */
+  username: string;
+
+  /**
+   * @generated from field: optional string fullname = 2;
+   */
+  fullname?: string;
+
+  /**
+   * @generated from field: optional woodhouse.api.v1.clients.UserRole role = 3;
+   */
+  role?: UserRole;
+
+  /**
+   * @generated from field: optional string password = 4;
+   */
+  password?: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.UpdateUserRequest.
+ * Use `create(UpdateUserRequestSchema)` to create a new message.
+ */
+export const UpdateUserRequestSchema: GenMessage<UpdateUserRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 13);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.UpdateUserResponse
+ */
+export type UpdateUserResponse = Message<"woodhouse.api.v1.clients.UpdateUserResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.UpdateUserResponse.
+ * Use `create(UpdateUserResponseSchema)` to create a new message.
+ */
+export const UpdateUserResponseSchema: GenMessage<UpdateUserResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 14);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveUserRequest
+ */
+export type RemoveUserRequest = Message<"woodhouse.api.v1.clients.RemoveUserRequest"> & {
+  /**
+   * @generated from field: string username = 1;
+   */
+  username: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.RemoveUserRequest.
+ * Use `create(RemoveUserRequestSchema)` to create a new message.
+ */
+export const RemoveUserRequestSchema: GenMessage<RemoveUserRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 15);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveUserResponse
+ */
+export type RemoveUserResponse = Message<"woodhouse.api.v1.clients.RemoveUserResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.RemoveUserResponse.
+ * Use `create(RemoveUserResponseSchema)` to create a new message.
+ */
+export const RemoveUserResponseSchema: GenMessage<RemoveUserResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 16);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.User
+ */
+export type User = Message<"woodhouse.api.v1.clients.User"> & {
+  /**
+   * @generated from field: string username = 1;
+   */
+  username: string;
+
+  /**
+   * @generated from field: string fullname = 2;
+   */
+  fullname: string;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.UserRole role = 3;
+   */
+  role: UserRole;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.User.
+ * Use `create(UserSchema)` to create a new message.
+ */
+export const UserSchema: GenMessage<User> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 17);
+
+/**
+ * @generated from enum woodhouse.api.v1.clients.UserRole
+ */
+export enum UserRole {
+  /**
+   * @generated from enum value: USER_ROLE_UNDEFINED = 0;
+   */
+  UNDEFINED = 0,
+
+  /**
+   * @generated from enum value: USER_ROLE_ADMIN = 1;
+   */
+  ADMIN = 1,
+
+  /**
+   * @generated from enum value: USER_ROLE_USER = 2;
+   */
+  USER = 2,
+}
+
+/**
+ * Describes the enum woodhouse.api.v1.clients.UserRole.
+ */
+export const UserRoleSchema: GenEnum<UserRole> = /*@__PURE__*/
+  enumDesc(file_clients_user_service, 0);
+
+/**
  * @generated from service woodhouse.api.v1.clients.UserService
  */
 export const UserService: GenService<{
@@ -304,6 +516,43 @@ export const UserService: GenService<{
     methodKind: "server_streaming";
     input: typeof ImageRequestSchema;
     output: typeof ImageResponseSchema;
+  },
+  /**
+   * Get a stream of User updates. The first batch of replies will be the
+   * current state of the users, followed by updates when they occur. The
+   * stream also includes a 10 second heartbeat (an empty User) which should
+   * be ignored, but can be used to monitor the stream for disconnects.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.UsersStream
+   */
+  usersStream: {
+    methodKind: "server_streaming";
+    input: typeof UsersStreamRequestSchema;
+    output: typeof UsersStreamResponseSchema;
+  },
+  /**
+   * @generated from rpc woodhouse.api.v1.clients.UserService.AddUser
+   */
+  addUser: {
+    methodKind: "unary";
+    input: typeof AddUserRequestSchema;
+    output: typeof AddUserResponseSchema;
+  },
+  /**
+   * @generated from rpc woodhouse.api.v1.clients.UserService.UpdateUser
+   */
+  updateUser: {
+    methodKind: "unary";
+    input: typeof UpdateUserRequestSchema;
+    output: typeof UpdateUserResponseSchema;
+  },
+  /**
+   * @generated from rpc woodhouse.api.v1.clients.UserService.RemoveUser
+   */
+  removeUser: {
+    methodKind: "unary";
+    input: typeof RemoveUserRequestSchema;
+    output: typeof RemoveUserResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_clients_user_service, 0);

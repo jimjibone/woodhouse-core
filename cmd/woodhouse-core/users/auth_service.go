@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
@@ -39,10 +38,11 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest) (*TokenDetail
 	// exist... add this user as an admin and log them in.
 	if user == nil && !srv.users.HasAnAdmin() {
 		// Add the user as an admin.
-		admin, err := core.NewUser(in.Username, in.Password, auth.AdminRole)
+		admin, err := core.NewUser(in.Username, "", in.Password, auth.AdminRole)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "failed to create user: %v", err)
 		}
+		admin.ResetPassword = false // don't prompt the new admin to change their password
 
 		// Add the user to the store.
 		err = srv.users.Store(admin)
@@ -101,14 +101,8 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				writeGRPCError(w, err)
 			} else {
-				http.SetCookie(w, &http.Cookie{
-					Name:    "token",
-					Value:   tokens.RefreshToken,
-					Expires: tokens.RefreshExpires,
-					// Secure: true,
-					HttpOnly: true,
-					SameSite: http.SameSiteLaxMode,
-				})
+				srv.log.Warnf("LoginWeb: token: %+v", tokens)
+				http.SetCookie(w, newTokenCookie(tokens.RefreshToken, tokens.RefreshExpires))
 				resp := &clientsapi.UserLoginResponse{
 					AccessToken: tokens.AccessToken,
 				}
@@ -211,14 +205,7 @@ func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					writeGRPCError(w, err)
 				} else {
-					http.SetCookie(w, &http.Cookie{
-						Name:    "token",
-						Value:   tokens.RefreshToken,
-						Expires: tokens.RefreshExpires,
-						// Secure: true,
-						HttpOnly: true,
-						SameSite: http.SameSiteLaxMode,
-					})
+					http.SetCookie(w, newTokenCookie(tokens.RefreshToken, tokens.RefreshExpires))
 					resp := &clientsapi.UserLoginResponse{
 						AccessToken: tokens.AccessToken,
 					}
@@ -238,7 +225,7 @@ func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 func (srv *AuthService) logoutBase(req *clientsapi.UserLogoutRequest) error {
 	_, err := srv.jwt.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
-		return status.Errorf(codes.Unauthenticated, "refresh token is invalid")
+		return status.Errorf(codes.Unauthenticated, "%s", err)
 	}
 
 	srv.jwt.RevokeRefreshToken(req.RefreshToken)
@@ -272,13 +259,7 @@ func (srv *AuthService) LogoutWeb(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					writeGRPCError(w, err)
 				} else {
-					http.SetCookie(w, &http.Cookie{
-						Name:  "token",
-						Value: "",
-						// Secure: true,
-						HttpOnly: true,
-						SameSite: http.SameSiteLaxMode,
-					})
+					http.SetCookie(w, newTokenCookie("", time.Time{}))
 					resp := &clientsapi.UserLogoutResponse{}
 					body, err := protojson.Marshal(resp)
 					if err != nil {
@@ -299,15 +280,26 @@ func handlePost(w http.ResponseWriter, r *http.Request, handler func(token strin
 	} else if r.Header.Get("Content-Type") != "application/json" {
 		http.Error(w, "content-type must be application/json", http.StatusUnsupportedMediaType)
 	} else {
-		cookie := r.Header.Values("Cookie")
+		cookie, err := r.Cookie("token")
 		token := ""
-		for _, val := range cookie {
-			if strings.HasPrefix(val, "token=") {
-				token = strings.TrimPrefix(val, "token=")
-				break
-			}
+		if err != nil {
+			token = ""
+		} else {
+			token = cookie.Value
 		}
 		handler(token, w, r)
+	}
+}
+
+func newTokenCookie(refreshToken string, expires time.Time) *http.Cookie {
+	return &http.Cookie{
+		Name:     "token",
+		Value:    refreshToken,
+		Path:     "/",   // cookie can be used by any path under woodhouse
+		HttpOnly: true,  // i.e. not for use in javascript
+		Secure:   false, // require HTTPS
+		SameSite: http.SameSiteLaxMode,
+		Expires:  expires,
 	}
 }
 

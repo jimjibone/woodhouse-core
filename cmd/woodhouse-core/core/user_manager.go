@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jimjibone/queue/v2"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
@@ -24,22 +25,31 @@ var (
 )
 
 type UserManager struct {
-	log     *log.Context
-	wg      sync.WaitGroup
-	mu      sync.RWMutex
-	close   func()
-	store   stores.Store
-	users   map[string]*User // key=username
-	changed bool
+	log         *log.Context
+	wg          sync.WaitGroup
+	mu          sync.RWMutex
+	close       func()
+	store       stores.Store
+	users       map[string]*User // key=username
+	changed     bool
+	publisher   *queue.Pub[UserUpdate]
+	listenerAdd chan *queue.Sub[UserUpdate]
+}
+
+type UserUpdate struct {
+	Updated *User
+	Removed *string
 }
 
 func NewUserManager(store stores.Store) (*UserManager, error) {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &UserManager{
-		log:   log.NewContext(log.DefaultLogger, "user-manager", log.DebugLevel),
-		close: close,
-		store: store,
-		users: make(map[string]*User),
+		log:         log.NewContext(log.DefaultLogger, "user-manager", log.DebugLevel),
+		close:       close,
+		store:       store,
+		users:       make(map[string]*User),
+		publisher:   queue.NewPub[UserUpdate](),
+		listenerAdd: make(chan *queue.Sub[UserUpdate], 1),
 	}
 
 	// Load the previous state.
@@ -69,11 +79,17 @@ func (manager *UserManager) Close() {
 	}
 }
 
-func (store *UserManager) HasAnAdmin() bool {
-	store.mu.RLock()
-	defer store.mu.RUnlock()
+func (manager *UserManager) GetListener() *queue.Sub[UserUpdate] {
+	sub := manager.publisher.NewSub()
+	manager.listenerAdd <- sub
+	return sub
+}
+
+func (manager *UserManager) HasAnAdmin() bool {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
 	admins := 0
-	for _, user := range store.users {
+	for _, user := range manager.users {
 		if user.Role == auth.AdminRole {
 			admins++
 		}
@@ -81,25 +97,30 @@ func (store *UserManager) HasAnAdmin() bool {
 	return admins > 0
 }
 
-func (store *UserManager) Store(user *User) error {
-	store.mu.Lock()
-	defer store.mu.Unlock()
+func (manager *UserManager) Store(user *User) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
 
-	if store.users[user.Username] != nil {
+	if manager.users[user.Username] != nil {
 		return ErrAlreadyExists
 	}
 
-	store.users[user.Username] = user.Clone()
-	store.changed = true
+	manager.users[user.Username] = user.Clone()
+	manager.changed = true
+
+	manager.log.Infof("user %q added as %s", user.Username, user.Role)
+
+	// Publish the new/updated user to the listeners.
+	manager.publisher.Pub(UserUpdate{Updated: user.Clone()})
 
 	return nil
 }
 
-func (store *UserManager) Find(username string) *User {
-	store.mu.RLock()
-	defer store.mu.RUnlock()
+func (manager *UserManager) Find(username string) *User {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
 
-	user := store.users[username]
+	user := manager.users[username]
 	if user == nil {
 		return nil
 	}
@@ -107,11 +128,67 @@ func (store *UserManager) Find(username string) *User {
 	return user.Clone()
 }
 
-func (store *UserManager) Delete(username string) {
-	store.mu.Lock()
-	defer store.mu.Unlock()
-	delete(store.users, username)
-	store.changed = true
+func (manager *UserManager) Delete(username string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if _, found := manager.users[username]; found {
+		delete(manager.users, username)
+		manager.changed = true
+
+		manager.log.Infof("user %q deleted", username)
+
+		// Publish the removed user to the listeners.
+		manager.publisher.Pub(UserUpdate{Removed: &username})
+
+		return nil
+	}
+
+	return ErrUserNotFound
+}
+
+func (manager *UserManager) SetFullname(username string, fullname string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	user := manager.users[username]
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	user.Fullname = fullname
+
+	manager.users[user.Username] = user.Clone()
+	manager.changed = true
+
+	manager.log.Infof("user %q changed fullname to %q", user.Username, user.Fullname)
+
+	// Publish the new/updated user to the listeners.
+	manager.publisher.Pub(UserUpdate{Updated: user.Clone()})
+
+	return nil
+}
+
+func (manager *UserManager) SetRole(username string, role auth.Role) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	user := manager.users[username]
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	user.Role = role
+
+	manager.users[user.Username] = user.Clone()
+	manager.changed = true
+
+	manager.log.Infof("user %q changed role to %q", user.Username, user.Role)
+
+	// Publish the new/updated user to the listeners.
+	manager.publisher.Pub(UserUpdate{Updated: user.Clone()})
+
+	return nil
 }
 
 // func (store *UserManager) AddUserToken(username string, uuid string, exp time.Time) error {
@@ -298,6 +375,15 @@ func (manager *UserManager) run(ctx context.Context) {
 			if err != nil {
 				manager.log.Fatalf("failed to save state: %s", err)
 			}
+
+		case lis := <-manager.listenerAdd:
+			// Publish all users to the new listener.
+			for _, user := range manager.users {
+				manager.publisher.Send(lis, UserUpdate{Updated: user.Clone()})
+			}
+
+			// Send and empty update to indicate the end of the initial list.
+			manager.publisher.Send(lis, UserUpdate{})
 		}
 	}
 }

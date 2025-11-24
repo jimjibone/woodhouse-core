@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/shared/random"
 	"golang.org/x/crypto/argon2"
@@ -16,19 +17,22 @@ const (
 
 type User struct {
 	Username       string    `json:"user"`
+	Fullname       string    `json:"name"`
+	ResetPassword  bool      `json:"reset-password"`
 	HashedPassword []byte    `json:"hash"`
 	PasswordSalt   []byte    `json:"salt"`
 	Role           auth.Role `json:"role"`
 	// Tokens         map[string]time.Time `json:"tokens"` // key:UUID, val: expiration time
 }
 
-func NewUser(username string, password string, role auth.Role) (*User, error) {
+func NewUser(username, fullname string, password string, role auth.Role) (*User, error) {
 	if len(username) == 0 {
 		return nil, fmt.Errorf("username too short")
 	}
 
 	user := &User{
 		Username: username,
+		Fullname: fullname,
 		Role:     role,
 		// Tokens:   make(map[string]time.Time),
 	}
@@ -52,6 +56,7 @@ func (user *User) SetPassword(password string) error {
 
 	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 64)
 
+	user.ResetPassword = false
 	user.HashedPassword = hash
 	user.PasswordSalt = salt
 
@@ -66,10 +71,19 @@ func (user *User) IsCorrectPassword(password string) bool {
 func (user *User) Clone() *User {
 	return &User{
 		Username:       user.Username,
+		Fullname:       user.Fullname,
 		HashedPassword: user.HashedPassword,
 		PasswordSalt:   user.PasswordSalt,
 		Role:           user.Role,
 		// Tokens:         user.Tokens,
+	}
+}
+
+func (user *User) Pb() *clientsapi.User {
+	return &clientsapi.User{
+		Username: user.Username,
+		Fullname: user.Fullname,
+		Role:     user.Role.Pb(),
 	}
 }
 

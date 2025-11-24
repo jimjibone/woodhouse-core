@@ -1,18 +1,38 @@
-import { ActionRequestSchema, ActionResponseSchema, ActionResponse_ActionStatus, type Value, type ActionResponse } from '$lib/api/v1/clients/client_service_pb';
-import { AddFavoriteRequestSchema, RemoveFavoriteRequestSchema } from '$lib/api/v1/clients/user_service_pb';
+import {
+	ActionRequestSchema,
+	ActionResponseSchema,
+	ActionResponse_ActionStatus,
+	type Value,
+	type ActionResponse
+} from '$lib/api/v1/clients/client_service_pb';
+import {
+	AddFavoriteRequestSchema,
+	AddUserRequestSchema,
+	AddUserResponseSchema,
+	RemoveFavoriteRequestSchema,
+	UpdateUserRequestSchema,
+	UpdateUserResponseSchema,
+	UserRole,
+	type UpdateUserRequest
+} from '$lib/api/v1/clients/user_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { ConnectError, type CallOptions } from '@connectrpc/connect';
-import { create, toJsonString } from "@bufbuild/protobuf";
+import { create, toJsonString } from '@bufbuild/protobuf';
 import { getAccessToken } from '$lib/stores/auth-store';
 
-export const SendActionRequest = async (deviceID: string, serviceID: string, vals: Value[], responseHandler: (response: ActionResponse) => void) => {
+export const SendActionRequest = async (
+	deviceID: string,
+	serviceID: string,
+	vals: Value[],
+	responseHandler: (response: ActionResponse) => void
+) => {
 	const request = create(ActionRequestSchema, {
 		deviceId: deviceID,
 		serviceId: serviceID,
 		values: vals
 	});
 	const options: CallOptions = {
-		headers: { "authorization": getAccessToken() }
+		headers: { authorization: getAccessToken() }
 	};
 	console.log('sending action: ' + toJsonString(ActionRequestSchema, request));
 	try {
@@ -35,10 +55,10 @@ export const SendFavoriteRequest = async (deviceID: string, serviceID: string, f
 	if (fave) {
 		const request = create(AddFavoriteRequestSchema, {
 			deviceId: deviceID,
-			serviceId: serviceID,
+			serviceId: serviceID
 		});
 		const options: CallOptions = {
-			headers: { "authorization": getAccessToken() }
+			headers: { authorization: getAccessToken() }
 		};
 		console.log('sending add favorite request: ' + toJsonString(AddFavoriteRequestSchema, request));
 		try {
@@ -51,10 +71,10 @@ export const SendFavoriteRequest = async (deviceID: string, serviceID: string, f
 	} else {
 		const request = create(RemoveFavoriteRequestSchema, {
 			deviceId: deviceID,
-			serviceId: serviceID,
+			serviceId: serviceID
 		});
 		const options: CallOptions = {
-			headers: { "authorization": getAccessToken() }
+			headers: { authorization: getAccessToken() }
 		};
 		console.log('sending remove favorite request: ' + toJsonString(RemoveFavoriteRequestSchema, request));
 		try {
@@ -65,4 +85,72 @@ export const SendFavoriteRequest = async (deviceID: string, serviceID: string, f
 			}
 		}
 	}
+};
+
+export const AddUser = async (
+	username: string,
+	fullname: string,
+	role: UserRole,
+	initialPassword: string
+): Promise<null | ConnectError> => {
+	const request = create(AddUserRequestSchema, {
+		username: username,
+		fullname: fullname,
+		role: role,
+		initialPassword: initialPassword
+	});
+	const redacted = create(AddUserRequestSchema, {
+		username: username,
+		fullname: fullname,
+		role: role
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending add user: ' + toJsonString(AddUserRequestSchema, redacted));
+	try {
+		const response = await UserServiceClient.addUser(request, options);
+		console.log('received add user: ' + toJsonString(AddUserResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error add user: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const UpdateUserFullname = async (username: string, fullname: string): Promise<null | ConnectError> => {
+	return UpdateUser(
+		create(UpdateUserRequestSchema, {
+			username: username,
+			fullname: fullname
+		})
+	);
+};
+
+export const UpdateUserRole = async (username: string, role: UserRole): Promise<null | ConnectError> => {
+	return UpdateUser(
+		create(UpdateUserRequestSchema, {
+			username: username,
+			role: role
+		})
+	);
+};
+
+export const UpdateUser = async (request: UpdateUserRequest): Promise<null | ConnectError> => {
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending update user: ' + toJsonString(UpdateUserRequestSchema, request));
+	try {
+		const response = await UserServiceClient.updateUser(request, options);
+		console.log('received update user: ' + toJsonString(UpdateUserResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error update user: ' + err.message);
+			return err;
+		}
+	}
+	return null;
 };

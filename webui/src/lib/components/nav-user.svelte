@@ -1,20 +1,23 @@
 <script lang="ts">
-	import * as Avatar from "$lib/components/ui/avatar/index.js";
-	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-	import { useSidebar } from "$lib/components/ui/sidebar/index.js";
-	import BadgeCheckIcon from "@lucide/svelte/icons/badge-check";
-	import BellIcon from "@lucide/svelte/icons/bell";
-	import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
-	import CreditCardIcon from "@lucide/svelte/icons/credit-card";
-	import LogOutIcon from "@lucide/svelte/icons/log-out";
-	import SparklesIcon from "@lucide/svelte/icons/sparkles";
-	import { toggleMode } from "mode-watcher";
-	import { LightDarkIcon } from "$lib/components/wh/icons";
-	import { doLogout, userData } from "$lib/stores/auth-store";
+	import * as Avatar from '$lib/components/ui/avatar/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
+	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+	import BellIcon from '@lucide/svelte/icons/bell';
+	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import CreditCardIcon from '@lucide/svelte/icons/credit-card';
+	import LogOutIcon from '@lucide/svelte/icons/log-out';
+	import SparklesIcon from '@lucide/svelte/icons/sparkles';
+	import { toggleMode } from 'mode-watcher';
+	import { LightDarkIcon } from '$lib/components/wh/icons';
+	import { doLogout, userData } from '$lib/stores/auth-store';
+	import { makeAcronym } from '$lib/tools/acronym';
 
-	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
+	let { user }: { user: { username: string; fullname: string } } = $props();
 	const sidebar = useSidebar();
+
+	const initials = makeAcronym(user.fullname, user.username);
 </script>
 
 <Sidebar.Menu>
@@ -29,7 +32,7 @@
 					>
 						<Avatar.Root class="size-8 rounded-lg">
 							<Avatar.Image src={user.avatar} alt={$userData.username} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							<Avatar.Fallback class="rounded-lg">{initials}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
 							<span class="truncate font-medium">{$userData.username}</span>
@@ -41,7 +44,7 @@
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content
 				class="w-(--bits-dropdown-menu-anchor-width) min-w-56 rounded-lg"
-				side={sidebar.isMobile ? "bottom" : "right"}
+				side={sidebar.isMobile ? 'bottom' : 'right'}
 				align="end"
 				sideOffset={4}
 			>
@@ -79,7 +82,7 @@
 						Notifications
 					</DropdownMenu.Item>
 					<DropdownMenu.Item onclick={toggleMode}>
-						<LightDarkIcon/>
+						<LightDarkIcon />
 						Toggle Theme
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>

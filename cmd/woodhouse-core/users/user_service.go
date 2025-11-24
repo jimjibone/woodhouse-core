@@ -7,6 +7,7 @@ import (
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,13 +18,15 @@ type UserService struct {
 	log              *log.Context
 	deviceManager    *core.DeviceManager
 	favoritesManager *core.FavoritesManager
+	userManager      *core.UserManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, userManager *core.UserManager) *UserService {
 	service := &UserService{
 		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:    deviceManager,
 		favoritesManager: favoritesManager,
+		userManager:      userManager,
 	}
 	return service
 }
@@ -347,4 +350,175 @@ func (service *UserService) SendImageRequest(req *clientsapi.ImageRequest, serve
 			}
 		}
 	}
+}
+
+func (service *UserService) UsersStream(req *clientsapi.UsersStreamRequest, server clientsapi.UserService_UsersStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
+	service.log.Infof("users stream started")
+	defer service.log.Infof("users stream finished")
+
+	lis := service.userManager.GetListener()
+	defer lis.Close()
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			// Send an empty message as a keepalive for the client.
+			err := server.Send(&clientsapi.UsersStreamResponse{})
+			if err != nil {
+				service.log.Errorf("failed to send users stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case update := <-lis.Sub():
+			// Admins get everyone, users only get themselves.
+			sendIt := false
+			if claims.Role == auth.AdminRole {
+				sendIt = true
+			} else if update.Updated != nil && update.Updated.Username == claims.Username {
+				sendIt = true
+			}
+
+			if sendIt {
+				msg := &clientsapi.UsersStreamResponse{}
+				if update.Updated != nil {
+					msg.User = update.Updated.Pb()
+				}
+				if update.Removed != nil {
+					msg.UserRemoved = *update.Removed
+				}
+				err := server.Send(msg)
+				if err != nil {
+					service.log.Errorf("failed to send users stream update: %s", err)
+					return status.Errorf(codes.Internal, "failed to send update")
+				}
+			}
+		}
+	}
+}
+
+func (service *UserService) AddUser(ctx context.Context, req *clientsapi.AddUserRequest) (*clientsapi.AddUserResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
+	// Only admins can add users.
+	if claims.Role != auth.AdminRole && claims.Username != req.Username {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to add users")
+	}
+
+	// Check that the request is valid.
+	if req.Username == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "username not defined")
+	}
+	if req.Fullname == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "fullname not defined")
+	}
+	if req.Role != clientsapi.UserRole_USER_ROLE_ADMIN && req.Role != clientsapi.UserRole_USER_ROLE_USER {
+		return nil, status.Errorf(codes.InvalidArgument, "role not defined")
+	}
+	if req.InitialPassword == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "initial password not defined")
+	}
+
+	user, err := core.NewUser(req.Username, req.Fullname, req.InitialPassword, auth.RoleFromPb(req.Role))
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to create user: %v", err)
+	}
+
+	// Force new users to reset their password on first login.
+	user.ResetPassword = true
+
+	// Add the user to the store.
+	err = service.userManager.Store(user)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to add user: %v", err)
+	}
+
+	return &clientsapi.AddUserResponse{}, nil
+}
+
+func (service *UserService) UpdateUser(ctx context.Context, req *clientsapi.UpdateUserRequest) (*clientsapi.UpdateUserResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
+	// Only admins can change other users.
+	if claims.Role != auth.AdminRole && claims.Username != req.Username {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to modify other user")
+	}
+
+	if req.Username == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "username not defined")
+	}
+
+	if req.Fullname != nil {
+		err := service.userManager.SetFullname(req.Username, req.GetFullname())
+		if err != nil {
+			return nil, status.Errorf(codes.PermissionDenied, "%s", err)
+		}
+	}
+	if req.Role != nil {
+		// Only admins are allowed to do this.
+		if claims.Role != auth.AdminRole {
+			return nil, status.Errorf(codes.PermissionDenied, "only admins can change user roles")
+		}
+
+		// Admins are not allowed to change their own role.
+		if claims.Username == req.Username {
+			return nil, status.Errorf(codes.PermissionDenied, "not allowed to change own role")
+		}
+
+		err := service.userManager.SetRole(req.Username, auth.RoleFromPb(req.GetRole()))
+		if err != nil {
+			return nil, status.Errorf(codes.PermissionDenied, "%s", err)
+		}
+	}
+	// if req.Password != nil {
+	// 	err := service.userManager.SetPassword(req.GetPassword())
+	// 	if err != nil {
+	// 		return nil, status.Errorf(codes.PermissionDenied, "%s", err)
+	// 	}
+	// }
+	return &clientsapi.UpdateUserResponse{}, nil
+}
+
+func (service *UserService) RemoveUser(ctx context.Context, req *clientsapi.RemoveUserRequest) (*clientsapi.RemoveUserResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
+	// Only admins can remove other users.
+	if claims.Role != auth.AdminRole && claims.Username != req.Username {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to remove other user")
+	}
+
+	if req.Username == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "username not defined")
+	}
+
+	// Admins are not allowed to remove themselves.
+	if claims.Username == req.Username {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to remove self")
+	}
+
+	err := service.userManager.Delete(req.Username)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "%s", err)
+	}
+
+	return &clientsapi.RemoveUserResponse{}, nil
 }
