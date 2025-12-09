@@ -33,6 +33,7 @@ func newDevice(log *log.Context, clientID string, update *clientsapi.Device) (*D
 
 func (dev *Device) pb() *clientsapi.Device {
 	pb := &clientsapi.Device{
+		ClientId:  dev.ClientID,
 		Id:        dev.ID,
 		FullState: true,
 		Typ:       dev.Typ,
@@ -78,6 +79,7 @@ func (dev *Device) setOffline(log *log.Context) *clientsapi.Device {
 			}
 			return &clientsapi.Device{
 				Id:        dev.ID,
+				ClientId:  dev.ClientID,
 				FullState: false,
 				Typ:       dev.Typ,
 				Services: []*clientsapi.Service{
@@ -91,6 +93,7 @@ func (dev *Device) setOffline(log *log.Context) *clientsapi.Device {
 
 // Update the device state and return the changes or an error.
 func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.Device) (*clientsapi.Device, error) {
+	update.ClientId = clientID
 	if dev.ClientID != clientID {
 		dev.ClientID = clientID
 		if log != nil {

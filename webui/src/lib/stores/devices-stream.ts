@@ -1,8 +1,14 @@
 import { type Subscriber, writable } from 'svelte/store';
 import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
-import { create } from "@bufbuild/protobuf";
+import { create } from '@bufbuild/protobuf';
 import { DevicesStreamRequestSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
-import { Device_DeviceType, Service_ServiceType, type Device, type Service, type TimeAttribute } from '$lib/api/v1/clients/client_service_pb';
+import {
+	Device_DeviceType,
+	Service_ServiceType,
+	type Device,
+	type Service,
+	type TimeAttribute
+} from '$lib/api/v1/clients/client_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
 import { getAccessToken } from '$lib/stores/auth-store';
@@ -15,6 +21,7 @@ export type DevicesStoreType = {
 
 export type DevicesStoreDevice = {
 	id: string;
+	clientID: string;
 	typ: Device_DeviceType;
 	name: string | undefined;
 	online: boolean;
@@ -31,16 +38,16 @@ let streamer: Streamer<typeof UserService> | undefined = undefined;
 const { subscribe, set, update } = writable<DevicesStoreType>(
 	{ connected: false, backoff: 0, devices: [] },
 	(set: Subscriber<DevicesStoreType>) => {
-		console.log("devices stream subscriber started");
+		console.log('devices stream subscriber started');
 
 		if (streamer === undefined) {
-			streamer = new Streamer("devices", UserServiceClient, streamDevices, backoffHandler);
+			streamer = new Streamer('devices', UserServiceClient, streamDevices, backoffHandler);
 		} else {
 			streamer.restart();
 		}
 
 		return () => {
-			console.log("devices stream subscriber finished");
+			console.log('devices stream subscriber finished');
 			if (streamer !== undefined) {
 				streamer.stop();
 			}
@@ -53,8 +60,9 @@ export const DevicesStore = {
 };
 
 const createDevice = (next: Device): DevicesStoreDevice => {
-	let prev : DevicesStoreDevice = {
+	let prev: DevicesStoreDevice = {
 		id: next.id,
+		clientID: next.clientId,
 		typ: next.typ,
 		name: next.id,
 		online: false,
@@ -66,6 +74,7 @@ const createDevice = (next: Device): DevicesStoreDevice => {
 };
 
 const updateDevice = (prev: DevicesStoreDevice, next: Device): DevicesStoreDevice => {
+	prev.clientID = next.clientId;
 	prev.typ = next.typ;
 	if (next.fullState) {
 		// Remove all services as we're about to receive the complete new set.
@@ -78,7 +87,7 @@ const updateDevice = (prev: DevicesStoreDevice, next: Device): DevicesStoreDevic
 	for (let i = 0; i < next.services.length; i++) {
 		if (next.services[i].typ === Service_ServiceType.INFO) {
 			for (const attr of next.services[i].attrs) {
-				if (attr.id === "name") {
+				if (attr.id === 'name') {
 					prev.name = attr.text!.value;
 					break;
 				}
@@ -86,16 +95,16 @@ const updateDevice = (prev: DevicesStoreDevice, next: Device): DevicesStoreDevic
 		}
 		if (next.services[i].typ === Service_ServiceType.ONLINE) {
 			for (const attr of next.services[i].attrs) {
-				if (attr.id === "online") {
+				if (attr.id === 'online') {
 					prev.online = attr.bool!.value;
-				} else if (attr.id === "last_seen") {
+				} else if (attr.id === 'last_seen') {
 					prev.lastSeen = attr.time;
 				}
 			}
 		}
 		if (next.services[i].typ === Service_ServiceType.BATTERY) {
 			for (const attr of next.services[i].attrs) {
-				if (attr.id === "level") {
+				if (attr.id === 'level') {
 					prev.batteryLevel = attr.int!.value;
 					break;
 				}
@@ -136,21 +145,25 @@ const updateService = (prev: Service, next: Service): Service => {
 	return prev;
 };
 
-const streamDevices = async (client: Client<typeof UserService>, abortSignal: AbortSignal, heartbeat: HeartbeatHandler) => {
+const streamDevices = async (
+	client: Client<typeof UserService>,
+	abortSignal: AbortSignal,
+	heartbeat: HeartbeatHandler
+) => {
 	let didConnect = false;
 	const request = create(DevicesStreamRequestSchema, {});
 	try {
 		// console.log("streamDevices: starting stream");
 		const options: CallOptions = {
 			signal: abortSignal,
-			headers: { "authorization": getAccessToken() }
+			headers: { authorization: getAccessToken() }
 		};
 		for await (const response of client.devicesStream(request, options)) {
 			heartbeat();
 			didConnect = true;
 
 			// All fields will be empty if this is a keepalive message.
-			if (response.id !== "") {
+			if (response.id !== '') {
 				// console.log("streamDevices: update: " + response.toJsonString());
 				update((prev: DevicesStoreType) => {
 					let foundDeviceService = false;
