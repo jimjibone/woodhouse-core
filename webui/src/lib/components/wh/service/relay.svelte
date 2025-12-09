@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { ValueSchema, BoolValueSchema } from '$lib/api/v1/clients/client_service_pb';
 	import type { Attribute, BoolAttribute, FloatAttribute } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { PowerIcon } from '@lucide/svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { BoolContent, OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrOn: BoolAttribute | undefined = $state(undefined);
 	let attrVoltage: FloatAttribute | undefined = $state(undefined);
@@ -57,7 +53,7 @@
 </script>
 
 {#snippet icon()}
-	<PowerIcon/>
+	<PowerIcon />
 {/snippet}
 
 {#snippet details()}
@@ -79,21 +75,10 @@
 	{/if}
 {/snippet}
 
-<ServiceRoot
-	{deviceID}
-	{...rest}
-	service={service}
-	icon={icon}
-	iconclass={on ? "bg-green-400 text-black" : false}
-	details={details}
->
+<ServiceRoot {deviceID} {...rest} {service} {icon} iconclass={on ? 'bg-green-400 text-black' : false} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrOn !== undefined}
-			<BoolContent
-				name="On"
-				attr={attrOn}
-				onaction={sendActionOn}
-			/>
+			<BoolContent name="On" attr={attrOn} onaction={sendActionOn} />
 		{/if}
 		{#if attrVoltage !== undefined}
 			<div>Voltage</div>
@@ -119,6 +104,6 @@
 				{attrTemperature.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}°C
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

@@ -1,15 +1,17 @@
 <script lang="ts">
-	import type { Attribute, BoolAttribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import type {
+		Attribute,
+		BoolAttribute,
+		FloatAttribute,
+		IntAttribute,
+		Service
+	} from '$lib/api/v1/clients/client_service_pb';
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { LogInIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrOn: BoolAttribute | undefined = $state(undefined);
 	let attrOthers: Attribute[] = $state([]);
@@ -32,7 +34,7 @@
 </script>
 
 {#snippet icon()}
-	<LogInIcon/>
+	<LogInIcon />
 {/snippet}
 
 {#snippet details()}
@@ -45,14 +47,7 @@
 	{/if}
 {/snippet}
 
-<ServiceRoot
-	{deviceID}
-	{...rest}
-	service={service}
-	icon={icon}
-	iconclass={on ? "bg-green-400 text-black" : false}
-	details={details}
->
+<ServiceRoot {deviceID} {...rest} {service} {icon} iconclass={on ? 'bg-green-400 text-black' : false} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrOn !== undefined}
 			<div>On</div>
@@ -64,6 +59,6 @@
 				{/if}
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

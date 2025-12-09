@@ -1,15 +1,11 @@
 <script lang="ts">
 	import type { Attribute, DurationAttribute, EnumAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { PointerIcon } from '@lucide/svelte';
 	import { EnumContent, OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrState: EnumAttribute | undefined = $state(undefined);
 	let attrDuration: DurationAttribute | undefined = $state(undefined);
@@ -38,10 +34,8 @@
 
 {#snippet details()}
 	{#if attrState !== undefined}
-		{#if attrState.value === ""}
-			<p>
-				No state
-			</p>
+		{#if attrState.value === ''}
+			<p>No state</p>
 		{:else}
 			<p>
 				{attrState.value}
@@ -57,19 +51,10 @@
 	{/if}
 {/snippet}
 
-<ServiceRoot
-	{deviceID}
-	{...rest}
-	service={service}
-	icon={icon}
-	details={details}
->
+<ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrState !== undefined}
-			<EnumContent
-				name="State"
-				attr={attrState}
-			/>
+			<EnumContent name="State" attr={attrState} />
 		{/if}
 		{#if attrDuration !== undefined}
 			{#if attrDuration.value > 0}
@@ -79,6 +64,6 @@
 				</div>
 			{/if}
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

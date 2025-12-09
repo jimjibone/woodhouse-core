@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Slider } from "$lib/components/ui/slider";
+	import { Slider } from '$lib/components/ui/slider';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -11,17 +11,19 @@
 		onaction,
 		transform = (value) => value,
 		maximumFractionDigits = 0,
-		units
+		units,
+		class: className = ''
 	}: {
-		name: string,
-		value: number,
-		min: number,
-		max: number,
-		step?: number,
-		onaction: (value: number)=>void,
-		transform?: (value: number)=>number,
-		maximumFractionDigits?: number,
-		units: string
+		name: string;
+		value: number;
+		min: number;
+		max: number;
+		step?: number;
+		onaction: (value: number) => void;
+		transform?: (value: number) => number;
+		maximumFractionDigits?: number;
+		units: string;
+		class?: string;
 	} = $props();
 
 	let ghostMax: string = $derived.by(() => {
@@ -32,7 +34,10 @@
 	});
 
 	let formatNumber = (val: number) => {
-		return val.toLocaleString(undefined, { minimumFractionDigits:maximumFractionDigits, maximumFractionDigits: maximumFractionDigits });
+		return val.toLocaleString(undefined, {
+			minimumFractionDigits: maximumFractionDigits,
+			maximumFractionDigits: maximumFractionDigits
+		});
 	};
 
 	let changing: number | null = $state(null);
@@ -47,26 +52,26 @@
 	};
 </script>
 
-<div>{name}</div>
+<div class={className}>{name}</div>
 <Slider
-	class="shrink"
+	class={'shrink' + className}
 	type="single"
-	step={step}
-	min={min}
-	max={max}
-	value={value}
+	{step}
+	{min}
+	{max}
+	{value}
 	onValueChange={startAction}
 	onValueCommit={sendAction}
 />
-<div class={cn("inline-block", changing ? "font-semibold" : "text-muted-foreground")}>
+<div class={cn('inline-block', changing ? 'font-semibold' : 'text-muted-foreground')}>
 	<span class="invisible block h-0 overflow-hidden font-semibold">
-		{ghostMax+units}
+		{ghostMax + units}
 	</span>
 	<span>
 		{#if changing}
-			{formatNumber(transform(changing))+units}
+			{formatNumber(transform(changing)) + units}
 		{:else}
-			{formatNumber(transform(value))+units}
+			{formatNumber(transform(value)) + units}
 		{/if}
 	</span>
 </div>

@@ -1,20 +1,30 @@
 <script lang="ts">
-	import { BoolValueSchema, IntValueSchema, ValueSchema, ColorValueSchema, DurationValueSchema } from '$lib/api/v1/clients/client_service_pb';
-	import type { Attribute, BoolAttribute, ColorAttribute, ColorHueSat, DurationAttribute, IntAttribute, Service, Value } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import {
+		BoolValueSchema,
+		IntValueSchema,
+		ValueSchema,
+		ColorValueSchema,
+		DurationValueSchema
+	} from '$lib/api/v1/clients/client_service_pb';
+	import type {
+		Attribute,
+		BoolAttribute,
+		ColorAttribute,
+		ColorHueSat,
+		DurationAttribute,
+		IntAttribute,
+		Service,
+		Value
+	} from '$lib/api/v1/clients/client_service_pb';
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { LightbulbIcon, LightbulbOffIcon } from '@lucide/svelte';
 	import chroma from 'chroma-js';
-	import { mode } from "mode-watcher";
+	import { mode } from 'mode-watcher';
 	import { create } from '@bufbuild/protobuf';
 	import { BoolContent, DurationContent, IntContent, FloatContent, OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		online,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, online, service, ...rest }: StandardProps = $props();
 
 	let attrOn: BoolAttribute | undefined = $state(undefined);
 	let attrBrightness: IntAttribute | undefined = $state(undefined);
@@ -61,15 +71,15 @@
 		if (!online || !onValue) {
 			// Show color as if off offline.
 			buttonOn = false;
-			if (mode.current == "dark") {
-				color = chroma.hsl(240.06, 4.0/100.0, 16.0/100.0); // dark-muted
+			if (mode.current == 'dark') {
+				color = chroma.hsl(240.06, 4.0 / 100.0, 16.0 / 100.0); // dark-muted
 			} else {
-				color = chroma.hsl(240, 4.8/100.0, 95.9/100.0); // light-muted
+				color = chroma.hsl(240, 4.8 / 100.0, 95.9 / 100.0); // light-muted
 			}
 		} else {
 			buttonOn = true;
 			if (colorValue !== undefined && colorValue !== undefined) {
-				color = chroma.hsv(colorValue.hue, colorValue.sat / 100.0, Number(brightnessValue)/100.0);
+				color = chroma.hsv(colorValue.hue, colorValue.sat / 100.0, Number(brightnessValue) / 100.0);
 			} else if (colorTempValue !== undefined) {
 				// TODO: add brightness adjustment for color temp.
 				const kelvin = (1.0 / Number(colorTempValue.value)) * 1000000.0;
@@ -95,15 +105,17 @@
 	const sendActionWithTransition = async (val: Value) => {
 		let vals = [val];
 		if (transition !== undefined) {
-			vals.push(create(ValueSchema, {
-				id: 'transition',
-				duration: create(DurationValueSchema, {
-					value: transition
+			vals.push(
+				create(ValueSchema, {
+					id: 'transition',
+					duration: create(DurationValueSchema, {
+						value: transition
+					})
 				})
-			}));
+			);
 		}
 		serviceAction.send(vals);
-	}
+	};
 
 	const sendActionOn = async (val: boolean) => {
 		sendActionWithTransition(
@@ -145,7 +157,7 @@
 				color: create(ColorValueSchema, {
 					hueSat: {
 						hue: hue,
-						sat: sat,
+						sat: sat
 					}
 				})
 			})
@@ -197,37 +209,28 @@
 	{deviceID}
 	{online}
 	{...rest}
-	service={service}
+	{service}
 	actionPending={serviceAction.pending}
 	errorSignal={serviceAction.error}
-	icon={icon}
+	{icon}
 	iconstyle="color: {buttonForeground}; background-color: {buttonBackground};"
-	oniconclick={oniconclick}
-	details={details}
-	bind:drawerOpen={drawerOpen}
+	{oniconclick}
+	{details}
+	bind:drawerOpen
 >
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrOn !== undefined}
-			<BoolContent
-				name="On"
-				attr={attrOn}
-				onaction={sendActionOn}
-			/>
+			<BoolContent name="On" attr={attrOn} onaction={sendActionOn} />
 		{/if}
 		{#if attrBrightness !== undefined}
-			<IntContent
-				name="Brightness"
-				attr={attrBrightness}
-				onaction={sendActionBrightness}
-				units="%"
-			/>
+			<IntContent name="Brightness" attr={attrBrightness} onaction={sendActionBrightness} units="%" />
 		{/if}
 		{#if attrColorTemp !== undefined}
 			<IntContent
 				name="Color Temp"
 				attr={attrColorTemp}
 				onaction={sendActionColorTemp}
-				transform={(val) => (1000000.0 / Number(val))}
+				transform={(val) => 1000000.0 / Number(val)}
 				units="°K"
 				invert
 			/>
@@ -253,13 +256,8 @@
 			{/if}
 		{/if}
 		{#if attrTransition !== undefined}
-			<DurationContent
-				name="Transition"
-				attr={attrTransition}
-				value={transition}
-				onaction={sendActionTransition}
-			/>
+			<DurationContent name="Transition" attr={attrTransition} value={transition} onaction={sendActionTransition} />
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

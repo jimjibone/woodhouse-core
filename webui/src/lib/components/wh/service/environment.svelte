@@ -1,15 +1,11 @@
 <script lang="ts">
 	import type { Attribute, FloatAttribute } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { ThermometerIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrTemperature: FloatAttribute | undefined = $state(undefined);
 	let attrHumidity: FloatAttribute | undefined = $state(undefined);
@@ -36,7 +32,7 @@
 </script>
 
 {#snippet icon()}
-	<ThermometerIcon/>
+	<ThermometerIcon />
 {/snippet}
 
 {#snippet details()}
@@ -59,13 +55,7 @@
 	{/if}
 {/snippet}
 
-<ServiceRoot
-	{deviceID}
-	{...rest}
-	service={service}
-	icon={icon}
-	details={details}
->
+<ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrTemperature !== undefined}
 			<div>Temperature</div>
@@ -85,6 +75,6 @@
 				{attrPressure.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}hPa
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

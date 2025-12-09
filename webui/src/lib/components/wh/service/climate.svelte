@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { ValueSchema, FloatValueSchema } from '$lib/api/v1/clients/client_service_pb';
 	import type { Attribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { FlameIcon } from '@lucide/svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { FloatContent, OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrHeatingSetpoint: FloatAttribute | undefined = $state(undefined);
 	let attrLocalTemperature: FloatAttribute | undefined = $state(undefined);
@@ -49,7 +45,7 @@
 </script>
 
 {#snippet icon()}
-	<FlameIcon/>
+	<FlameIcon />
 {/snippet}
 
 {#snippet details()}
@@ -76,11 +72,11 @@
 <ServiceRoot
 	{deviceID}
 	{...rest}
-	service={service}
+	{service}
 	actionPending={serviceAction.pending}
 	errorSignal={serviceAction.error}
-	icon={icon}
-	details={details}
+	{icon}
+	{details}
 >
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrHeatingSetpoint !== undefined}
@@ -107,6 +103,6 @@
 				{attrPIHeatingDemand.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

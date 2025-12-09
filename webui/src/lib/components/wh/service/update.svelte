@@ -131,6 +131,6 @@
 				{toHumanDuration(Number(attrRemaining.value))}
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction} />
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

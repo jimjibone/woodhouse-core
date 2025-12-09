@@ -1,15 +1,11 @@
 <script lang="ts">
 	import type { Attribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { BatteryFullIcon, BatteryLowIcon, BatteryMediumIcon, BatteryWarningIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrLevel: IntAttribute | undefined = $state(undefined);
 	let attrVoltage: FloatAttribute | undefined = $state(undefined);
@@ -36,13 +32,13 @@
 
 {#snippet icon()}
 	{#if level < 20}
-		<BatteryWarningIcon/>
+		<BatteryWarningIcon />
 	{:else if level < 33}
-		<BatteryLowIcon/>
+		<BatteryLowIcon />
 	{:else if level < 66}
-		<BatteryMediumIcon/>
+		<BatteryMediumIcon />
 	{:else}
-		<BatteryFullIcon/>
+		<BatteryFullIcon />
 	{/if}
 {/snippet}
 
@@ -64,10 +60,10 @@
 <ServiceRoot
 	{deviceID}
 	{...rest}
-	service={service}
-	icon={icon}
-	iconclass={level < 20 ? "bg-red-400 text-black" : level < 33 ? "bg-yellow-400 text-black" : false}
-	details={details}
+	{service}
+	{icon}
+	iconclass={level < 20 ? 'bg-red-400 text-black' : level < 33 ? 'bg-yellow-400 text-black' : false}
+	{details}
 >
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrLevel !== undefined}
@@ -82,6 +78,6 @@
 				{attrVoltage.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}V
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

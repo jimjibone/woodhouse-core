@@ -1,15 +1,17 @@
 <script lang="ts">
-	import type { Attribute, BoolAttribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import type {
+		Attribute,
+		BoolAttribute,
+		FloatAttribute,
+		IntAttribute,
+		Service
+	} from '$lib/api/v1/clients/client_service_pb';
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { DoorOpenIcon, DoorClosedIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrClosed: BoolAttribute | undefined = $state(undefined);
 	let attrOthers: Attribute[] = $state([]);
@@ -33,9 +35,9 @@
 
 {#snippet icon()}
 	{#if closed}
-		<DoorClosedIcon/>
+		<DoorClosedIcon />
 	{:else}
-		<DoorOpenIcon/>
+		<DoorOpenIcon />
 	{/if}
 {/snippet}
 
@@ -49,13 +51,7 @@
 	{/if}
 {/snippet}
 
-<ServiceRoot
-	{deviceID}
-	{...rest}
-	service={service}
-	icon={icon}
-	details={details}
->
+<ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrClosed !== undefined}
 			<div>Closed</div>
@@ -67,6 +63,6 @@
 				{/if}
 			</div>
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>

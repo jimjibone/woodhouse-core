@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { ValueSchema, IntValueSchema, EnumValueSchema } from '$lib/api/v1/clients/client_service_pb';
 	import type { Attribute, EnumAttribute, IntAttribute } from '$lib/api/v1/clients/client_service_pb';
-	import ServiceRoot, { type StandardProps } from "./service-root.svelte";
+	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { BlindsIcon } from '@lucide/svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { IntContent, EnumContent, OthersContent } from '$lib/components/wh/attributes';
 
-	let {
-		deviceID,
-		service,
-		...rest
-	}: StandardProps = $props();
+	let { deviceID, service, ...rest }: StandardProps = $props();
 
 	let attrPosition: IntAttribute | undefined = $state(undefined);
 	let attrState: EnumAttribute | undefined = $state(undefined);
@@ -56,7 +52,7 @@
 </script>
 
 {#snippet icon()}
-	<BlindsIcon/>
+	<BlindsIcon />
 {/snippet}
 
 {#snippet details()}
@@ -68,7 +64,7 @@
 	{/if}
 	{#if attrState !== undefined}
 		<p class="whitespace-pre text-muted-foreground">
-			{#if attrState.value === ""}
+			{#if attrState.value === ''}
 				No state
 			{:else}
 				{attrState.value}
@@ -80,28 +76,19 @@
 <ServiceRoot
 	{deviceID}
 	{...rest}
-	service={service}
+	{service}
 	actionPending={serviceAction.pending}
 	errorSignal={serviceAction.error}
-	icon={icon}
-	details={details}
+	{icon}
+	{details}
 >
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrPosition !== undefined}
-			<IntContent
-				name="Position"
-				attr={attrPosition}
-				onaction={sendActionPosition}
-				units="%"
-			/>
+			<IntContent name="Position" attr={attrPosition} onaction={sendActionPosition} units="%" />
 		{/if}
 		{#if attrState !== undefined}
-			<EnumContent
-				name="State"
-				attr={attrState}
-				onaction={sendActionState}
-			/>
+			<EnumContent name="State" attr={attrState} onaction={sendActionState} />
 		{/if}
-		<OthersContent others={attrOthers} {serviceAction}/>
 	</div>
+	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>
