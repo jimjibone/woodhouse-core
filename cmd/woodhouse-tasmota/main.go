@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,30 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+type JsonNumber float64
+
+func (js *JsonNumber) UnmarshalJSON(p []byte) error {
+	// Try to unmarshal as number.
+	var num float64
+	if err := json.Unmarshal(p, &num); err == nil {
+		*js = JsonNumber(num)
+		return nil
+	}
+
+	// Try to unmarshal as string.
+	var s string
+	if err := json.Unmarshal(p, &s); err == nil {
+		n, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return err
+		}
+		*js = JsonNumber(n)
+		return nil
+	}
+
+	return fmt.Errorf("invalid float value: %s", p)
+}
+
 type StatusResponse struct {
 	Status struct {
 		Module       int
@@ -28,7 +53,8 @@ type StatusResponse struct {
 		FriendlyName []string
 		Topic        string
 		ButtonTopic  string
-		Power        int
+		Power        JsonNumber
+		PowerLock    JsonNumber
 		PowerOnState int
 		LedState     int
 		LedMask      string
@@ -82,8 +108,13 @@ func (sr *StatusResponse) String() string {
 	return fmt.Sprintf("id: %q, name: %q, mac: %s, power: %s", sr.ID(), sr.Name(), sr.StatusNET.Mac, power)
 }
 
-func GetCommand(ctx context.Context, endpoint, command string) ([]byte, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/cm?cmnd=%s", endpoint, command), nil)
+func GetCommand(ctx context.Context, endpoint, command string, debug bool) ([]byte, error) {
+	url := fmt.Sprintf("http://%s/cm?cmnd=%s", endpoint, command)
+	if debug {
+		log.Debugf("GET %s", url)
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -102,10 +133,14 @@ func GetCommand(ctx context.Context, endpoint, command string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func GetStatus(ctx context.Context, endpoint string) (*StatusResponse, error) {
-	resp, err := GetCommand(ctx, endpoint, "Status%%200")
+func GetStatus(ctx context.Context, endpoint string, debug bool) (*StatusResponse, error) {
+	resp, err := GetCommand(ctx, endpoint, `Status%200`, debug)
 	if err != nil {
 		return nil, err
+	}
+
+	if debug {
+		log.Debugf("status response: %s", resp)
 	}
 
 	status := &StatusResponse{}
@@ -130,7 +165,7 @@ func SetPower(ctx context.Context, endpoint string, on bool) (*PowerResponse, er
 	if on {
 		onString = "on"
 	}
-	body, err := GetCommand(ctx, endpoint, fmt.Sprintf("Power%%20%s", onString))
+	body, err := GetCommand(ctx, endpoint, fmt.Sprintf("Power%%20%s", onString), false)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +225,7 @@ func NewTasmotaDevice(client *wh.Client, id, ip string) *TasmotaDevice {
 }
 
 func (dev *TasmotaDevice) PollStatus(ctx context.Context) {
-	status, err := GetStatus(ctx, dev.ip)
+	status, err := GetStatus(ctx, dev.ip, false)
 	if err != nil {
 		// Assume offline.
 		if dev.online.Online.Set(false) {
@@ -271,14 +306,14 @@ func main() {
 							return fmt.Errorf("invalid IP address %q", rawIP)
 						}
 						ipString := ip.String()
-						fmt.Println(ipString)
+						log.Infof("connecting to %s", ipString)
 
 						// Check that we can connect to this IP.
-						status, err := GetStatus(context.Background(), ipString)
+						status, err := GetStatus(context.Background(), ipString, true)
 						if err != nil {
 							return err
 						}
-						fmt.Println(status)
+						log.Infof("status: %v", status)
 
 						// Add the IP to the list if it's new.
 						endpoints[status.ID()] = ipString
