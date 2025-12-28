@@ -14,7 +14,7 @@ includes:
   api:
     taskfile: ./api
     dir: ./api
-  web:
+  webui:
     taskfile: ./webui
     dir: ./webui
 
@@ -23,7 +23,7 @@ tasks:
     desc: Generate API code from protos
     cmds:
       - task api:proto-go-v1
-      - task web:proto-web-v1
+      - task webui:proto-web-v1
 
   generate-env:
     desc: Generate the default .env file
@@ -36,7 +36,7 @@ tasks:
     desc: Build woodhouse-core
     cmds:
       - task: build-api
-      # - task: webapp:build
+      - task: webui:build
       - task: build-component
         vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-core" }
 
@@ -44,7 +44,14 @@ tasks:
     desc: Deploy woodhouse-core to your confiugred system (use 'generate-env' to configure)
     cmds:
       - task: build-api
-      # - task: webapp:build
+      - task: build-and-deploy-component
+        vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-core" }
+
+  deploy-core-full:
+    desc: Deploy woodhouse-core to your confiugred system (use 'generate-env' to configure)
+    cmds:
+      - task: build-api
+      - task: webui:build
       - task: build-and-deploy-component
         vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-core" }
 
@@ -95,9 +102,15 @@ tasks:
   #   cmds:
   #     - cd {{.BUILD_DIR}} && ./woodhouse-reactor{{exeExt}} {{.CLI_ARGS}}
 
-  # build-shelly:
-  #   cmds:
-  #     - go build -o {{.BUILD_DIR}}/woodhouse-shelly{{exeExt}} ./cmd/woodhouse-shelly
+  build-shelly:
+    cmds:
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-shelly" }
+
+  deploy-shelly:
+    cmds:
+      - task: build-and-deploy-component
+        vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-shelly" }
 
   # run-shelly:
   #   deps:
@@ -105,15 +118,21 @@ tasks:
   #   cmds:
   #     - cd {{.BUILD_DIR}} && ./woodhouse-shelly{{exeExt}} {{.CLI_ARGS}}
 
-  # build-tasmota:
-  #   cmds:
-  #     - go build -o {{.BUILD_DIR}}/woodhouse-tasmota{{exeExt}} ./cmd/woodhouse-tasmota
+  run-tasmota:
+    deps:
+      - build-tasmota
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-tasmota{{exeExt}} {{.CLI_ARGS}}
 
-  # run-tasmota:
-  #   deps:
-  #     - build-tasmota
-  #   cmds:
-  #     - cd {{.BUILD_DIR}} && ./woodhouse-tasmota{{exeExt}} {{.CLI_ARGS}}
+  build-tasmota:
+    cmds:
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-tasmota" }
+
+  deploy-tasmota:
+    cmds:
+      - task: build-and-deploy-component
+        vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-tasmota" }
 
   # build-zigbee:
   #   cmds:
