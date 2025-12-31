@@ -113,7 +113,7 @@
 
 <button
 	class={cn(
-		'w-full max-w-full rounded-lg border bg-card/50 hover:bg-card/70 p-2 text-card-foreground shadow-sm text-left cursor-pointer',
+		'w-full max-w-full rounded-xl border bg-card/50 hover:bg-card/70 p-2 text-card-foreground shadow-sm text-left cursor-pointer text-base md:text-sm',
 		!online && 'bg-muted/80 hover:bg-muted/90',
 		isError && 'shake'
 	)}
@@ -128,7 +128,7 @@
 				{#if oniconclick !== undefined}
 					<span
 						class={cn(
-							'p-3 rounded-full bg-secondary text-secondary-foreground transition-[background-color,color] duration-200 ease-linear cursor-pointer',
+							'p-3 md:p-2 rounded-full bg-secondary text-secondary-foreground transition-[background-color,color] duration-200 ease-linear cursor-pointer',
 							iconclass
 						)}
 						style={iconstyle}
@@ -149,7 +149,10 @@
 						{/if}
 					</span>
 				{:else}
-					<span class={cn('p-3 rounded-full bg-secondary text-secondary-foreground', iconclass)} style={iconstyle}>
+					<span
+						class={cn('p-3 md:p-2 rounded-full bg-secondary text-secondary-foreground', iconclass)}
+						style={iconstyle}
+					>
 						{#if icon}
 							{@render icon()}
 						{:else}
