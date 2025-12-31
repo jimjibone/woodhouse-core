@@ -206,8 +206,7 @@ func NewTasmotaDevice(client *wh.Client, id, ip string) *TasmotaDevice {
 		resp, err := SetPower(context.Background(), dev.ip, val)
 		if err != nil {
 			dev.log.Errorf("failed to set power: %s", err)
-		}
-		if dev.relay.On.Set(resp.Power()) {
+		} else if dev.relay.On.Set(resp.Power()) {
 			powerString := "off"
 			if resp.Power() {
 				powerString = "on"
