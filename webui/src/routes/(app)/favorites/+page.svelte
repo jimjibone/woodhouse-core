@@ -8,15 +8,15 @@
 	import { onDestroy } from 'svelte';
 
 	let services = $state<DeviceService[]>([]);
-	let query = $state("");
-	onDestroy(store.subscribe((update) => services = update.deviceServices));
-	onDestroy(search.subscribe((update) => query = update.query));
+	let query = $state('');
+	onDestroy(store.subscribe((update) => (services = update.deviceServices)));
+	onDestroy(search.subscribe((update) => (query = update.query)));
 
 	let filtered = $derived.by(() => {
 		if (!fuse) return services;
 		if (!query.trim()) return services;
 
-		return fuse.search(query).map(r => r.item);
+		return fuse.search(query).map((r) => r.item);
 	});
 
 	let fuse: Fuse<DeviceService> | null = $state(null);
@@ -31,11 +31,11 @@
 	});
 </script>
 
-<main class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-20 md:mb-0">
+<main class="grid gap-2 md:grid-cols-2 lg:grid-cols-3 mb-20 md:mb-0">
 	{#each filtered as dev, i (dev.key)}
 		{#if dev.service !== undefined}
 			<ServiceEnumerator
-				deviceName={dev.deviceName ? dev.deviceName : ""}
+				deviceName={dev.deviceName ? dev.deviceName : ''}
 				deviceID={dev.deviceId}
 				online={dev.online ? dev.online : false}
 				lastSeen={dev.lastSeen ? valueToDate(dev.lastSeen) : undefined}

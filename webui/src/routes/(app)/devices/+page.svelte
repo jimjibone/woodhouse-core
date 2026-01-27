@@ -33,12 +33,12 @@
 	});
 </script>
 
-<main class="grid gap-4 md:grid-cols-1 lg:grid-cols-2 mb-20 md:mb-0">
+<main class="grid gap-2 md:grid-cols-1 lg:grid-cols-2 mb-20 md:mb-0">
 	{#each filtered as dev, i (dev.id)}
 		{@const deviceName = dev.name ? dev.name : dev.id}
 		<div
 			class={cn(
-				'rounded-lg border bg-card/50 p-2 text-card-foreground shadow-sm text-left overflow-clip',
+				'rounded-xl border bg-card/50 p-2 text-card-foreground shadow-sm text-left text-base md:text-sm overflow-clip',
 				!dev.online && 'bg-muted/80'
 			)}
 		>
@@ -50,9 +50,8 @@
 						{:else}
 							{dev.id}
 						{/if}
-						({dev.clientID})
 					</a>
-					<span class="flex flex-row gap-2 text-sm items-center whitespace-pre">
+					<span class="flex flex-row gap-2 text-sm md:text-xs items-center whitespace-pre">
 						{#if dev.lastSeen}
 							<TimeSince past={attributeToDate(dev.lastSeen)} />
 						{/if}
@@ -66,13 +65,13 @@
 								)}
 							>
 								{#if dev.batteryLevel < 20}
-									<BatteryWarningIcon class="size-5" />
+									<BatteryWarningIcon class="size-5 md:size-4" />
 								{:else if dev.batteryLevel < 33}
-									<BatteryLowIcon class="size-5" />
+									<BatteryLowIcon class="size-5 md:size-4" />
 								{:else if dev.batteryLevel < 66}
-									<BatteryMediumIcon class="size-5" />
+									<BatteryMediumIcon class="size-5 md:size-4" />
 								{:else}
-									<BatteryFullIcon class="size-5" />
+									<BatteryFullIcon class="size-5 md:size-4" />
 								{/if}
 								{Number(dev.batteryLevel)}%
 							</span>
