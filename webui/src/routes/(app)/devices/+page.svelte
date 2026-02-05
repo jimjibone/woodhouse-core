@@ -82,6 +82,7 @@
 					{#each dev.services as srv, i (srv.id)}
 						<ServiceEnumerator
 							showDeviceName={false}
+							naturalWidth
 							{deviceName}
 							deviceID={dev.id}
 							online={dev.online}
