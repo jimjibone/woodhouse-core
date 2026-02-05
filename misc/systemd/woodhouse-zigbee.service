@@ -1,0 +1,15 @@
+[Unit]
+Description=woodhouse-zigbee
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/user/woodhouse-4/build-linux-amd64
+ExecStart=/home/user/woodhouse-4/build-linux-amd64/woodhouse-zigbee \
+    --addr localhost:4000 \
+    --store zigbee.db \
+    --web-addr your.lan:8080 \
+    --ws-addr your.lan:8080 \
+    -v
+
+[Install]
+WantedBy=default.target

@@ -3,7 +3,10 @@ Description=woodhouse-core
 After=network-online.target
 
 [Service]
-ExecStart=/home/user/woodhouse/woodhouse-core --config /home/user/woodhouse/woodhouse.yaml
+WorkingDirectory=/home/user/woodhouse-4/build-linux-amd64
+ExecStart=/home/user/woodhouse-4/build-linux-amd64/woodhouse-core \
+    --config /home/user/woodhouse-4/build-linux-amd64/woodhouse.yaml \
+    -v
 
 [Install]
 WantedBy=default.target

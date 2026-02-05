@@ -1,9 +1,0 @@
-[Unit]
-Description=woodhouse-bridge-zigbee
-After=network-online.target
-
-[Service]
-ExecStart=/home/user/woodhouse/woodhouse-bridge-zigbee --web-addr woodhouse.lan:8080
-
-[Install]
-WantedBy=default.target
