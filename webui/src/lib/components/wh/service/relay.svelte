@@ -50,6 +50,12 @@
 			})
 		]);
 	};
+
+	const oniconclick = async () => {
+		if (attrOn !== undefined) {
+			sendActionOn(!attrOn.value);
+		}
+	};
 </script>
 
 {#snippet icon()}
@@ -75,7 +81,15 @@
 	{/if}
 {/snippet}
 
-<ServiceRoot {deviceID} {...rest} {service} {icon} iconclass={on ? 'bg-green-400 text-black' : false} {details}>
+<ServiceRoot
+	{deviceID}
+	{...rest}
+	{service}
+	{icon}
+	{oniconclick}
+	iconclass={on ? 'bg-green-400 text-black' : false}
+	{details}
+>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrOn !== undefined}
 			<BoolContent name="On" attr={attrOn} onaction={sendActionOn} />
