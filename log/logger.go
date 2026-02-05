@@ -14,6 +14,7 @@ type Logger struct {
 	minLevel    Level
 	out         *os.File
 	timeFormat  string
+	timeHidden  bool
 	exitOnFatal bool
 }
 
@@ -24,6 +25,7 @@ func NewLogger(opts ...LoggerOpt) *Logger {
 		minLevel:    DebugLevel,
 		out:         os.Stderr,
 		timeFormat:  "06/01/02 15:04:05.000",
+		timeHidden:  false,
 		exitOnFatal: true,
 	}
 	l.SetOptions(opts...)
@@ -54,6 +56,12 @@ func WithTimeFormat(format string) LoggerOpt {
 	}
 }
 
+func WithTimeHidden(hidden bool) LoggerOpt {
+	return func(l *Logger) {
+		l.timeHidden = hidden
+	}
+}
+
 func WithExitOnFatal(exitOnFatal bool) LoggerOpt {
 	return func(l *Logger) {
 		l.exitOnFatal = exitOnFatal
@@ -63,18 +71,30 @@ func WithExitOnFatal(exitOnFatal bool) LoggerOpt {
 func (l *Logger) printf(level Level, ctx string, format string, args ...any) {
 	if level >= l.minLevel {
 		if l.out != nil {
-			// 15:04:05.000 DEBU [context] message
-			joinedFormat := "%s %s "
-			joinedArgs := []any{
-				color.HiBlackString(time.Now().Format(l.timeFormat)),
-				level.String(),
+			// 06/01/02 15:04:05.000 DEBU [context] message
+			joinedFormat := ""
+			joinedArgs := []any{}
+
+			// Add timestamp.
+			if !l.timeHidden {
+				joinedFormat += "%s "
+				joinedArgs = append(joinedArgs, color.HiBlackString(time.Now().Format(l.timeFormat)))
 			}
+
+			// Add level.
+			joinedFormat += "%s "
+			joinedArgs = append(joinedArgs, level.String())
+
+			// Add context.
 			if len(ctx) > 0 {
 				joinedFormat += "%s "
 				joinedArgs = append(joinedArgs, color.BlueString(ctx))
 			}
+
+			// Add caller args.
 			joinedFormat += format
 			joinedArgs = append(joinedArgs, args...)
+
 			fmt.Fprintf(l.out, joinedFormat+"\n", joinedArgs...)
 		}
 	}
@@ -87,14 +107,23 @@ func (l *Logger) println(level Level, ctx string, args ...any) {
 	if level >= l.minLevel {
 		if l.out != nil {
 			// 15:04:05.000 DEBU [context] message
-			joined := []any{
-				color.HiBlackString(time.Now().Format(l.timeFormat)),
-				level.String(),
+			joined := []any{}
+			// Add timestamp.
+			if !l.timeHidden {
+				joined = append(joined, color.HiBlackString(time.Now().Format(l.timeFormat)))
 			}
+
+			// Add level.
+			joined = append(joined, level.String())
+
+			// Add context.
 			if len(ctx) > 0 {
 				joined = append(joined, color.BlueString(ctx))
 			}
+
+			// Add caller args.
 			joined = append(joined, args...)
+
 			fmt.Fprintln(l.out, joined...)
 		}
 	}
