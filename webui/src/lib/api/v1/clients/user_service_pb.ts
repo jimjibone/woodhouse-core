@@ -4,6 +4,8 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { ClientSchema } from "./client_pb";
+import { file_clients_client } from "./client_pb";
 import type { ActionRequestSchema, ActionResponseSchema, DeviceSchema, ImageRequestSchema, ImageResponseSchema, Service, TimeValue } from "./client_service_pb";
 import { file_clients_client_service } from "./client_service_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +14,33 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/user_service.proto.
  */
 export const file_clients_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSK6AgoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZUIOCgxfZGV2aWNlX25hbWVCCQoHX29ubGluZUIMCgpfbGFzdF9zZWVuQhAKDl9iYXR0ZXJ5X2xldmVsIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZSIUChJVc2Vyc1N0cmVhbVJlcXVlc3QiWQoTVXNlcnNTdHJlYW1SZXNwb25zZRIsCgR1c2VyGAEgASgLMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXISFAoMdXNlcl9yZW1vdmVkGAIgASgJIoABCg5BZGRVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghmdWxsbmFtZRgCIAEoCRIwCgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlEhgKEGluaXRpYWxfcGFzc3dvcmQYBCABKAkiEQoPQWRkVXNlclJlc3BvbnNlIq0BChFVcGRhdGVVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIVCghmdWxsbmFtZRgCIAEoCUgAiAEBEjUKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGVIAYgBARIVCghwYXNzd29yZBgEIAEoCUgCiAEBQgsKCV9mdWxsbmFtZUIHCgVfcm9sZUILCglfcGFzc3dvcmQiFAoSVXBkYXRlVXNlclJlc3BvbnNlIiUKEVJlbW92ZVVzZXJSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJIhQKElJlbW92ZVVzZXJSZXNwb25zZSJcCgRVc2VyEhAKCHVzZXJuYW1lGAEgASgJEhAKCGZ1bGxuYW1lGAIgASgJEjAKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGUqTAoIVXNlclJvbGUSFwoTVVNFUl9ST0xFX1VOREVGSU5FRBAAEhMKD1VTRVJfUk9MRV9BRE1JThABEhIKDlVTRVJfUk9MRV9VU0VSEAIylgkKC1VzZXJTZXJ2aWNlEl0KCkdldERldmljZXMSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0RGV2aWNlc1JlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlMAESYwoNRGV2aWNlc1N0cmVhbRIuLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJ4Cg9GYXZvcml0ZXNTdHJlYW0SMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmF2b3JpdGVzU3RyZWFtUmVxdWVzdBoxLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXNwb25zZTABEmoKC0FkZEZhdm9yaXRlEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRGYXZvcml0ZVJlc3BvbnNlEnMKDlJlbW92ZUZhdm9yaXRlEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVGYXZvcml0ZVJlc3BvbnNlEmEKClNlbmRBY3Rpb24SJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVxdWVzdBooLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXNwb25zZTABEmUKEFNlbmRJbWFnZVJlcXVlc3QSJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXF1ZXN0Gicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVzcG9uc2UwARJsCgtVc2Vyc1N0cmVhbRIsLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2Vyc1N0cmVhbVJlcXVlc3QaLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlcnNTdHJlYW1SZXNwb25zZTABEl4KB0FkZFVzZXISKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkVXNlclJlcXVlc3QaKS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkVXNlclJlc3BvbnNlEmcKClVwZGF0ZVVzZXISKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlVXNlclJlcXVlc3QaLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlVXNlclJlc3BvbnNlEmcKClJlbW92ZVVzZXISKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlVXNlclJlcXVlc3QaLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlVXNlclJlc3BvbnNlQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw", [file_clients_client_service]);
+  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldENsaWVudHNSZXF1ZXN0IhYKFENsaWVudHNTdHJlYW1SZXF1ZXN0IhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSK6AgoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZUIOCgxfZGV2aWNlX25hbWVCCQoHX29ubGluZUIMCgpfbGFzdF9zZWVuQhAKDl9iYXR0ZXJ5X2xldmVsIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZSIUChJVc2Vyc1N0cmVhbVJlcXVlc3QiWQoTVXNlcnNTdHJlYW1SZXNwb25zZRIsCgR1c2VyGAEgASgLMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXISFAoMdXNlcl9yZW1vdmVkGAIgASgJIoABCg5BZGRVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghmdWxsbmFtZRgCIAEoCRIwCgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlEhgKEGluaXRpYWxfcGFzc3dvcmQYBCABKAkiEQoPQWRkVXNlclJlc3BvbnNlIq0BChFVcGRhdGVVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIVCghmdWxsbmFtZRgCIAEoCUgAiAEBEjUKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGVIAYgBARIVCghwYXNzd29yZBgEIAEoCUgCiAEBQgsKCV9mdWxsbmFtZUIHCgVfcm9sZUILCglfcGFzc3dvcmQiFAoSVXBkYXRlVXNlclJlc3BvbnNlIiUKEVJlbW92ZVVzZXJSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJIhQKElJlbW92ZVVzZXJSZXNwb25zZSJcCgRVc2VyEhAKCHVzZXJuYW1lGAEgASgJEhAKCGZ1bGxuYW1lGAIgASgJEjAKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGUqTAoIVXNlclJvbGUSFwoTVVNFUl9ST0xFX1VOREVGSU5FRBAAEhMKD1VTRVJfUk9MRV9BRE1JThABEhIKDlVTRVJfUk9MRV9VU0VSEAIy2goKC1VzZXJTZXJ2aWNlEl0KCkdldENsaWVudHMSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0Q2xpZW50c1JlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50MAESYwoNQ2xpZW50c1N0cmVhbRIuLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5DbGllbnRzU3RyZWFtUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5DbGllbnQwARJdCgpHZXREZXZpY2VzEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdldERldmljZXNSZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZTABEmMKDURldmljZXNTdHJlYW0SLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlc1N0cmVhbVJlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlMAESeAoPRmF2b3JpdGVzU3RyZWFtEjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QaMS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2UwARJqCgtBZGRGYXZvcml0ZRIsLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRGYXZvcml0ZVJlcXVlc3QaLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkRmF2b3JpdGVSZXNwb25zZRJzCg5SZW1vdmVGYXZvcml0ZRIvLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVGYXZvcml0ZVJlcXVlc3QaMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRmF2b3JpdGVSZXNwb25zZRJhCgpTZW5kQWN0aW9uEicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlcXVlc3QaKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVzcG9uc2UwARJlChBTZW5kSW1hZ2VSZXF1ZXN0EiYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVxdWVzdBonLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlc3BvbnNlMAESbAoLVXNlcnNTdHJlYW0SLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlcnNTdHJlYW1SZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJzU3RyZWFtUmVzcG9uc2UwARJeCgdBZGRVc2VyEigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFVzZXJSZXF1ZXN0Gikud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFVzZXJSZXNwb25zZRJnCgpVcGRhdGVVc2VyEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVVzZXJSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVVzZXJSZXNwb25zZRJnCgpSZW1vdmVVc2VyEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVVzZXJSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVVzZXJSZXNwb25zZUI/Wj1naXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtNC9hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM", [file_clients_client, file_clients_client_service]);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.GetClientsRequest
+ */
+export type GetClientsRequest = Message<"woodhouse.api.v1.clients.GetClientsRequest"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.GetClientsRequest.
+ * Use `create(GetClientsRequestSchema)` to create a new message.
+ */
+export const GetClientsRequestSchema: GenMessage<GetClientsRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 0);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.ClientsStreamRequest
+ */
+export type ClientsStreamRequest = Message<"woodhouse.api.v1.clients.ClientsStreamRequest"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.ClientsStreamRequest.
+ * Use `create(ClientsStreamRequestSchema)` to create a new message.
+ */
+export const ClientsStreamRequestSchema: GenMessage<ClientsStreamRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 1);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetDevicesRequest
@@ -25,7 +53,7 @@ export type GetDevicesRequest = Message<"woodhouse.api.v1.clients.GetDevicesRequ
  * Use `create(GetDevicesRequestSchema)` to create a new message.
  */
 export const GetDevicesRequestSchema: GenMessage<GetDevicesRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 0);
+  messageDesc(file_clients_user_service, 2);
 
 /**
  * @generated from message woodhouse.api.v1.clients.DevicesStreamRequest
@@ -44,7 +72,7 @@ export type DevicesStreamRequest = Message<"woodhouse.api.v1.clients.DevicesStre
  * Use `create(DevicesStreamRequestSchema)` to create a new message.
  */
 export const DevicesStreamRequestSchema: GenMessage<DevicesStreamRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 1);
+  messageDesc(file_clients_user_service, 3);
 
 /**
  * @generated from message woodhouse.api.v1.clients.DeviceService
@@ -115,7 +143,7 @@ export type DeviceService = Message<"woodhouse.api.v1.clients.DeviceService"> & 
  * Use `create(DeviceServiceSchema)` to create a new message.
  */
 export const DeviceServiceSchema: GenMessage<DeviceService> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 2);
+  messageDesc(file_clients_user_service, 4);
 
 /**
  * @generated from message woodhouse.api.v1.clients.FavoritesStreamRequest
@@ -128,7 +156,7 @@ export type FavoritesStreamRequest = Message<"woodhouse.api.v1.clients.Favorites
  * Use `create(FavoritesStreamRequestSchema)` to create a new message.
  */
 export const FavoritesStreamRequestSchema: GenMessage<FavoritesStreamRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 3);
+  messageDesc(file_clients_user_service, 5);
 
 /**
  * @generated from message woodhouse.api.v1.clients.FavoritesStreamResponse
@@ -154,7 +182,7 @@ export type FavoritesStreamResponse = Message<"woodhouse.api.v1.clients.Favorite
  * Use `create(FavoritesStreamResponseSchema)` to create a new message.
  */
 export const FavoritesStreamResponseSchema: GenMessage<FavoritesStreamResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 4);
+  messageDesc(file_clients_user_service, 6);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddFavoriteRequest
@@ -176,7 +204,7 @@ export type AddFavoriteRequest = Message<"woodhouse.api.v1.clients.AddFavoriteRe
  * Use `create(AddFavoriteRequestSchema)` to create a new message.
  */
 export const AddFavoriteRequestSchema: GenMessage<AddFavoriteRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 5);
+  messageDesc(file_clients_user_service, 7);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddFavoriteResponse
@@ -189,7 +217,7 @@ export type AddFavoriteResponse = Message<"woodhouse.api.v1.clients.AddFavoriteR
  * Use `create(AddFavoriteResponseSchema)` to create a new message.
  */
 export const AddFavoriteResponseSchema: GenMessage<AddFavoriteResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 6);
+  messageDesc(file_clients_user_service, 8);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveFavoriteRequest
@@ -211,7 +239,7 @@ export type RemoveFavoriteRequest = Message<"woodhouse.api.v1.clients.RemoveFavo
  * Use `create(RemoveFavoriteRequestSchema)` to create a new message.
  */
 export const RemoveFavoriteRequestSchema: GenMessage<RemoveFavoriteRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 7);
+  messageDesc(file_clients_user_service, 9);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveFavoriteResponse
@@ -224,7 +252,7 @@ export type RemoveFavoriteResponse = Message<"woodhouse.api.v1.clients.RemoveFav
  * Use `create(RemoveFavoriteResponseSchema)` to create a new message.
  */
 export const RemoveFavoriteResponseSchema: GenMessage<RemoveFavoriteResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 8);
+  messageDesc(file_clients_user_service, 10);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UsersStreamRequest
@@ -237,7 +265,7 @@ export type UsersStreamRequest = Message<"woodhouse.api.v1.clients.UsersStreamRe
  * Use `create(UsersStreamRequestSchema)` to create a new message.
  */
 export const UsersStreamRequestSchema: GenMessage<UsersStreamRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 9);
+  messageDesc(file_clients_user_service, 11);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UsersStreamResponse
@@ -263,7 +291,7 @@ export type UsersStreamResponse = Message<"woodhouse.api.v1.clients.UsersStreamR
  * Use `create(UsersStreamResponseSchema)` to create a new message.
  */
 export const UsersStreamResponseSchema: GenMessage<UsersStreamResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 10);
+  messageDesc(file_clients_user_service, 12);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddUserRequest
@@ -295,7 +323,7 @@ export type AddUserRequest = Message<"woodhouse.api.v1.clients.AddUserRequest"> 
  * Use `create(AddUserRequestSchema)` to create a new message.
  */
 export const AddUserRequestSchema: GenMessage<AddUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 11);
+  messageDesc(file_clients_user_service, 13);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddUserResponse
@@ -308,7 +336,7 @@ export type AddUserResponse = Message<"woodhouse.api.v1.clients.AddUserResponse"
  * Use `create(AddUserResponseSchema)` to create a new message.
  */
 export const AddUserResponseSchema: GenMessage<AddUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 12);
+  messageDesc(file_clients_user_service, 14);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateUserRequest
@@ -340,7 +368,7 @@ export type UpdateUserRequest = Message<"woodhouse.api.v1.clients.UpdateUserRequ
  * Use `create(UpdateUserRequestSchema)` to create a new message.
  */
 export const UpdateUserRequestSchema: GenMessage<UpdateUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 13);
+  messageDesc(file_clients_user_service, 15);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateUserResponse
@@ -353,7 +381,7 @@ export type UpdateUserResponse = Message<"woodhouse.api.v1.clients.UpdateUserRes
  * Use `create(UpdateUserResponseSchema)` to create a new message.
  */
 export const UpdateUserResponseSchema: GenMessage<UpdateUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 14);
+  messageDesc(file_clients_user_service, 16);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveUserRequest
@@ -370,7 +398,7 @@ export type RemoveUserRequest = Message<"woodhouse.api.v1.clients.RemoveUserRequ
  * Use `create(RemoveUserRequestSchema)` to create a new message.
  */
 export const RemoveUserRequestSchema: GenMessage<RemoveUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 15);
+  messageDesc(file_clients_user_service, 17);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveUserResponse
@@ -383,7 +411,7 @@ export type RemoveUserResponse = Message<"woodhouse.api.v1.clients.RemoveUserRes
  * Use `create(RemoveUserResponseSchema)` to create a new message.
  */
 export const RemoveUserResponseSchema: GenMessage<RemoveUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 16);
+  messageDesc(file_clients_user_service, 18);
 
 /**
  * @generated from message woodhouse.api.v1.clients.User
@@ -410,7 +438,7 @@ export type User = Message<"woodhouse.api.v1.clients.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 17);
+  messageDesc(file_clients_user_service, 19);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.UserRole
@@ -442,6 +470,31 @@ export const UserRoleSchema: GenEnum<UserRole> = /*@__PURE__*/
  * @generated from service woodhouse.api.v1.clients.UserService
  */
 export const UserService: GenService<{
+  /**
+   * Get the current Client states. This returns a stream of Clients which
+   * will close once all Clients are sent. Use ClientsStream method to get a
+   * stream of current Client states and updates.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.GetClients
+   */
+  getClients: {
+    methodKind: "server_streaming";
+    input: typeof GetClientsRequestSchema;
+    output: typeof ClientSchema;
+  },
+  /**
+   * Get a stream of Client updates. The first batch of replies will be the
+   * current state of the clients, followed by updates when they occur. The
+   * stream also includes a 10 second heartbeat (an empty Client) which should
+   * be ignored, but can be used to monitor the stream for disconnects.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.ClientsStream
+   */
+  clientsStream: {
+    methodKind: "server_streaming";
+    input: typeof ClientsStreamRequestSchema;
+    output: typeof ClientSchema;
+  },
   /**
    * Get the current device states. This returns a stream of devices which
    * will close once all devices are sent. Use DevicesStream method to get a
