@@ -6,6 +6,7 @@ import (
 
 	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -16,16 +17,18 @@ import (
 )
 
 type AuthInterceptor struct {
-	log     *log.Context
-	clients *clients.JWTManager
-	users   *users.JWTManager
+	log           *log.Context
+	clients       *clients.JWTManager
+	users         *users.JWTManager
+	clientManager *core.ClientManager
 }
 
-func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager) *AuthInterceptor {
+func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager, clientManager *core.ClientManager) *AuthInterceptor {
 	interceptor := &AuthInterceptor{
-		log:     log.NewContext(log.DefaultLogger, "auth-interceptor", log.DebugLevel),
-		clients: clients,
-		users:   users,
+		log:           log.NewContext(log.DefaultLogger, "auth-interceptor", log.DebugLevel),
+		clients:       clients,
+		users:         users,
+		clientManager: clientManager,
 	}
 
 	return interceptor
@@ -132,6 +135,12 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 	claims, err := interceptor.clients.VerifyAccessToken(accessToken)
 	if err != nil {
 		return "", nil, status.Errorf(codes.Unauthenticated, "client access token is invalid: %v", err)
+	}
+
+	if interceptor.clientManager != nil {
+		if client := interceptor.clientManager.FindClient(claims.ClientID); client != nil && client.Blocked {
+			return claims.ClientID, nil, status.Errorf(codes.PermissionDenied, "client revoked")
+		}
 	}
 
 	return claims.ClientID, context.WithValue(ctx, "claims", claims), nil

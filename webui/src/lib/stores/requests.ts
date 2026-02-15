@@ -9,7 +9,17 @@ import {
 	AddFavoriteRequestSchema,
 	AddUserRequestSchema,
 	AddUserResponseSchema,
+	ApprovePairingRequestSchema,
+	ApprovePairingResponseSchema,
+	DenyPairingRequestSchema,
+	DenyPairingResponseSchema,
 	RemoveFavoriteRequestSchema,
+	BlockClientRequestSchema,
+	BlockClientResponseSchema,
+	UnblockClientRequestSchema,
+	UnblockClientResponseSchema,
+	UnpairClientRequestSchema,
+	UnpairClientResponseSchema,
 	UpdateUserRequestSchema,
 	UpdateUserResponseSchema,
 	UserRole,
@@ -149,6 +159,106 @@ export const UpdateUser = async (request: UpdateUserRequest): Promise<null | Con
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error update user: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const ApprovePairing = async (clientID: string): Promise<null | ConnectError> => {
+	const request = create(ApprovePairingRequestSchema, {
+		clientId: clientID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending approve pairing: ' + toJsonString(ApprovePairingRequestSchema, request));
+	try {
+		const response = await UserServiceClient.approvePairing(request, options);
+		console.log('received approve pairing: ' + toJsonString(ApprovePairingResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error approve pairing: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const DenyPairing = async (clientID: string): Promise<null | ConnectError> => {
+	const request = create(DenyPairingRequestSchema, {
+		clientId: clientID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending deny pairing: ' + toJsonString(DenyPairingRequestSchema, request));
+	try {
+		const response = await UserServiceClient.denyPairing(request, options);
+		console.log('received deny pairing: ' + toJsonString(DenyPairingResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error deny pairing: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const UnpairClient = async (clientID: string): Promise<null | ConnectError> => {
+	const request = create(UnpairClientRequestSchema, {
+		clientId: clientID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending unpair client: ' + toJsonString(UnpairClientRequestSchema, request));
+	try {
+		const response = await UserServiceClient.unpairClient(request, options);
+		console.log('received unpair client: ' + toJsonString(UnpairClientResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error unpair client: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const BlockClient = async (clientID: string): Promise<null | ConnectError> => {
+	const request = create(BlockClientRequestSchema, {
+		clientId: clientID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending block client: ' + toJsonString(BlockClientRequestSchema, request));
+	try {
+		const response = await UserServiceClient.blockClient(request, options);
+		console.log('received block client: ' + toJsonString(BlockClientResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error block client: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const UnblockClient = async (clientID: string): Promise<null | ConnectError> => {
+	const request = create(UnblockClientRequestSchema, {
+		clientId: clientID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending block client: ' + toJsonString(UnblockClientRequestSchema, request));
+	try {
+		const response = await UserServiceClient.unblockClient(request, options);
+		console.log('received block client: ' + toJsonString(UnblockClientResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error unblock client: ' + err.message);
 			return err;
 		}
 	}

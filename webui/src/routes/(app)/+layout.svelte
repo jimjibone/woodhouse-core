@@ -23,6 +23,11 @@
 			icon: LampIcon
 		},
 		{
+			name: 'Clients',
+			url: '/clients',
+			icon: UsersIcon
+		},
+		{
 			name: 'Users',
 			url: '/users',
 			icon: UsersIcon

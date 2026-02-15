@@ -6,6 +6,7 @@ import (
 	"time"
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/crypt"
@@ -17,16 +18,18 @@ import (
 
 type AuthService struct {
 	clientsapi.UnimplementedAuthServiceServer
-	log *log.Context
-	cm  *cert.CertManager
-	jwt *JWTManager
+	log           *log.Context
+	cm            *cert.CertManager
+	jwt           *JWTManager
+	clientManager *core.ClientManager
 }
 
-func NewAuthService(cm *cert.CertManager, ba *JWTManager) *AuthService {
+func NewAuthService(cm *cert.CertManager, ba *JWTManager, clientManager *core.ClientManager) *AuthService {
 	return &AuthService{
-		log: log.NewContext(log.DefaultLogger, "clients-auth", log.DebugLevel),
-		cm:  cm,
-		jwt: ba,
+		log:           log.NewContext(log.DefaultLogger, "clients-auth", log.DebugLevel),
+		cm:            cm,
+		jwt:           ba,
+		clientManager: clientManager,
 	}
 }
 
@@ -44,15 +47,55 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	clientID := req.ClientId
 	as.log.Infof("pairing client %q started", clientID)
 
+	if as.clientManager != nil {
+		if client := as.clientManager.FindClient(clientID); client != nil && client.Blocked {
+			as.log.Infof("pairing client %q denied (revoked)", clientID)
+			return status.Errorf(codes.PermissionDenied, "client revoked")
+		}
+
+		code := ""
+		if len(req.Data) > 0 {
+			code = string(req.Data)
+		}
+		err := as.clientManager.AddPairingRequest(&core.PairingRequest{
+			ClientID: clientID,
+			Code:     code,
+		})
+		if err != nil {
+			as.log.Warnf("pairing client %q failed to add pairing request: %s", clientID, err)
+			return status.Errorf(codes.Internal, "failed to add pairing request")
+		}
+		defer func() {
+			_ = as.clientManager.RemovePairingRequest(clientID)
+		}()
+	}
+
 	// 2. Send the pairing state to the client until the user has accepted the
 	// pairing request.
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	start := time.Now()
 	pending := true
 	for pending {
 		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
 		case <-ticker.C:
+			if as.clientManager == nil {
+				pending = false
+				continue
+			}
+
+			client := as.clientManager.FindClient(clientID)
+			if client != nil && client.Paired {
+				pending = false
+				continue
+			}
+			if as.clientManager.FindPairingRequest(clientID) == nil {
+				as.log.Infof("pairing client %q denied", clientID)
+				return status.Errorf(codes.PermissionDenied, "pairing denied")
+			}
+
 			as.log.Debugf("pairing client %q pending...", clientID)
 			err = server.Send(&clientsapi.PairResponse{
 				State: clientsapi.PairResponse_Pending,
@@ -68,10 +111,6 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 					as.log.Warnf("pairing client %q error when sending pending: %s", clientID, err)
 					return status.Errorf(code, "failed to send pending")
 				}
-			}
-
-			if time.Since(start) >= 1*time.Second {
-				pending = false
 			}
 		}
 	}
@@ -189,6 +228,10 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	if err != nil {
 		as.log.Warnf("pairing client %q error when sending token: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send token")
+	}
+
+	if as.clientManager != nil {
+		_ = as.clientManager.SetClientPaired(clientID, true)
 	}
 
 	as.log.Infof("pairing client %q finished", clientID)

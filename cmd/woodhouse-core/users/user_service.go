@@ -6,6 +6,7 @@ import (
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-4/apitools"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -19,16 +20,291 @@ type UserService struct {
 	deviceManager    *core.DeviceManager
 	favoritesManager *core.FavoritesManager
 	userManager      *core.UserManager
+	clientManager    *core.ClientManager
+	clientJwt        *clients.JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, userManager *core.UserManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, userManager *core.UserManager, clientManager *core.ClientManager, clientJwt *clients.JWTManager) *UserService {
 	service := &UserService{
 		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:    deviceManager,
 		favoritesManager: favoritesManager,
 		userManager:      userManager,
+		clientManager:    clientManager,
+		clientJwt:        clientJwt,
 	}
 	return service
+}
+
+func (service *UserService) GetClients(req *clientsapi.GetClientsRequest, server clientsapi.UserService_GetClientsServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return status.Errorf(codes.PermissionDenied, "not allowed to view clients")
+	}
+	if service.clientManager == nil {
+		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	clients := service.clientManager.GetClients()
+	for _, client := range clients {
+		err := server.Send(client.Pb())
+		if err != nil {
+			service.log.Errorf("failed to send clients: %s", err)
+			return status.Errorf(codes.Internal, "failed to send clients")
+		}
+	}
+	return nil
+}
+
+func (service *UserService) ClientsStream(req *clientsapi.ClientsStreamRequest, server clientsapi.UserService_ClientsStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return status.Errorf(codes.PermissionDenied, "not allowed to view clients")
+	}
+	if service.clientManager == nil {
+		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	service.log.Infof("clients stream started")
+	defer service.log.Infof("clients stream finished")
+
+	sub := service.clientManager.GetClientListener()
+	defer sub.Close()
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			err := server.Send(&clientsapi.Client{})
+			if err != nil {
+				service.log.Errorf("failed to send clients stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case update := <-sub.Sub():
+			if update.Updated != nil {
+				err := server.Send(update.Updated.Pb())
+				if err != nil {
+					service.log.Errorf("failed to send clients stream update: %s", err)
+					return status.Errorf(codes.Internal, "failed to send update")
+				}
+			}
+			if update.Removed != nil {
+				err := server.Send(&clientsapi.Client{Id: *update.Removed})
+				if err != nil {
+					service.log.Errorf("failed to send clients stream removal: %s", err)
+					return status.Errorf(codes.Internal, "failed to send removal")
+				}
+			}
+		}
+	}
+}
+
+func (service *UserService) PairingRequestsStream(req *clientsapi.PairingRequestsStreamRequest, server clientsapi.UserService_PairingRequestsStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return status.Errorf(codes.PermissionDenied, "not allowed to view pairing requests")
+	}
+	if service.clientManager == nil {
+		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	service.log.Infof("pairing requests stream started")
+	defer service.log.Infof("pairing requests stream finished")
+
+	sub := service.clientManager.GetPairingListener()
+	defer sub.Close()
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			err := server.Send(&clientsapi.PairingRequestsStreamResponse{})
+			if err != nil {
+				service.log.Errorf("failed to send pairing requests stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case update := <-sub.Sub():
+			msg := &clientsapi.PairingRequestsStreamResponse{}
+			if update.Updated != nil {
+				msg.PairingRequest = update.Updated.Pb()
+			}
+			if update.Removed != nil {
+				msg.PairingRemoved = *update.Removed
+			}
+			err := server.Send(msg)
+			if err != nil {
+				service.log.Errorf("failed to send pairing requests stream update: %s", err)
+				return status.Errorf(codes.Internal, "failed to send update")
+			}
+		}
+	}
+}
+
+func (service *UserService) ApprovePairing(ctx context.Context, req *clientsapi.ApprovePairingRequest) (*clientsapi.ApprovePairingResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to approve pairing")
+	}
+	if req.GetClientId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	}
+	if service.clientManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	if err := service.clientManager.SetClientPaired(req.GetClientId(), true); err != nil {
+		if err == core.ErrClientNotFound {
+			return nil, status.Errorf(codes.NotFound, "client not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to approve pairing")
+	}
+
+	return &clientsapi.ApprovePairingResponse{}, nil
+}
+
+func (service *UserService) DenyPairing(ctx context.Context, req *clientsapi.DenyPairingRequest) (*clientsapi.DenyPairingResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to deny pairing")
+	}
+	if req.GetClientId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	}
+	if service.clientManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	if err := service.clientManager.RemovePairingRequest(req.GetClientId()); err != nil {
+		if err == core.ErrPairingNotFound {
+			return nil, status.Errorf(codes.NotFound, "pairing request not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to deny pairing")
+	}
+
+	return &clientsapi.DenyPairingResponse{}, nil
+}
+
+func (service *UserService) UnpairClient(ctx context.Context, req *clientsapi.UnpairClientRequest) (*clientsapi.UnpairClientResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to unpair client")
+	}
+	if req.GetClientId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	}
+	if service.clientManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	if err := service.clientManager.SetClientPaired(req.GetClientId(), false); err != nil {
+		if err == core.ErrClientNotFound {
+			return nil, status.Errorf(codes.NotFound, "client not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to unpair client")
+	}
+
+	if service.clientJwt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client jwt manager not configured")
+	}
+	service.clientJwt.RevokeClient(req.GetClientId())
+
+	return &clientsapi.UnpairClientResponse{}, nil
+}
+
+func (service *UserService) BlockClient(ctx context.Context, req *clientsapi.BlockClientRequest) (*clientsapi.BlockClientResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to block client")
+	}
+	if req.GetClientId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	}
+	if service.clientManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+	if service.clientJwt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client jwt manager not configured")
+	}
+
+	if err := service.clientManager.SetClientBlocked(req.GetClientId(), true); err != nil {
+		if err == core.ErrClientNotFound {
+			return nil, status.Errorf(codes.NotFound, "client not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to block client")
+	}
+
+	if err := service.clientManager.RemovePairingRequest(req.GetClientId()); err != nil && err != core.ErrPairingNotFound {
+		return nil, status.Errorf(codes.Internal, "failed to clear pairing request")
+	}
+
+	if err := service.clientManager.SetClientPaired(req.GetClientId(), false); err != nil && err != core.ErrClientNotFound {
+		return nil, status.Errorf(codes.Internal, "failed to clear paired state")
+	}
+
+	service.clientJwt.RevokeClient(req.GetClientId())
+
+	return &clientsapi.BlockClientResponse{}, nil
+}
+
+func (service *UserService) UnblockClient(ctx context.Context, req *clientsapi.UnblockClientRequest) (*clientsapi.UnblockClientResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to unblock client")
+	}
+	if req.GetClientId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	}
+	if service.clientManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+	if service.clientJwt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client jwt manager not configured")
+	}
+
+	if err := service.clientManager.SetClientBlocked(req.GetClientId(), false); err != nil {
+		if err == core.ErrClientNotFound {
+			return nil, status.Errorf(codes.NotFound, "client not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to unblock client")
+	}
+
+	return &clientsapi.UnblockClientResponse{}, nil
 }
 
 func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server clientsapi.UserService_GetDevicesServer) error {

@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/client.proto.
  */
 export const file_clients_client: GenFile = /*@__PURE__*/
-  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIjIKBkNsaWVudBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEg4KBm9ubGluZRgDIAEoCEI/Wj1naXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtNC9hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
+  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIo8BCgZDbGllbnQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIOCgZwYWlyZWQYBCABKAgSDwoHYmxvY2tlZBgFIAEoCBIOCgZvbmxpbmUYBiABKAgSEgoKZmlyc3Rfc2VlbhgHIAEoBBIRCglsYXN0X3NlZW4YCCABKAQiXAoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
 
 /**
  * @generated from message woodhouse.api.v1.clients.Client
@@ -27,9 +27,38 @@ export type Client = Message<"woodhouse.api.v1.clients.Client"> & {
   name: string;
 
   /**
-   * @generated from field: bool online = 3;
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * @generated from field: bool paired = 4;
+   */
+  paired: boolean;
+
+  /**
+   * @generated from field: bool blocked = 5;
+   */
+  blocked: boolean;
+
+  /**
+   * @generated from field: bool online = 6;
    */
   online: boolean;
+
+  /**
+   * Seconds since Unix epoch 1970-01-01T00:00:00Z.
+   *
+   * @generated from field: uint64 first_seen = 7;
+   */
+  firstSeen: bigint;
+
+  /**
+   * Seconds since Unix epoch 1970-01-01T00:00:00Z.
+   *
+   * @generated from field: uint64 last_seen = 8;
+   */
+  lastSeen: bigint;
 };
 
 /**
@@ -38,4 +67,38 @@ export type Client = Message<"woodhouse.api.v1.clients.Client"> & {
  */
 export const ClientSchema: GenMessage<Client> = /*@__PURE__*/
   messageDesc(file_clients_client, 0);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.PairingRequest
+ */
+export type PairingRequest = Message<"woodhouse.api.v1.clients.PairingRequest"> & {
+  /**
+   * @generated from field: string client_id = 1;
+   */
+  clientId: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * Seconds since Unix epoch 1970-01-01T00:00:00Z.
+   *
+   * @generated from field: uint64 requested_at = 4;
+   */
+  requestedAt: bigint;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.PairingRequest.
+ * Use `create(PairingRequestSchema)` to create a new message.
+ */
+export const PairingRequestSchema: GenMessage<PairingRequest> = /*@__PURE__*/
+  messageDesc(file_clients_client, 1);
 

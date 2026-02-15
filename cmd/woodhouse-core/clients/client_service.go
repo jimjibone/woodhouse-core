@@ -16,12 +16,14 @@ type ClientService struct {
 	clientsapi.UnimplementedClientServiceServer
 	log           *log.Context
 	deviceManager *core.DeviceManager
+	clientManager *core.ClientManager
 }
 
-func NewClientService(deviceManager *core.DeviceManager) *ClientService {
+func NewClientService(deviceManager *core.DeviceManager, clientManager *core.ClientManager) *ClientService {
 	service := &ClientService{
 		log:           log.NewContext(log.DefaultLogger, "client-service", log.DebugLevel),
 		deviceManager: deviceManager,
+		clientManager: clientManager,
 	}
 	return service
 }
@@ -35,6 +37,10 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 	service.log.Debugf("%q status stream started", claims.ClientID)
 	defer service.log.Debugf("%q status stream finished", claims.ClientID)
 
+	if service.clientManager != nil {
+		service.clientManager.SetClientOnline(claims.ClientID, true, time.Now(), "")
+		defer service.clientManager.SetClientOnline(claims.ClientID, false, time.Now(), "")
+	}
 	defer service.deviceManager.SetClientOffline(claims.ClientID)
 
 	for {
@@ -45,6 +51,20 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 				service.log.Errorf("%q status stream error: %s", claims.ClientID, err)
 			}
 			return status.Errorf(codes.InvalidArgument, "recv failed")
+		}
+
+		if update.ClientInfo != nil && service.clientManager != nil {
+			client := service.clientManager.FindClient(claims.ClientID)
+			if client == nil {
+				client = &core.Client{ID: claims.ClientID}
+			}
+			if update.ClientInfo.GetName() != "" {
+				client.Name = update.ClientInfo.GetName()
+			}
+			if update.ClientInfo.GetDescription() != "" {
+				client.Description = update.ClientInfo.GetDescription()
+			}
+			service.clientManager.UpdateClient(client)
 		}
 
 		// Validate updates.

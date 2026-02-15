@@ -309,6 +309,17 @@ func (manager *JWTManager) RevokeToken(refreshUUID string) {
 	manager.mu.Unlock()
 }
 
+func (manager *JWTManager) RevokeClient(clientID string) {
+	manager.mu.Lock()
+	manager.changed = true
+	for refreshUUID, allocation := range manager.tokenAllocations {
+		if allocation.ClientID == clientID {
+			delete(manager.tokenAllocations, refreshUUID)
+		}
+	}
+	manager.mu.Unlock()
+}
+
 func (manager *JWTManager) VerifyRefreshToken(refreshToken string) (*RefreshTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		refreshToken,
