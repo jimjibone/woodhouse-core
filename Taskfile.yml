@@ -35,6 +35,12 @@ tasks:
   build-core:
     desc: Build woodhouse-core
     cmds:
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-core" }
+
+  build-core-full:
+    desc: Build woodhouse-core
+    cmds:
       - task: build-api
       - task: webui:build
       - task: build-component
@@ -82,15 +88,16 @@ tasks:
   #   cmds:
   #     - cd {{.BUILD_DIR}} && ./whctl{{exeExt}} {{.CLI_ARGS}}
 
-  # build-client:
-  #   cmds:
-  #     - go build -o {{.BUILD_DIR}}/woodhouse-client{{exeExt}} ./cmd/woodhouse-client
+  build-client:
+    cmds:
+      - go build -o {{.BUILD_DIR}}/woodhouse-client{{exeExt}} ./cmd/woodhouse-client
 
-  # run-client:
-  #   deps:
-  #     - build-client
-  #   cmds:
-  #     - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} {{.CLI_ARGS}}
+  run-client:
+    desc: Run woodhouse-client
+    deps:
+      - build-client
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-client{{exeExt}} --store client.db --addr localhost:4000 {{.CLI_ARGS}}
 
   # build-reactor:
   #   cmds:
