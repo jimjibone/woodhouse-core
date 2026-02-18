@@ -172,13 +172,16 @@ func (service *UserService) ApprovePairing(ctx context.Context, req *clientsapi.
 	if req.GetClientId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
 	}
+	if req.GetPairingCode() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "pairing_code not defined")
+	}
 	if service.clientManager == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
 	}
 
-	if err := service.clientManager.SetClientPaired(req.GetClientId(), true); err != nil {
-		if err == core.ErrClientNotFound {
-			return nil, status.Errorf(codes.NotFound, "client not found")
+	if err := service.clientManager.ApprovePairingRequest(req.GetClientId(), req.GetPairingCode()); err != nil {
+		if err == core.ErrPairingNotFound {
+			return nil, status.Errorf(codes.NotFound, "pairing request not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to approve pairing")
 	}

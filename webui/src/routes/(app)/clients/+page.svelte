@@ -26,9 +26,22 @@
 	};
 
 	const handleApprove = async (req: PairingRequest) => {
+		const label = req.name || req.clientId;
+		const enteredCode = prompt(`Approve pairing for ${label}\n\nEnter the pairing code shown on the client:`);
+
+		if (enteredCode === null) {
+			return;
+		}
+
+		const pairingCode = enteredCode.trim();
+		if (!pairingCode) {
+			alert('Pairing code is required to approve this request.');
+			return;
+		}
+
 		setPending(req.clientId, true);
 		try {
-			await ApprovePairing(req.clientId);
+			await ApprovePairing(req.clientId, pairingCode);
 		} finally {
 			setPending(req.clientId, false);
 		}
@@ -150,6 +163,8 @@
 								</span>
 								{#if client.paired}
 									<span class="text-emerald-600">Paired</span>
+								{:else}
+									<span class="text-muted-foreground">Unpaired</span>
 								{/if}
 								{#if client.blocked}
 									<span class="text-red-600">Blocked</span>

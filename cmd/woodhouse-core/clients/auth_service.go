@@ -54,9 +54,6 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 		}
 
 		code := ""
-		if len(req.Data) > 0 {
-			code = string(req.Data)
-		}
 		err := as.clientManager.AddPairingRequest(&core.PairingRequest{
 			ClientID: clientID,
 			Code:     code,
@@ -75,6 +72,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	pending := true
+	pairingCode := ""
 	for pending {
 		select {
 		case <-server.Context().Done():
@@ -86,14 +84,15 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 				continue
 			}
 
-			client := as.clientManager.FindClient(clientID)
-			if client != nil && client.Paired {
-				pending = false
-				continue
-			}
-			if as.clientManager.FindPairingRequest(clientID) == nil {
+			pairingReq := as.clientManager.FindPairingRequest(clientID)
+			if pairingReq == nil {
 				as.log.Infof("pairing client %q denied", clientID)
 				return status.Errorf(codes.PermissionDenied, "pairing denied")
+			}
+			if pairingReq.Code != "" {
+				pairingCode = pairingReq.Code
+				pending = false
+				continue
 			}
 
 			as.log.Debugf("pairing client %q pending...", clientID)
@@ -115,9 +114,14 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 		}
 	}
 
+	if as.clientManager != nil && pairingCode == "" {
+		as.log.Warnf("pairing client %q not approved with a pairing code", clientID)
+		return status.Errorf(codes.FailedPrecondition, "pairing not approved")
+	}
+
 	// Start the PAKE handshake using the key provided by the user.
 	as.log.Debugf("pairing client %q initialising pake", clientID)
-	pakep, err := pake.InitCurve([]byte("redacted"), 0, "p521")
+	pakep, err := pake.InitCurve([]byte(pairingCode), 0, "p521")
 	if err != nil {
 		as.log.Warnf("pairing client %q failed to init pake: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to init pake: %s", err)

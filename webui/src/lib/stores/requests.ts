@@ -165,9 +165,10 @@ export const UpdateUser = async (request: UpdateUserRequest): Promise<null | Con
 	return null;
 };
 
-export const ApprovePairing = async (clientID: string): Promise<null | ConnectError> => {
+export const ApprovePairing = async (clientID: string, pairingCode: string): Promise<null | ConnectError> => {
 	const request = create(ApprovePairingRequestSchema, {
-		clientId: clientID
+		clientId: clientID,
+		pairingCode: pairingCode.trim()
 	});
 	const options: CallOptions = {
 		headers: { authorization: getAccessToken() }

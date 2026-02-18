@@ -315,6 +315,28 @@ func (manager *ClientManager) FindPairingRequest(clientID string) *PairingReques
 	return req.Clone()
 }
 
+func (manager *ClientManager) ApprovePairingRequest(clientID string, code string) error {
+	if clientID == "" {
+		return fmt.Errorf("client id not set")
+	}
+	if code == "" {
+		return fmt.Errorf("pairing code not set")
+	}
+
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	req, found := manager.pairingRequests[clientID]
+	if !found {
+		return ErrPairingNotFound
+	}
+
+	req.Code = code
+	manager.pairingPublisher.Pub(PairingUpdate{Updated: req.Clone()})
+
+	return nil
+}
+
 func (manager *ClientManager) load() error {
 	if !manager.store.Has("clients") {
 		return nil
