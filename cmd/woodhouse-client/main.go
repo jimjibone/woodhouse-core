@@ -46,7 +46,7 @@ func main() {
 			store := stores.NewFSStore(args.String("store"))
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"))
+			client := wh.NewClient(store, args.String("addr"), wh.WithClientInfo("woodhouse-client", "Test Client", "Client for testing Woodhouse functionality", "0.1.0"))
 
 			fake123 := NewFakeLightbulb("fake123")
 			if err := client.AddDevice(fake123.dev); err != nil {

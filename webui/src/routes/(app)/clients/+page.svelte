@@ -153,9 +153,6 @@
 								{:else}
 									<span class="text-muted-foreground">Unpaired</span>
 								{/if}
-								{#if client.blocked}
-									<span class="text-red-600">Blocked</span>
-								{/if}
 							</div>
 						</div>
 
@@ -163,7 +160,7 @@
 							<Button
 								class="cursor-pointer"
 								variant="outline"
-								disabled={!client.paired || client.blocked || pendingClientAction[client.id]}
+								disabled={!client.paired || pendingClientAction[client.id]}
 								onclick={() => handleUnpair(client)}
 							>
 								Unpair

@@ -351,7 +351,11 @@ func main() {
 			}
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"), wh.WithClientID(args.String("id")))
+			client := wh.NewClient(
+				store,
+				args.String("addr"),
+				wh.WithClientInfo(args.String("id"), "Tasmota Bridge", "Bridge for Tasmota devices", "0.1.0"),
+			)
 
 			// Set up devices.
 			var devices []*TasmotaDevice

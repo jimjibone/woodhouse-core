@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/client.proto.
  */
 export const file_clients_client: GenFile = /*@__PURE__*/
-  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIn4KBkNsaWVudBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg4KBnBhaXJlZBgEIAEoCBIOCgZvbmxpbmUYBSABKAgSEgoKZmlyc3Rfc2VlbhgGIAEoBBIRCglsYXN0X3NlZW4YByABKAQiXAoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
+  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIo8BCgZDbGllbnQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIPCgd2ZXJzaW9uGAQgASgJEg4KBnBhaXJlZBgFIAEoCBIOCgZvbmxpbmUYBiABKAgSEgoKZmlyc3Rfc2VlbhgHIAEoBBIRCglsYXN0X3NlZW4YCCABKAQiXAoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
 
 /**
  * @generated from message woodhouse.api.v1.clients.Client
@@ -32,26 +32,31 @@ export type Client = Message<"woodhouse.api.v1.clients.Client"> & {
   description: string;
 
   /**
-   * @generated from field: bool paired = 4;
+   * @generated from field: string version = 4;
+   */
+  version: string;
+
+  /**
+   * @generated from field: bool paired = 5;
    */
   paired: boolean;
 
   /**
-   * @generated from field: bool online = 5;
+   * @generated from field: bool online = 6;
    */
   online: boolean;
 
   /**
    * Seconds since Unix epoch 1970-01-01T00:00:00Z.
    *
-   * @generated from field: uint64 first_seen = 6;
+   * @generated from field: uint64 first_seen = 7;
    */
   firstSeen: bigint;
 
   /**
    * Seconds since Unix epoch 1970-01-01T00:00:00Z.
    *
-   * @generated from field: uint64 last_seen = 7;
+   * @generated from field: uint64 last_seen = 8;
    */
   lastSeen: bigint;
 };
