@@ -16,12 +16,25 @@ type ClientService struct {
 	clientsapi.UnimplementedClientServiceServer
 	log           *log.Context
 	deviceManager *core.DeviceManager
+	clientManager *core.ClientManager
+	jwtManager    *JWTManager
 }
 
-func NewClientService(deviceManager *core.DeviceManager) *ClientService {
+func NewClientService(deviceManager *core.DeviceManager, clientManager *core.ClientManager, jwtManager *JWTManager) *ClientService {
+	if deviceManager == nil {
+		panic("device manager required")
+	}
+	if clientManager == nil {
+		panic("client manager required")
+	}
+	if jwtManager == nil {
+		panic("jwt manager required")
+	}
 	service := &ClientService{
 		log:           log.NewContext(log.DefaultLogger, "client-service", log.DebugLevel),
 		deviceManager: deviceManager,
+		clientManager: clientManager,
+		jwtManager:    jwtManager,
 	}
 	return service
 }
@@ -35,46 +48,109 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 	service.log.Debugf("%q status stream started", claims.ClientID)
 	defer service.log.Debugf("%q status stream finished", claims.ClientID)
 
+	if service.clientManager != nil {
+		service.clientManager.SetClientOnline(claims.ClientID, true, time.Now())
+		defer service.clientManager.SetClientOnline(claims.ClientID, false, time.Now())
+	}
 	defer service.deviceManager.SetClientOffline(claims.ClientID)
 
-	for {
-		update, err := server.Recv()
-		if err != nil {
-			code := status.Code(err)
-			if code != codes.Canceled {
-				service.log.Errorf("%q status stream error: %s", claims.ClientID, err)
+	// Subscribe to token revocations so the stream is closed if the client's
+	// tokens are revoked.
+	revocations := service.jwtManager.SubscribeRevocations()
+	defer revocations.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	type recvResult struct {
+		update *clientsapi.StatusUpdate
+		err    error
+	}
+	recvCh := make(chan recvResult, 1)
+
+	go func() {
+		defer cancel()
+		for {
+			update, err := server.Recv()
+			select {
+			case recvCh <- recvResult{update, err}:
+				if err != nil {
+					return
+				}
+			case <-ctx.Done():
+				return
 			}
-			return status.Errorf(codes.InvalidArgument, "recv failed")
 		}
+	}()
 
-		// Validate updates.
-		for _, dev := range update.DeviceInfo {
-			// The device ID must be set.
-			if dev.Id == "" {
-				return status.Errorf(codes.InvalidArgument, "device has empty id")
+	for {
+		select {
+		case result := <-recvCh:
+			if result.err != nil {
+				code := status.Code(result.err)
+				if code != codes.Canceled {
+					service.log.Errorf("%q status stream error: %s", claims.ClientID, result.err)
+				}
+				return status.Errorf(codes.InvalidArgument, "recv failed")
 			}
 
-			// A full device state must contain the Info and Online services.
-			if dev.FullState {
-				foundInfo := false
-				foundOnline := false
-				for _, srv := range dev.Services {
-					switch srv.Typ {
-					case clientsapi.Service_INFO:
-						foundInfo = true
-					case clientsapi.Service_ONLINE:
-						foundOnline = true
+			update := result.update
+
+			if update.ClientInfo != nil && service.clientManager != nil {
+				client := service.clientManager.FindClient(claims.ClientID)
+				if client == nil {
+					client = &core.Client{ID: claims.ClientID}
+				}
+				if update.ClientInfo.GetName() != "" {
+					client.Name = update.ClientInfo.GetName()
+				}
+				if update.ClientInfo.GetDescription() != "" {
+					client.Description = update.ClientInfo.GetDescription()
+				}
+				service.clientManager.UpdateClient(client)
+			}
+
+			// Mark the client as online on any update.
+			service.clientManager.SetClientOnline(claims.ClientID, true, time.Now())
+
+			// Validate updates.
+			for _, dev := range update.DeviceInfo {
+				// The device ID must be set.
+				if dev.Id == "" {
+					return status.Errorf(codes.InvalidArgument, "device has empty id")
+				}
+
+				// A full device state must contain the Info and Online services.
+				if dev.FullState {
+					foundInfo := false
+					foundOnline := false
+					for _, srv := range dev.Services {
+						switch srv.Typ {
+						case clientsapi.Service_INFO:
+							foundInfo = true
+						case clientsapi.Service_ONLINE:
+							foundOnline = true
+						}
+					}
+					if !foundInfo || !foundOnline {
+						service.log.Errorf("client %q device %q does not have info or online services", claims.ClientID, dev.Id)
+						return status.Errorf(codes.InvalidArgument, "device %q does not have info or online services", dev.Id)
 					}
 				}
-				if !foundInfo || !foundOnline {
-					service.log.Errorf("client %q device %q does not have info or online services", claims.ClientID, dev.Id)
-					return status.Errorf(codes.InvalidArgument, "device %q does not have info or online services", dev.Id)
-				}
 			}
-		}
 
-		for _, dev := range update.DeviceInfo {
-			service.deviceManager.PushDeviceUpdate(claims.ClientID, dev)
+			for _, dev := range update.DeviceInfo {
+				service.deviceManager.PushDeviceUpdate(claims.ClientID, dev)
+			}
+
+		case revokedID := <-revocations.Sub():
+			if revokedID == claims.ClientID {
+				service.log.Debugf("%q status stream closed due to token revocation", claims.ClientID)
+				return status.Errorf(codes.Unauthenticated, "token revoked")
+			}
+
+		case <-ctx.Done():
+			return nil
 		}
 	}
 }
@@ -92,6 +168,11 @@ func (service *ClientService) ActionStream(server clientsapi.ClientService_Actio
 
 	requests := service.deviceManager.GetActionRequests()
 	defer requests.Close()
+
+	// Subscribe to token revocations so the stream is closed if the client's
+	// tokens are revoked.
+	revocations := service.jwtManager.SubscribeRevocations()
+	defer revocations.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -134,6 +215,12 @@ func (service *ClientService) ActionStream(server clientsapi.ClientService_Actio
 				}
 			}
 
+		case revokedID := <-revocations.Sub():
+			if revokedID == claims.ClientID {
+				service.log.Debugf("%q action stream closed due to token revocation", claims.ClientID)
+				return status.Errorf(codes.Unauthenticated, "token revoked")
+			}
+
 		case <-ctx.Done():
 			service.log.Debugf("%q action stream send done", claims.ClientID)
 			return nil
@@ -154,6 +241,11 @@ func (service *ClientService) ImageStream(server clientsapi.ClientService_ImageS
 
 	requests := service.deviceManager.GetImageRequests()
 	defer requests.Close()
+
+	// Subscribe to token revocations so the stream is closed if the client's
+	// tokens are revoked.
+	revocations := service.jwtManager.SubscribeRevocations()
+	defer revocations.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -194,6 +286,12 @@ func (service *ClientService) ImageStream(server clientsapi.ClientService_ImageS
 					service.log.Warnf("%q images stream send err: %s", claims.ClientID, err)
 					return status.Errorf(codes.InvalidArgument, "send failed")
 				}
+			}
+
+		case revokedID := <-revocations.Sub():
+			if revokedID == claims.ClientID {
+				service.log.Debugf("%q images stream closed due to token revocation", claims.ClientID)
+				return status.Errorf(codes.Unauthenticated, "token revoked")
 			}
 
 		case <-ctx.Done():

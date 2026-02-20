@@ -58,7 +58,12 @@ func main() {
 			store := stores.NewFSStore(args.String("store"))
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"), wh.WithClientID(args.String("id")), wh.WithImages())
+			client := wh.NewClient(
+				store,
+				args.String("addr"),
+				wh.WithClientInfo(args.String("id"), "Frigate Bridge", "Bridge for integrating Frigate with Woodhouse", "0.1.0"),
+				wh.WithImages(),
+			)
 
 			// Start the Frigate goroutine.
 			wg := &sync.WaitGroup{}

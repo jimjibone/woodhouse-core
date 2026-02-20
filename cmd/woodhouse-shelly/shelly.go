@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -21,17 +20,39 @@ func shellyStuff(wg *sync.WaitGroup, ctx context.Context, client *wh.Client) err
 	defer log.Infof("shelly finished")
 
 	// Use mDNS to discover Shelly devices.
-	resolver, err := zeroconf.NewResolver(nil)
-	if err != nil {
-		return fmt.Errorf("failed to start: %w", err)
-	}
-
 	entries := make(chan *zeroconf.ServiceEntry)
+	go func() {
+		for {
+			ctx2, cancel := context.WithTimeout(ctx, time.Minute)
 
-	err = resolver.Browse(ctx, "_http._tcp", ".local", entries)
-	if err != nil {
-		return fmt.Errorf("failed to browse: %w", err)
-	}
+			resolver, err := zeroconf.NewResolver(nil)
+			if err != nil {
+				log.Errorf("failed to start discovering devices: %s", err)
+			} else {
+				// Browse for devices for a minute. The Browse method doesn't resend
+				// query packets so we restart the browse so that it does resend them.
+				ch := make(chan *zeroconf.ServiceEntry, 5)
+				err := resolver.Browse(ctx2, "_http._tcp", ".local", ch)
+				if err != nil {
+					log.Errorf("failed to discover devices: %s", err)
+				} else {
+					// Wait for all entries to arrive and send them to the main loop.
+					for entry := range ch {
+						entries <- entry
+					}
+				}
+			}
+
+			cancel()
+
+			// Check if the main context has been closed.
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+		}
+	}()
 
 	devices_v1 := make(map[string]shelly_v1.Device)
 	devices_v2 := make(map[string]shelly_v2.Device)

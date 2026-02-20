@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jimjibone/queue/v2"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/random"
 	"github.com/jimjibone/woodhouse-4/shared/stores"
@@ -31,7 +32,8 @@ type JWTManager struct {
 	changed          bool
 	refreshSecret    string
 	accessSecret     string
-	tokenAllocations map[string]TokenAllocation // kwy: refresh token
+	tokenAllocations map[string]TokenAllocation // key: refresh token
+	revocations      *queue.Pub[string]
 }
 
 func NewJWTManager(store stores.Store) (*JWTManager, error) {
@@ -41,6 +43,7 @@ func NewJWTManager(store stores.Store) (*JWTManager, error) {
 		store:            store,
 		close:            close,
 		tokenAllocations: make(map[string]TokenAllocation),
+		revocations:      queue.NewPub[string](),
 	}
 
 	// Load the previous config.
@@ -307,6 +310,27 @@ func (manager *JWTManager) RevokeToken(refreshUUID string) {
 	manager.changed = true
 	delete(manager.tokenAllocations, refreshUUID)
 	manager.mu.Unlock()
+}
+
+func (manager *JWTManager) RevokeClient(clientID string) {
+	manager.mu.Lock()
+	manager.changed = true
+	for refreshUUID, allocation := range manager.tokenAllocations {
+		if allocation.ClientID == clientID {
+			delete(manager.tokenAllocations, refreshUUID)
+		}
+	}
+	manager.mu.Unlock()
+
+	// Notify any active streams that this client's tokens have been revoked.
+	manager.revocations.Pub(clientID)
+}
+
+// SubscribeRevocations returns a subscription that receives client IDs whenever
+// their tokens are revoked via RevokeClient. Call Close on the returned Sub
+// when done.
+func (manager *JWTManager) SubscribeRevocations() *queue.Sub[string] {
+	return manager.revocations.NewSub()
 }
 
 func (manager *JWTManager) VerifyRefreshToken(refreshToken string) (*RefreshTokenClaims, error) {

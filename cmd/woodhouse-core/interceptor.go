@@ -6,6 +6,7 @@ import (
 
 	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-4/log"
@@ -16,16 +17,18 @@ import (
 )
 
 type AuthInterceptor struct {
-	log     *log.Context
-	clients *clients.JWTManager
-	users   *users.JWTManager
+	log           *log.Context
+	clients       *clients.JWTManager
+	users         *users.JWTManager
+	clientManager *core.ClientManager
 }
 
-func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager) *AuthInterceptor {
+func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager, clientManager *core.ClientManager) *AuthInterceptor {
 	interceptor := &AuthInterceptor{
-		log:     log.NewContext(log.DefaultLogger, "auth-interceptor", log.DebugLevel),
-		clients: clients,
-		users:   users,
+		log:           log.NewContext(log.DefaultLogger, "auth-interceptor", log.DebugLevel),
+		clients:       clients,
+		users:         users,
+		clientManager: clientManager,
 	}
 
 	return interceptor

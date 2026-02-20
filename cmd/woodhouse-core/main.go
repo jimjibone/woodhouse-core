@@ -125,7 +125,14 @@ func main() {
 				return fmt.Errorf("failed to create client jwt manager: %s", err)
 			}
 			defer clientJwtManager.Close()
-			clientAuthService := clients.NewAuthService(certManager, clientJwtManager)
+
+			clientManager, err := core.NewClientManager(store)
+			if err != nil {
+				return fmt.Errorf("failed to create client manager: %s", err)
+			}
+			defer clientManager.Close()
+
+			clientAuthService := clients.NewAuthService(certManager, clientJwtManager, clientManager)
 
 			deviceManager, err := core.NewDeviceManager(store)
 			if err != nil {
@@ -153,8 +160,8 @@ func main() {
 			userAuthService := users.NewAuthService(userManager, userJwtManager)
 
 			// Create services.
-			clientService := clients.NewClientService(deviceManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, userManager)
+			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, userManager, clientManager, clientJwtManager)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())
@@ -165,7 +172,7 @@ func main() {
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
-			authInterceptor := NewAuthInterceptor(clientJwtManager, userJwtManager)
+			authInterceptor := NewAuthInterceptor(clientJwtManager, userJwtManager, clientManager)
 			server := grpc.NewServer(
 				grpc.Creds(creds),
 				grpc.UnaryInterceptor(authInterceptor.Unary()),

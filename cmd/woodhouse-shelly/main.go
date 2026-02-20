@@ -51,7 +51,11 @@ func main() {
 			store := stores.NewFSStore(args.String("store"))
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"), wh.WithClientID(args.String("id")))
+			client := wh.NewClient(
+				store,
+				args.String("addr"),
+				wh.WithClientInfo(args.String("id"), "Shelly Bridge", "Bridge for Shelly devices", "0.1.0"),
+			)
 
 			// Start the Shelly goroutine.
 			wg := &sync.WaitGroup{}

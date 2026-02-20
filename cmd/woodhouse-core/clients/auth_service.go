@@ -6,6 +6,7 @@ import (
 	"time"
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/log"
 	"github.com/jimjibone/woodhouse-4/shared/cert"
 	"github.com/jimjibone/woodhouse-4/shared/crypt"
@@ -17,16 +18,18 @@ import (
 
 type AuthService struct {
 	clientsapi.UnimplementedAuthServiceServer
-	log *log.Context
-	cm  *cert.CertManager
-	jwt *JWTManager
+	log           *log.Context
+	cm            *cert.CertManager
+	jwt           *JWTManager
+	clientManager *core.ClientManager
 }
 
-func NewAuthService(cm *cert.CertManager, ba *JWTManager) *AuthService {
+func NewAuthService(cm *cert.CertManager, ba *JWTManager, clientManager *core.ClientManager) *AuthService {
 	return &AuthService{
-		log: log.NewContext(log.DefaultLogger, "clients-auth", log.DebugLevel),
-		cm:  cm,
-		jwt: ba,
+		log:           log.NewContext(log.DefaultLogger, "clients-auth", log.DebugLevel),
+		cm:            cm,
+		jwt:           ba,
+		clientManager: clientManager,
 	}
 }
 
@@ -44,16 +47,50 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	clientID := req.ClientId
 	as.log.Infof("pairing client %q started", clientID)
 
+	pairingRequest := &core.PairingRequest{
+		ClientID: clientID,
+	}
+
+	if as.clientManager != nil {
+		err := as.clientManager.AddPairingRequest(pairingRequest)
+		if err != nil {
+			as.log.Warnf("pairing client %q failed to add pairing request: %s", clientID, err)
+			return status.Errorf(codes.Internal, "failed to add pairing request")
+		}
+		defer func() {
+			_ = as.clientManager.RemovePairingRequest(clientID)
+		}()
+	}
+
 	// 2. Send the pairing state to the client until the user has accepted the
 	// pairing request.
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	start := time.Now()
 	pending := true
+	pairingCode := ""
 	for pending {
 		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
 		case <-ticker.C:
-			as.log.Debugf("pairing client %q pending...", clientID)
+			if as.clientManager == nil {
+				pending = false
+				continue
+			}
+
+			pairingReq := as.clientManager.FindPairingRequest(clientID)
+			if pairingReq == nil {
+				as.log.Infof("pairing client %q denied", clientID)
+				return status.Errorf(codes.PermissionDenied, "pairing denied")
+			}
+			if pairingReq.Code != "" {
+				pairingCode = pairingReq.Code
+				pending = false
+				continue
+			}
+
+			// as.log.Debugf("pairing client %q pending...", clientID)
 			err = server.Send(&clientsapi.PairResponse{
 				State: clientsapi.PairResponse_Pending,
 			})
@@ -69,16 +106,17 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 					return status.Errorf(code, "failed to send pending")
 				}
 			}
-
-			if time.Since(start) >= 1*time.Second {
-				pending = false
-			}
 		}
+	}
+
+	if as.clientManager != nil && pairingCode == "" {
+		as.log.Warnf("pairing client %q not approved with a pairing code", clientID)
+		return status.Errorf(codes.FailedPrecondition, "pairing not approved")
 	}
 
 	// Start the PAKE handshake using the key provided by the user.
 	as.log.Debugf("pairing client %q initialising pake", clientID)
-	pakep, err := pake.InitCurve([]byte("redacted"), 0, "p521")
+	pakep, err := pake.InitCurve([]byte(pairingCode), 0, "p521")
 	if err != nil {
 		as.log.Warnf("pairing client %q failed to init pake: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to init pake: %s", err)
@@ -189,6 +227,10 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	if err != nil {
 		as.log.Warnf("pairing client %q error when sending token: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send token")
+	}
+
+	if as.clientManager != nil {
+		as.clientManager.FinalisePairingRequest(pairingRequest)
 	}
 
 	as.log.Infof("pairing client %q finished", clientID)
