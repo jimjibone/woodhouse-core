@@ -20,6 +20,8 @@ import {
 	UnblockClientResponseSchema,
 	UnpairClientRequestSchema,
 	UnpairClientResponseSchema,
+	ForgetClientRequestSchema,
+	ForgetClientResponseSchema,
 	UpdateUserRequestSchema,
 	UpdateUserResponseSchema,
 	UserRole,
@@ -257,6 +259,26 @@ export const UnblockClient = async (clientID: string): Promise<null | ConnectErr
 	try {
 		const response = await UserServiceClient.unblockClient(request, options);
 		console.log('received block client: ' + toJsonString(UnblockClientResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error unblock client: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const ForgetClient = async (clientID: string): Promise<null | ConnectError> => {
+	const request = create(ForgetClientRequestSchema, {
+		clientId: clientID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending forget client: ' + toJsonString(ForgetClientRequestSchema, request));
+	try {
+		const response = await UserServiceClient.forgetClient(request, options);
+		console.log('received block client: ' + toJsonString(ForgetClientResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error unblock client: ' + err.message);

@@ -337,6 +337,22 @@ func (manager *ClientManager) ApprovePairingRequest(clientID string, code string
 	return nil
 }
 
+func (manager *ClientManager) ForgetClient(id string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	client := manager.clients[id]
+	if client == nil {
+		return ErrClientNotFound
+	}
+
+	delete(manager.clients, id)
+	manager.changed = true
+
+	manager.clientPublisher.Pub(ClientUpdate{Removed: &id})
+	return nil
+}
+
 func (manager *ClientManager) load() error {
 	if !manager.store.Has("clients") {
 		return nil

@@ -4,7 +4,14 @@
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 	import { ClientsStore } from '$lib/stores/clients-stream';
 	import { PairingRequestsStore } from '$lib/stores/pairing-requests-stream';
-	import { ApprovePairing, DenyPairing, UnpairClient, BlockClient, UnblockClient } from '$lib/stores/requests';
+	import {
+		ApprovePairing,
+		DenyPairing,
+		UnpairClient,
+		BlockClient,
+		UnblockClient,
+		ForgetClient
+	} from '$lib/stores/requests';
 	import type { Client, PairingRequest } from '$lib/api/v1/clients/client_pb';
 
 	let clients = $state<Client[]>([]);
@@ -86,6 +93,19 @@
 		setClientPending(client.id, true);
 		try {
 			await UnblockClient(client.id);
+		} finally {
+			setClientPending(client.id, false);
+		}
+	};
+
+	const handleForget = async (client: Client) => {
+		const label = client.name || client.id;
+		if (!confirm(`Forget ${label}? This will not remove associated devices.`)) {
+			return;
+		}
+		setClientPending(client.id, true);
+		try {
+			await ForgetClient(client.id);
 		} finally {
 			setClientPending(client.id, false);
 		}
@@ -200,6 +220,14 @@
 									Block
 								</Button>
 							{/if}
+							<Button
+								class="cursor-pointer"
+								variant="destructive"
+								disabled={pendingClientAction[client.id]}
+								onclick={() => handleForget(client)}
+							>
+								Forget
+							</Button>
 						</div>
 
 						{#if client.description}

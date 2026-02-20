@@ -310,6 +310,36 @@ func (service *UserService) UnblockClient(ctx context.Context, req *clientsapi.U
 	return &clientsapi.UnblockClientResponse{}, nil
 }
 
+func (service *UserService) ForgetClient(ctx context.Context, req *clientsapi.ForgetClientRequest) (*clientsapi.ForgetClientResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to forget client")
+	}
+	if req.GetClientId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	}
+	if service.clientManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+	if service.clientJwt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "client jwt manager not configured")
+	}
+
+	if err := service.clientManager.ForgetClient(req.GetClientId()); err != nil {
+		if err == core.ErrClientNotFound {
+			return nil, status.Errorf(codes.NotFound, "client not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to forget client")
+	}
+
+	service.clientJwt.RevokeClient(req.GetClientId())
+
+	return &clientsapi.ForgetClientResponse{}, nil
+}
+
 func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server clientsapi.UserService_GetDevicesServer) error {
 	devices := service.deviceManager.GetDevices()
 	for dev := range devices {
