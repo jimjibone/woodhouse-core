@@ -14,10 +14,6 @@ import {
 	DenyPairingRequestSchema,
 	DenyPairingResponseSchema,
 	RemoveFavoriteRequestSchema,
-	BlockClientRequestSchema,
-	BlockClientResponseSchema,
-	UnblockClientRequestSchema,
-	UnblockClientResponseSchema,
 	UnpairClientRequestSchema,
 	UnpairClientResponseSchema,
 	ForgetClientRequestSchema,
@@ -222,46 +218,6 @@ export const UnpairClient = async (clientID: string): Promise<null | ConnectErro
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error unpair client: ' + err.message);
-			return err;
-		}
-	}
-	return null;
-};
-
-export const BlockClient = async (clientID: string): Promise<null | ConnectError> => {
-	const request = create(BlockClientRequestSchema, {
-		clientId: clientID
-	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
-	console.log('sending block client: ' + toJsonString(BlockClientRequestSchema, request));
-	try {
-		const response = await UserServiceClient.blockClient(request, options);
-		console.log('received block client: ' + toJsonString(BlockClientResponseSchema, response));
-	} catch (err) {
-		if (err instanceof ConnectError) {
-			console.error('error block client: ' + err.message);
-			return err;
-		}
-	}
-	return null;
-};
-
-export const UnblockClient = async (clientID: string): Promise<null | ConnectError> => {
-	const request = create(UnblockClientRequestSchema, {
-		clientId: clientID
-	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
-	console.log('sending block client: ' + toJsonString(UnblockClientRequestSchema, request));
-	try {
-		const response = await UserServiceClient.unblockClient(request, options);
-		console.log('received block client: ' + toJsonString(UnblockClientResponseSchema, response));
-	} catch (err) {
-		if (err instanceof ConnectError) {
-			console.error('error unblock client: ' + err.message);
 			return err;
 		}
 	}

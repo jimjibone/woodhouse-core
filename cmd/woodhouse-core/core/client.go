@@ -12,11 +12,9 @@ type Client struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Version     string `json:"version"`
-	LastIP      string `json:"last_ip"`
 
-	Paired  bool `json:"paired"`
-	Blocked bool `json:"blocked"`
-	Online  bool `json:"online"`
+	Paired bool `json:"paired"`
+	Online bool `json:"online"`
 
 	FirstSeen time.Time `json:"first_seen"`
 	LastSeen  time.Time `json:"last_seen"`
@@ -31,9 +29,7 @@ func (client *Client) Clone() *Client {
 		Name:        client.Name,
 		Description: client.Description,
 		Version:     client.Version,
-		LastIP:      client.LastIP,
 		Paired:      client.Paired,
-		Blocked:     client.Blocked,
 		Online:      client.Online,
 		FirstSeen:   client.FirstSeen,
 		LastSeen:    client.LastSeen,
@@ -50,7 +46,6 @@ func (client *Client) Pb() *clientsapi.Client {
 		Name:        client.Name,
 		Description: client.Description,
 		Paired:      client.Paired,
-		Blocked:     client.Blocked,
 		Online:      client.Online,
 		FirstSeen:   uint64(client.FirstSeen.Unix()),
 		LastSeen:    uint64(client.LastSeen.Unix()),
@@ -63,7 +58,6 @@ type PairingRequest struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Version     string    `json:"version"`
-	LastIP      string    `json:"last_ip"`
 	Code        string    `json:"code"`
 	RequestedAt time.Time `json:"requested_at"`
 }
@@ -77,7 +71,6 @@ func (req *PairingRequest) Clone() *PairingRequest {
 		Name:        req.Name,
 		Description: req.Description,
 		Version:     req.Version,
-		LastIP:      req.LastIP,
 		Code:        req.Code,
 		RequestedAt: req.RequestedAt,
 	}

@@ -56,31 +56,24 @@ const streamClients = async (
 			heartbeat();
 			didConnect = true;
 
-			if (response.id !== '') {
+			if (response.clientRemoved !== '') {
 				update((prev: ClientsStoreType) => {
-					const isRemoval =
-						response.name === '' &&
-						response.description === '' &&
-						response.paired === false &&
-						response.blocked === false &&
-						response.online === false &&
-						response.firstSeen === 0n &&
-						response.lastSeen === 0n;
-
-					if (isRemoval) {
-						prev.clients = prev.clients.filter((item) => item.id !== response.id);
-					} else {
-						let found = false;
-						for (let i = 0; i < prev.clients.length; i++) {
-							if (prev.clients[i].id === response.id) {
-								prev.clients[i] = response;
-								found = true;
-								break;
-							}
+					prev.clients = prev.clients.filter((item) => item.id !== response.clientRemoved);
+					return prev;
+				});
+			}
+			if (response.client != undefined) {
+				update((prev: ClientsStoreType) => {
+					let found = false;
+					for (let i = 0; i < prev.clients.length; i++) {
+						if (prev.clients[i].id === response.client!.id) {
+							prev.clients[i] = response.client!;
+							found = true;
+							break;
 						}
-						if (!found) {
-							prev.clients = [...prev.clients, response];
-						}
+					}
+					if (!found) {
+						prev.clients = [...prev.clients, response.client!];
 					}
 
 					prev.clients = prev.clients.sort((a, b) => {

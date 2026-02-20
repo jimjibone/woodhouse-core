@@ -4,14 +4,7 @@
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 	import { ClientsStore } from '$lib/stores/clients-stream';
 	import { PairingRequestsStore } from '$lib/stores/pairing-requests-stream';
-	import {
-		ApprovePairing,
-		DenyPairing,
-		UnpairClient,
-		BlockClient,
-		UnblockClient,
-		ForgetClient
-	} from '$lib/stores/requests';
+	import { ApprovePairing, DenyPairing, UnpairClient, ForgetClient } from '$lib/stores/requests';
 	import type { Client, PairingRequest } from '$lib/api/v1/clients/client_pb';
 
 	let clients = $state<Client[]>([]);
@@ -67,32 +60,6 @@
 		setClientPending(client.id, true);
 		try {
 			await UnpairClient(client.id);
-		} finally {
-			setClientPending(client.id, false);
-		}
-	};
-
-	const handleBlock = async (client: Client) => {
-		const label = client.name || client.id;
-		if (!confirm(`Block ${label}? This will invalidate tokens and block access.`)) {
-			return;
-		}
-		setClientPending(client.id, true);
-		try {
-			await BlockClient(client.id);
-		} finally {
-			setClientPending(client.id, false);
-		}
-	};
-
-	const handleUnblock = async (client: Client) => {
-		const label = client.name || client.id;
-		if (!confirm(`Unblock ${label}? This will restore access.`)) {
-			return;
-		}
-		setClientPending(client.id, true);
-		try {
-			await UnblockClient(client.id);
 		} finally {
 			setClientPending(client.id, false);
 		}
@@ -201,25 +168,6 @@
 							>
 								Unpair
 							</Button>
-							{#if client.blocked}
-								<Button
-									class="cursor-pointer"
-									variant="outline"
-									disabled={pendingClientAction[client.id]}
-									onclick={() => handleUnblock(client)}
-								>
-									Unblock
-								</Button>
-							{:else}
-								<Button
-									class="cursor-pointer"
-									variant="destructive"
-									disabled={pendingClientAction[client.id]}
-									onclick={() => handleBlock(client)}
-								>
-									Block
-								</Button>
-							{/if}
 							<Button
 								class="cursor-pointer"
 								variant="destructive"

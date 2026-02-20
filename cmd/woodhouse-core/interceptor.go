@@ -137,11 +137,5 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 		return "", nil, status.Errorf(codes.Unauthenticated, "client access token is invalid: %v", err)
 	}
 
-	if interceptor.clientManager != nil {
-		if client := interceptor.clientManager.FindClient(claims.ClientID); client != nil && client.Blocked {
-			return claims.ClientID, nil, status.Errorf(codes.PermissionDenied, "client revoked")
-		}
-	}
-
 	return claims.ClientID, context.WithValue(ctx, "claims", claims), nil
 }

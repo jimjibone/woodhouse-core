@@ -38,8 +38,8 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 	defer service.log.Debugf("%q status stream finished", claims.ClientID)
 
 	if service.clientManager != nil {
-		service.clientManager.SetClientOnline(claims.ClientID, true, time.Now(), "")
-		defer service.clientManager.SetClientOnline(claims.ClientID, false, time.Now(), "")
+		service.clientManager.SetClientOnline(claims.ClientID, true, time.Now())
+		defer service.clientManager.SetClientOnline(claims.ClientID, false, time.Now())
 	}
 	defer service.deviceManager.SetClientOffline(claims.ClientID)
 
@@ -66,6 +66,9 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 			}
 			service.clientManager.UpdateClient(client)
 		}
+
+		// Mark the client as online on any update.
+		service.clientManager.SetClientOnline(claims.ClientID, true, time.Now())
 
 		// Validate updates.
 		for _, dev := range update.DeviceInfo {

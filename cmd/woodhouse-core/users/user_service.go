@@ -86,7 +86,7 @@ func (service *UserService) ClientsStream(req *clientsapi.ClientsStreamRequest, 
 			return status.Errorf(codes.Canceled, "context canceled")
 
 		case <-ticker.C:
-			err := server.Send(&clientsapi.Client{})
+			err := server.Send(&clientsapi.ClientsStreamResponse{})
 			if err != nil {
 				service.log.Errorf("failed to send clients stream keepalive: %s", err)
 				return status.Errorf(codes.Internal, "failed to send keepalive")
@@ -94,14 +94,14 @@ func (service *UserService) ClientsStream(req *clientsapi.ClientsStreamRequest, 
 
 		case update := <-sub.Sub():
 			if update.Updated != nil {
-				err := server.Send(update.Updated.Pb())
+				err := server.Send(&clientsapi.ClientsStreamResponse{Client: update.Updated.Pb()})
 				if err != nil {
 					service.log.Errorf("failed to send clients stream update: %s", err)
 					return status.Errorf(codes.Internal, "failed to send update")
 				}
 			}
 			if update.Removed != nil {
-				err := server.Send(&clientsapi.Client{Id: *update.Removed})
+				err := server.Send(&clientsapi.ClientsStreamResponse{ClientRemoved: *update.Removed})
 				if err != nil {
 					service.log.Errorf("failed to send clients stream removal: %s", err)
 					return status.Errorf(codes.Internal, "failed to send removal")
@@ -242,72 +242,6 @@ func (service *UserService) UnpairClient(ctx context.Context, req *clientsapi.Un
 	service.clientJwt.RevokeClient(req.GetClientId())
 
 	return &clientsapi.UnpairClientResponse{}, nil
-}
-
-func (service *UserService) BlockClient(ctx context.Context, req *clientsapi.BlockClientRequest) (*clientsapi.BlockClientResponse, error) {
-	claims := ctx.Value("claims").(*AccessTokenClaims)
-	if claims == nil {
-		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
-	}
-	if claims.Role != auth.AdminRole {
-		return nil, status.Errorf(codes.PermissionDenied, "not allowed to block client")
-	}
-	if req.GetClientId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
-	}
-	if service.clientManager == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
-	}
-	if service.clientJwt == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "client jwt manager not configured")
-	}
-
-	if err := service.clientManager.SetClientBlocked(req.GetClientId(), true); err != nil {
-		if err == core.ErrClientNotFound {
-			return nil, status.Errorf(codes.NotFound, "client not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to block client")
-	}
-
-	if err := service.clientManager.RemovePairingRequest(req.GetClientId()); err != nil && err != core.ErrPairingNotFound {
-		return nil, status.Errorf(codes.Internal, "failed to clear pairing request")
-	}
-
-	if err := service.clientManager.SetClientPaired(req.GetClientId(), false); err != nil && err != core.ErrClientNotFound {
-		return nil, status.Errorf(codes.Internal, "failed to clear paired state")
-	}
-
-	service.clientJwt.RevokeClient(req.GetClientId())
-
-	return &clientsapi.BlockClientResponse{}, nil
-}
-
-func (service *UserService) UnblockClient(ctx context.Context, req *clientsapi.UnblockClientRequest) (*clientsapi.UnblockClientResponse, error) {
-	claims := ctx.Value("claims").(*AccessTokenClaims)
-	if claims == nil {
-		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
-	}
-	if claims.Role != auth.AdminRole {
-		return nil, status.Errorf(codes.PermissionDenied, "not allowed to unblock client")
-	}
-	if req.GetClientId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
-	}
-	if service.clientManager == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
-	}
-	if service.clientJwt == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "client jwt manager not configured")
-	}
-
-	if err := service.clientManager.SetClientBlocked(req.GetClientId(), false); err != nil {
-		if err == core.ErrClientNotFound {
-			return nil, status.Errorf(codes.NotFound, "client not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to unblock client")
-	}
-
-	return &clientsapi.UnblockClientResponse{}, nil
 }
 
 func (service *UserService) ForgetClient(ctx context.Context, req *clientsapi.ForgetClientRequest) (*clientsapi.ForgetClientResponse, error) {

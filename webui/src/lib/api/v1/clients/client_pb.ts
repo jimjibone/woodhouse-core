@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/client.proto.
  */
 export const file_clients_client: GenFile = /*@__PURE__*/
-  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIo8BCgZDbGllbnQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIOCgZwYWlyZWQYBCABKAgSDwoHYmxvY2tlZBgFIAEoCBIOCgZvbmxpbmUYBiABKAgSEgoKZmlyc3Rfc2VlbhgHIAEoBBIRCglsYXN0X3NlZW4YCCABKAQiXAoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
+  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIn4KBkNsaWVudBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg4KBnBhaXJlZBgEIAEoCBIOCgZvbmxpbmUYBSABKAgSEgoKZmlyc3Rfc2VlbhgGIAEoBBIRCglsYXN0X3NlZW4YByABKAQiXAoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
 
 /**
  * @generated from message woodhouse.api.v1.clients.Client
@@ -37,26 +37,21 @@ export type Client = Message<"woodhouse.api.v1.clients.Client"> & {
   paired: boolean;
 
   /**
-   * @generated from field: bool blocked = 5;
-   */
-  blocked: boolean;
-
-  /**
-   * @generated from field: bool online = 6;
+   * @generated from field: bool online = 5;
    */
   online: boolean;
 
   /**
    * Seconds since Unix epoch 1970-01-01T00:00:00Z.
    *
-   * @generated from field: uint64 first_seen = 7;
+   * @generated from field: uint64 first_seen = 6;
    */
   firstSeen: bigint;
 
   /**
    * Seconds since Unix epoch 1970-01-01T00:00:00Z.
    *
-   * @generated from field: uint64 last_seen = 8;
+   * @generated from field: uint64 last_seen = 7;
    */
   lastSeen: bigint;
 };

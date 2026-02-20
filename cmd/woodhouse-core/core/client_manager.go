@@ -113,6 +113,8 @@ func (manager *ClientManager) GetClients() []*Client {
 	return clients
 }
 
+// FindClient returns a client by ID, or nil if not found. Note that this
+// returns a copy of the client,
 func (manager *ClientManager) FindClient(id string) *Client {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()
@@ -124,35 +126,8 @@ func (manager *ClientManager) FindClient(id string) *Client {
 	return client.Clone()
 }
 
-func (manager *ClientManager) StoreClient(client *Client) error {
-	if client == nil || client.ID == "" {
-		return fmt.Errorf("client id not set")
-	}
-
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	if manager.clients[client.ID] != nil {
-		return ErrClientAlreadyExists
-	}
-
-	now := time.Now()
-	if client.FirstSeen.IsZero() {
-		client.FirstSeen = now
-	}
-	if client.LastSeen.IsZero() {
-		client.LastSeen = now
-	}
-
-	manager.clients[client.ID] = client.Clone()
-	manager.changed = true
-
-	manager.log.Infof("client %q added", client.ID)
-	manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
-
-	return nil
-}
-
+// UpdateClient updates an existing client, or creates a new client if one
+// doesn't already exist.
 func (manager *ClientManager) UpdateClient(client *Client) error {
 	if client == nil || client.ID == "" {
 		return fmt.Errorf("client id not set")
@@ -176,6 +151,9 @@ func (manager *ClientManager) UpdateClient(client *Client) error {
 	return nil
 }
 
+// DeleteClient deletes a client by ID. Note that this does not automatically
+// remove any pending pairing requests for the client, so if the client tries to
+// pair again with the same ID, it will be recreated as a new client.
 func (manager *ClientManager) DeleteClient(id string) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -193,13 +171,14 @@ func (manager *ClientManager) DeleteClient(id string) error {
 	return nil
 }
 
-func (manager *ClientManager) SetClientOnline(id string, online bool, lastSeen time.Time, lastIP string) error {
+// SetClientOnline sets the online status of an existing client, and updates the last seen time.
+func (manager *ClientManager) SetClientOnline(id string, online bool, lastSeen time.Time) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
 	client := manager.clients[id]
 	if client == nil {
-		client = &Client{ID: id}
+		return ErrClientNotFound
 	}
 
 	if client.FirstSeen.IsZero() {
@@ -211,9 +190,6 @@ func (manager *ClientManager) SetClientOnline(id string, online bool, lastSeen t
 		client.LastSeen = time.Now()
 	}
 	client.Online = online
-	if lastIP != "" {
-		client.LastIP = lastIP
-	}
 
 	manager.clients[id] = client.Clone()
 	manager.changed = true
@@ -222,31 +198,7 @@ func (manager *ClientManager) SetClientOnline(id string, online bool, lastSeen t
 	return nil
 }
 
-func (manager *ClientManager) FinaliseClientPaired(req *PairingRequest) {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	client := manager.clients[req.ClientID]
-	if client == nil {
-		now := time.Now()
-		client = &Client{
-			ID:          req.ClientID,
-			Name:        req.Name,
-			Description: req.Description,
-			FirstSeen:   now,
-			LastSeen:    now,
-			Paired:      true,
-		}
-		manager.clients[req.ClientID] = client.Clone()
-		manager.changed = true
-		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
-	} else {
-		client.Paired = true
-		manager.changed = true
-		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
-	}
-}
-
+// SetClientPaired sets the paired status of an existing client.
 func (manager *ClientManager) SetClientPaired(id string, paired bool) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -263,25 +215,9 @@ func (manager *ClientManager) SetClientPaired(id string, paired bool) error {
 	return nil
 }
 
-func (manager *ClientManager) SetClientBlocked(id string, blocked bool) error {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	client := manager.clients[id]
-	if client == nil {
-		return ErrClientNotFound
-	}
-
-	client.Blocked = blocked
-	if blocked {
-		client.Online = false
-	}
-	manager.changed = true
-
-	manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
-	return nil
-}
-
+// AddPairingRequest adds a new pending pairing request. Note that this does not
+// continue the pairing handshake in AuthService.Pair, so the request will not
+// be automatically approved or finalised.
 func (manager *ClientManager) AddPairingRequest(req *PairingRequest) error {
 	if req == nil || req.ClientID == "" {
 		return fmt.Errorf("client id not set")
@@ -299,6 +235,8 @@ func (manager *ClientManager) AddPairingRequest(req *PairingRequest) error {
 	return nil
 }
 
+// RemovePairingRequest removes a pending pairing request for the given client
+// ID.
 func (manager *ClientManager) RemovePairingRequest(clientID string) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -314,6 +252,9 @@ func (manager *ClientManager) RemovePairingRequest(clientID string) error {
 	return nil
 }
 
+// FindPairingRequest returns a pending pairing request for the given client ID,
+// or nil if not found. Note that this returns a copy of the request, so
+// modifying the returned request will not affect the stored request.
 func (manager *ClientManager) FindPairingRequest(clientID string) *PairingRequest {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()
@@ -325,6 +266,9 @@ func (manager *ClientManager) FindPairingRequest(clientID string) *PairingReques
 	return req.Clone()
 }
 
+// ApprovePairingRequest approves a pending pairing request by setting the
+// pairing code. Note that this only continues the pairing handshake in
+// AuthService.Pair.
 func (manager *ClientManager) ApprovePairingRequest(clientID string, code string) error {
 	if clientID == "" {
 		return fmt.Errorf("client id not set")
@@ -345,6 +289,36 @@ func (manager *ClientManager) ApprovePairingRequest(clientID string, code string
 	manager.pairingPublisher.Pub(PairingUpdate{Updated: req.Clone()})
 
 	return nil
+}
+
+// FinalisePairingRequest marks the pairing request as complete and creates a
+// new paired client if one doesn't already exist.
+func (manager *ClientManager) FinalisePairingRequest(req *PairingRequest) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	client := manager.clients[req.ClientID]
+	if client == nil {
+		now := time.Now()
+		client = &Client{
+			ID:          req.ClientID,
+			Name:        req.Name,
+			Description: req.Description,
+			FirstSeen:   now,
+			LastSeen:    now,
+			Paired:      true,
+		}
+		manager.log.Infof("client %q added", client.ID)
+		manager.clients[req.ClientID] = client.Clone()
+		manager.changed = true
+		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
+	} else {
+		manager.log.Infof("client %q added", client.ID)
+		client.Paired = true
+		manager.changed = true
+		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
+	}
+
 }
 
 func (manager *ClientManager) ForgetClient(id string) error {
