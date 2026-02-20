@@ -47,17 +47,17 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	clientID := req.ClientId
 	as.log.Infof("pairing client %q started", clientID)
 
+	pairingRequest := &core.PairingRequest{
+		ClientID: clientID,
+	}
+
 	if as.clientManager != nil {
 		if client := as.clientManager.FindClient(clientID); client != nil && client.Blocked {
 			as.log.Infof("pairing client %q denied (revoked)", clientID)
 			return status.Errorf(codes.PermissionDenied, "client revoked")
 		}
 
-		code := ""
-		err := as.clientManager.AddPairingRequest(&core.PairingRequest{
-			ClientID: clientID,
-			Code:     code,
-		})
+		err := as.clientManager.AddPairingRequest(pairingRequest)
 		if err != nil {
 			as.log.Warnf("pairing client %q failed to add pairing request: %s", clientID, err)
 			return status.Errorf(codes.Internal, "failed to add pairing request")
@@ -95,7 +95,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 				continue
 			}
 
-			as.log.Debugf("pairing client %q pending...", clientID)
+			// as.log.Debugf("pairing client %q pending...", clientID)
 			err = server.Send(&clientsapi.PairResponse{
 				State: clientsapi.PairResponse_Pending,
 			})
@@ -235,7 +235,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	}
 
 	if as.clientManager != nil {
-		_ = as.clientManager.SetClientPaired(clientID, true)
+		as.clientManager.FinaliseClientPaired(pairingRequest)
 	}
 
 	as.log.Infof("pairing client %q finished", clientID)

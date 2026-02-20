@@ -222,6 +222,31 @@ func (manager *ClientManager) SetClientOnline(id string, online bool, lastSeen t
 	return nil
 }
 
+func (manager *ClientManager) FinaliseClientPaired(req *PairingRequest) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	client := manager.clients[req.ClientID]
+	if client == nil {
+		now := time.Now()
+		client = &Client{
+			ID:          req.ClientID,
+			Name:        req.Name,
+			Description: req.Description,
+			FirstSeen:   now,
+			LastSeen:    now,
+			Paired:      true,
+		}
+		manager.clients[req.ClientID] = client.Clone()
+		manager.changed = true
+		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
+	} else {
+		client.Paired = true
+		manager.changed = true
+		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
+	}
+}
+
 func (manager *ClientManager) SetClientPaired(id string, paired bool) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -266,21 +291,6 @@ func (manager *ClientManager) AddPairingRequest(req *PairingRequest) error {
 
 	if req.RequestedAt.IsZero() {
 		req.RequestedAt = time.Now()
-	}
-
-	client := manager.clients[req.ClientID]
-	if client == nil {
-		now := time.Now()
-		client = &Client{
-			ID:          req.ClientID,
-			Name:        req.Name,
-			Description: req.Description,
-			FirstSeen:   now,
-			LastSeen:    now,
-		}
-		manager.clients[req.ClientID] = client.Clone()
-		manager.changed = true
-		manager.clientPublisher.Pub(ClientUpdate{Updated: client.Clone()})
 	}
 
 	manager.pairingRequests[req.ClientID] = req.Clone()

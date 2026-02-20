@@ -115,12 +115,12 @@
 <main class="grid gap-6">
 	<section class="grid gap-4">
 		<div class="flex items-center justify-between">
-			<h2 class="text-lg font-semibold">Pending Pairing Requests</h2>
+			<h2 class="text-lg font-semibold">Pairing Requests</h2>
 			<span class="text-sm text-muted-foreground">{pairingRequests.length} pending</span>
 		</div>
 
 		{#if pairingRequests.length === 0}
-			<p class="text-sm text-muted-foreground">No pending pairing requests.</p>
+			<p class="text-sm text-muted-foreground">No pairing requests.</p>
 		{:else}
 			<div class="grid gap-3">
 				{#each pairingRequests as req (req.clientId)}
