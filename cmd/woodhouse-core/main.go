@@ -160,7 +160,7 @@ func main() {
 			userAuthService := users.NewAuthService(userManager, userJwtManager)
 
 			// Create services.
-			clientService := clients.NewClientService(deviceManager, clientManager)
+			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
 			userService := users.NewUserService(deviceManager, favoritesManager, userManager, clientManager, clientJwtManager)
 
 			// Broadcast our existence.
