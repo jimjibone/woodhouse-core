@@ -161,6 +161,13 @@ tasks:
       - task: build-and-deploy-component
         vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-zigbee" }
 
+  deploy-all:
+    cmds:
+      - task: deploy-core-full
+      - task: deploy-shelly
+      - task: deploy-tasmota
+      - task: deploy-zigbee
+
   build-component:
     env:
       GOOS: '{{.GOOS}}'
