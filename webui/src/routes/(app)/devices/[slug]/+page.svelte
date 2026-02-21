@@ -6,23 +6,29 @@
 	import { ServiceSchema } from '$lib/api/v1/clients/client_service_pb';
 	import { toJsonString } from '@bufbuild/protobuf';
 	import { attributeToDate, toHumanDate } from '$lib/tools/time';
+	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 
 	const deviceID = page.params.slug;
+	const connStatus = useConnectionContext();
 
-	let connected: boolean;
-	let backoff: number;
-	let dev: DevicesStoreDevice | undefined;
-	const unsubscribe = DevicesStore.subscribe((store) => {
-		connected = store.connected;
-		backoff = store.backoff;
-		for (const it of store.devices) {
-			if (it.id === deviceID) {
-				dev = it;
-				break;
+	let connected = $state(false);
+	let backoff = $state(0);
+	let dev = $state<DevicesStoreDevice | undefined>(undefined);
+
+	onDestroy(
+		DevicesStore.subscribe((store) => {
+			connected = store.connected;
+			backoff = store.backoff;
+			connStatus.set(store.connected, !store.connected && store.backoff > 0);
+			for (const it of store.devices) {
+				if (it.id === deviceID) {
+					dev = it;
+					break;
+				}
 			}
-		}
-	});
-	onDestroy(unsubscribe);
+		})
+	);
+	onDestroy(() => connStatus.reset());
 </script>
 
 <main class="">

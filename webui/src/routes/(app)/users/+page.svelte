@@ -3,6 +3,7 @@
 	import { UsersStore as store } from '$lib/stores/users-stream';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { onDestroy } from 'svelte';
+	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 	import { UserPlusIcon } from '@lucide/svelte';
 	import UserRow from './user-row.svelte';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte.js';
@@ -13,7 +14,15 @@
 	let dialogOpen = $state(false);
 
 	let users = $state<User[]>([]);
-	onDestroy(store.subscribe((update) => (users = update.users)));
+
+	const connStatus = useConnectionContext();
+	onDestroy(
+		store.subscribe((update) => {
+			users = update.users;
+			connStatus.set(update.connected, !update.connected && update.backoff > 0);
+		})
+	);
+	onDestroy(() => connStatus.reset());
 </script>
 
 <main>

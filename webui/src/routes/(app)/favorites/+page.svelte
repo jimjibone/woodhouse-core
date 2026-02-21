@@ -6,11 +6,21 @@
 	import { search } from '$lib/stores/search';
 	import Fuse from 'fuse.js';
 	import { onDestroy } from 'svelte';
+	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 
 	let services = $state<DeviceService[]>([]);
 	let query = $state('');
-	onDestroy(store.subscribe((update) => (services = update.deviceServices)));
+
+	const connStatus = useConnectionContext();
+
+	onDestroy(
+		store.subscribe((update) => {
+			services = update.deviceServices;
+			connStatus.set(update.connected, !update.connected && update.backoff > 0);
+		})
+	);
 	onDestroy(search.subscribe((update) => (query = update.query)));
+	onDestroy(() => connStatus.reset());
 
 	let filtered = $derived.by(() => {
 		if (!fuse) return services;
@@ -49,9 +59,3 @@
 		</div>
 	{/each}
 </main>
-
-<div class="pt-4">
-	<p>Connected: {$store.connected}</p>
-	<p>Backoff: {$store.backoff}</p>
-	<p>Services: {$store.deviceServices.length}</p>
-</div>

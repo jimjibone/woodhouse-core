@@ -6,14 +6,44 @@
 	import { PairingRequestsStore } from '$lib/stores/pairing-requests-stream';
 	import { ApprovePairing, DenyPairing, UnpairClient, ForgetClient } from '$lib/stores/requests';
 	import type { Client, PairingRequest } from '$lib/api/v1/clients/client_pb';
+	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 
 	let clients = $state<Client[]>([]);
 	let pairingRequests = $state<PairingRequest[]>([]);
 	let pendingPairing = $state<Record<string, boolean>>({});
 	let pendingClientAction = $state<Record<string, boolean>>({});
 
-	onDestroy(ClientsStore.subscribe((update) => (clients = update.clients)));
-	onDestroy(PairingRequestsStore.subscribe((update) => (pairingRequests = update.requests)));
+	const connStatus = useConnectionContext();
+
+	let clientsConnected = false;
+	let clientsBackoff = 0;
+	let pairingConnected = false;
+	let pairingBackoff = 0;
+
+	const updateConnStatus = () => {
+		connStatus.set(
+			clientsConnected && pairingConnected,
+			(!clientsConnected && clientsBackoff > 0) || (!pairingConnected && pairingBackoff > 0)
+		);
+	};
+
+	onDestroy(
+		ClientsStore.subscribe((update) => {
+			clients = update.clients;
+			clientsConnected = update.clientsConnected;
+			clientsBackoff = update.clientsBackoff;
+			updateConnStatus();
+		})
+	);
+	onDestroy(
+		PairingRequestsStore.subscribe((update) => {
+			pairingRequests = update.requests;
+			pairingConnected = update.connected;
+			pairingBackoff = update.backoff;
+			updateConnStatus();
+		})
+	);
+	onDestroy(() => connStatus.reset());
 
 	const secondsToDate = (seconds: bigint) => new Date(Number(seconds) * 1000);
 
