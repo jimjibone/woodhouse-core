@@ -53,16 +53,26 @@
 
 <ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
-		<!-- {#if attrClosed !== undefined}
-			<div>Closed</div>
-			<div class="col-span-2">
-				{#if attrClosed.value}
-					<p>Yes</p>
-				{:else}
-					<p>No</p>
-				{/if}
-			</div>
-		{/if} -->
+		<div>Presence</div>
+		<div class="col-span-2">
+			{#if presence}
+				<p>Yes</p>
+			{:else}
+				<p>No</p>
+			{/if}
+		</div>
+		<div>Motion</div>
+		<div class="col-span-2">
+			{#if motion}
+				<p>Yes</p>
+			{:else}
+				<p>No</p>
+			{/if}
+		</div>
+		<div>Distance</div>
+		<div class="col-span-2">
+			<p>{distance.toLocaleString(undefined, { maximumFractionDigits: 1 })}m</p>
+		</div>
 	</div>
 	<OthersContent others={attrOthers} {serviceAction} />
 </ServiceRoot>
