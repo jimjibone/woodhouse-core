@@ -7,6 +7,7 @@ import EnumService from './enum.svelte';
 import EnvironmentService from './environment.svelte';
 import InputService from './input.svelte';
 import LightbulbService from './lightbulb.svelte';
+import PresenceService from './presence.svelte';
 import RelayService from './relay.svelte';
 import UpdateService from './update.svelte';
 import ServiceAction from './service-action.svelte';
@@ -23,13 +24,12 @@ export {
 	EnvironmentService,
 	InputService,
 	LightbulbService,
+	PresenceService,
 	RelayService,
 	UpdateService,
 	ServiceAction,
 	ServiceEnumerator,
-	ServiceRoot,
+	ServiceRoot
 };
 
-export type {
-	StandardProps,
-};
+export type { StandardProps };

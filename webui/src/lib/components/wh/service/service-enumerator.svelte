@@ -34,6 +34,8 @@
 			<Services.InputService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.LIGHTBULB}
 			<Services.LightbulbService {service} {...rest} />
+		{:else if service.typ == Service_ServiceType.PRESENCE}
+			<Services.PresenceService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.RELAY}
 			<Services.RelayService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.UPDATE}
