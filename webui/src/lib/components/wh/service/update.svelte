@@ -73,14 +73,14 @@
 {/snippet}
 
 {#snippet details()}
-	{#if available}
-		<p>Update Available</p>
-	{:else if updating}
+	{#if updating}
 		{#if attrProgress && attrRemaining}
 			<p>Updating ({attrProgress.value}% {toHumanDuration(Number(attrRemaining.value))})</p>
 		{:else}
 			<p>Updating</p>
 		{/if}
+	{:else if available}
+		<p>Update Available</p>
 	{:else}
 		<p>Up to Date</p>
 	{/if}
@@ -98,10 +98,10 @@
 		{#if attrAvailable !== undefined}
 			<div>Available</div>
 			<div class="col-span-2">
-				{#if attrAvailable.value}
-					<Button class={'cursor-pointer'} onclick={() => sendActionStartUpdate()}>Start Update</Button>
-				{:else if updating}
+				{#if updating}
 					<Button class={'cursor-pointer'} disabled>Updating...</Button>
+				{:else if available}
+					<Button class={'cursor-pointer'} onclick={() => sendActionStartUpdate()}>Start Update</Button>
 				{:else}
 					<p>No</p>
 				{/if}
