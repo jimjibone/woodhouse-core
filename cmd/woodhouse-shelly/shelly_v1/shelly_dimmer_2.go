@@ -61,7 +61,7 @@ func NewShellyDimmer2(hostname, ip string, client *wh.Client) *ShellyDimmer2 {
 		hostname:  hostname,
 		ip:        ip,
 		client:    client,
-		dev:       devices.NewDevice(hostname, clientsapi.Device_LIGHTBULB),
+		dev:       devices.NewDevice(hostname, clientsapi.Device_DEVICE),
 		info:      services.NewInfo(),
 		online:    services.NewOnline(),
 		lightbulb: services.NewLightbulb("lightbulb"),

@@ -194,7 +194,7 @@ func NewTasmotaDevice(client *wh.Client, id, ip string) *TasmotaDevice {
 		log:    log.NewContext(log.DefaultLogger, id, log.DebugLevel),
 		client: client,
 		ip:     ip,
-		dev:    devices.NewDevice(id, clientsapi.Device_RELAY),
+		dev:    devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:   services.NewInfo(),
 		online: services.NewOnline(),
 		relay:  services.NewRelay("relay"),

@@ -19,7 +19,7 @@ type ShellyPlusPlugUK struct {
 
 func NewShellyPlusPlugUK(hostname, ip string, client *wh.Client) *ShellyPlusPlugUK {
 	dev := &ShellyPlusPlugUK{
-		shelly: NewShellyComms(hostname, ip, clientsapi.Device_RELAY, client),
+		shelly: NewShellyComms(hostname, ip, clientsapi.Device_DEVICE, client),
 		info:   services.NewInfo(),
 		online: services.NewOnline(),
 		relay0: services.NewRelay("relay0"),

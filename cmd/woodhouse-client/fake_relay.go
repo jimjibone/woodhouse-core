@@ -18,7 +18,7 @@ type FakeRelay struct {
 
 func NewFakeRelay(id string) *FakeRelay {
 	dev := &FakeRelay{
-		dev:    devices.NewDevice(id, clientsapi.Device_LIGHTBULB),
+		dev:    devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:   services.NewInfo(),
 		online: services.NewOnline(),
 		relay:  services.NewRelay("relay"),

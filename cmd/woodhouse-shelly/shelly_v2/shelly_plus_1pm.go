@@ -20,7 +20,7 @@ type ShellyPlus1PM struct {
 
 func NewShellyPlus1PM(hostname, ip string, client *wh.Client) *ShellyPlus1PM {
 	dev := &ShellyPlus1PM{
-		shelly: NewShellyComms(hostname, ip, clientsapi.Device_RELAY, client),
+		shelly: NewShellyComms(hostname, ip, clientsapi.Device_DEVICE, client),
 		info:   services.NewInfo(),
 		online: services.NewOnline(),
 		input0: services.NewInput("input0"),

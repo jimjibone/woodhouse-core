@@ -18,7 +18,7 @@ type FakeLightbulb struct {
 
 func NewFakeLightbulb(id string) *FakeLightbulb {
 	dev := &FakeLightbulb{
-		dev:       devices.NewDevice(id, clientsapi.Device_LIGHTBULB),
+		dev:       devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:      services.NewInfo(),
 		online:    services.NewOnline(),
 		lightbulb: services.NewLightbulb("lightbulb"),

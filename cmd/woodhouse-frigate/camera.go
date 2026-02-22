@@ -31,7 +31,7 @@ func NewFrigateCamera(serverAddr, name string, client *wh.Client) *FrigateCamera
 		log:        log.NewContext(log.DefaultLogger, name, log.DebugLevel),
 		serverAddr: serverAddr,
 		name:       name,
-		dev:        devices.NewDevice("frigate-"+name, clientsapi.Device_GENERIC),
+		dev:        devices.NewDevice("frigate-"+name, clientsapi.Device_DEVICE),
 		motion:     services.NewInput("motion"),
 		camera:     services.NewCamera(""),
 	}
