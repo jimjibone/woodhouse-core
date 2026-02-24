@@ -72,7 +72,7 @@
 		let color: any;
 		if (!online || !onValue) {
 			// Show color as if off offline.
-			buttonOn = false;
+			buttonOn = online && onValue;
 			if (mode.current == 'dark') {
 				color = chroma.hsl(240.06, 4.0 / 100.0, 16.0 / 100.0); // dark-muted
 			} else {
@@ -80,14 +80,19 @@
 			}
 		} else {
 			buttonOn = true;
-			if (colorValue !== undefined && colorValue !== undefined) {
-				color = chroma.hsv(colorValue.hue, colorValue.sat / 100.0, Number(brightnessValue) / 100.0);
-			} else if (colorTempValue !== undefined) {
-				// TODO: add brightness adjustment for color temp.
-				const kelvin = (1.0 / Number(colorTempValue.value)) * 1000000.0;
-				color = chroma.temperature(kelvin);
+			if (brightnessValue == 0n) {
+				color = chroma.rgb(0, 0, 0);
 			} else {
-				color = chroma.rgb(250, 204, 21); // yellow
+				const bri = Number(brightnessValue) / 200.0 + 0.5;
+				if (colorValue !== undefined && colorValue !== undefined) {
+					color = chroma.hsv(colorValue.hue, colorValue.sat / 100.0, bri);
+				} else if (colorTempValue !== undefined) {
+					const kelvin = (1.0 / Number(colorTempValue.value)) * 1000000.0;
+					const ct = chroma.temperature(kelvin).hsv();
+					color = chroma.hsv(ct[0], ct[1], ct[2] * bri);
+				} else {
+					color = chroma.rgb(250, 204, 21); // yellow
+				}
 			}
 		}
 		buttonForeground = color.luminance() < 0.5 ? foregroundLight : foregroundDark;
