@@ -91,7 +91,8 @@
 					const ct = chroma.temperature(kelvin).hsv();
 					color = chroma.hsv(ct[0], ct[1], ct[2] * bri);
 				} else {
-					color = chroma.rgb(250, 204, 21); // yellow
+					color = chroma.hsv(34, 0.75, bri); // yellow
+					console.log('yellow:', color.hsv(), ', bri:', bri);
 				}
 			}
 		}
