@@ -47,8 +47,8 @@ func NewFakeLightbulb(id string) *FakeLightbulb {
 	// Set default values.
 	dev.lightbulb.On.Set(false)
 	dev.lightbulb.Brightness.Set(75)
-	dev.lightbulb.ColorTemp.Set(1802)
-	dev.lightbulb.Color.Set(22.0, 97.0, 0.0, 0.0)
+	dev.lightbulb.ColorTemp.Set(2703)
+	dev.lightbulb.Color.Set(32.0, 82.0, 0.0, 0.0)
 	dev.lightbulb.Transition.Set(time.Second)
 
 	return dev
