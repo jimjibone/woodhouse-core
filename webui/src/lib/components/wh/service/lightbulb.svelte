@@ -18,11 +18,12 @@
 	} from '$lib/api/v1/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
-	import { LightbulbIcon, LightbulbOffIcon } from '@lucide/svelte';
+	import { LightbulbIcon, LightbulbOffIcon, SunIcon } from '@lucide/svelte';
 	import chroma from 'chroma-js';
 	import { mode } from 'mode-watcher';
 	import { create } from '@bufbuild/protobuf';
 	import { BoolContent, DurationContent, IntContent, FloatContent, OthersContent } from '$lib/components/wh/attributes';
+	import { cn } from '$lib/utils';
 
 	let { deviceID, online, service, ...rest }: StandardProps = $props();
 
@@ -39,6 +40,7 @@
 	let buttonOn: boolean = $state(false);
 	let buttonForeground: string = $state('hsl(var(--primary-foreground) / var(--tw-text-opacity))');
 	let buttonBackground: string = $state('rgb(250 204 21)'); // default "bg-yellow-400"
+	let sliderBackground: string = $state('rgb(250 204 21)'); // default "bg-yellow-400"
 
 	$effect(() => {
 		let others: Attribute[] = [];
@@ -90,6 +92,7 @@
 		}
 		buttonForeground = color.luminance() < 0.5 ? foregroundLight : foregroundDark;
 		buttonBackground = color.hex();
+		sliderBackground = buttonOn ? color.hex() : chroma.rgb(0, 0, 0);
 	});
 
 	let serviceAction = new ServiceAction(deviceID, service.id);
@@ -175,6 +178,78 @@
 			sendActionOn(!attrOn.value);
 		}
 	};
+
+	// Vertical brightness slider state & handlers
+	let brightnessChanging: number | null = $state(null);
+	let brightnessIsDragging = $state(false);
+
+	$effect(() => {
+		if (drawerOpen === false) {
+			brightnessChanging = null;
+			brightnessIsDragging = false;
+		}
+	});
+
+	const getBrightnessFromPointer = (event: PointerEvent): number => {
+		if (!attrBrightness) return 0;
+		const el = event.currentTarget as HTMLElement;
+		const rect = el.getBoundingClientRect();
+		const min = Number(attrBrightness.min);
+		const max = Number(attrBrightness.max);
+		const step = Number(attrBrightness.step) || 1;
+		const relY = event.clientY - rect.top;
+		const pct = 1 - Math.max(0, Math.min(1, relY / rect.height));
+		const rawVal = pct * (max - min) + min;
+		return Math.max(min, Math.min(max, Math.round(rawVal / step) * step));
+	};
+
+	const onBrightnessPointerDown = (event: PointerEvent) => {
+		if (!attrBrightness) return;
+		// Stop the event bubbling to the vaul Drawer, which would otherwise
+		// record a pointerStart and interpret the subsequent downward drag as a
+		// swipe-to-close gesture.
+		event.stopPropagation();
+		const el = event.currentTarget as HTMLElement;
+		el.setPointerCapture(event.pointerId);
+		brightnessIsDragging = true;
+		brightnessChanging = getBrightnessFromPointer(event);
+	};
+
+	const onBrightnessPointerMove = (event: PointerEvent) => {
+		if (!brightnessIsDragging || !attrBrightness) return;
+		brightnessChanging = getBrightnessFromPointer(event);
+	};
+
+	const onBrightnessPointerUp = (event: PointerEvent) => {
+		if (!brightnessIsDragging || !attrBrightness) return;
+		brightnessIsDragging = false;
+		if (brightnessChanging !== null) {
+			sendActionBrightness(BigInt(brightnessChanging));
+		}
+		brightnessChanging = null;
+	};
+
+	const onBrightnessKeyDown = (event: KeyboardEvent) => {
+		if (!attrBrightness) return;
+		const min = Number(attrBrightness.min);
+		const max = Number(attrBrightness.max);
+		const step = Number(attrBrightness.step) || 1;
+		const current = Number(attrBrightness.value);
+		let newVal = current;
+		if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+			newVal = Math.min(max, current + step);
+		} else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+			newVal = Math.max(min, current - step);
+		} else if (event.key === 'Home') {
+			newVal = min;
+		} else if (event.key === 'End') {
+			newVal = max;
+		} else {
+			return;
+		}
+		event.preventDefault();
+		sendActionBrightness(BigInt(newVal));
+	};
 </script>
 
 {#snippet icon()}
@@ -218,6 +293,84 @@
 	{details}
 	bind:drawerOpen
 >
+	{#if attrBrightness !== undefined}
+		{@const bMin = Number(attrBrightness.min)}
+		{@const bMax = Number(attrBrightness.max)}
+		{@const bCurrent = brightnessChanging !== null ? brightnessChanging : Number(attrBrightness.value)}
+		{@const bFillPct = Math.max(0, Math.min(100, ((bCurrent - bMin) / (bMax - bMin)) * 100))}
+		<div class="flex flex-col items-center gap-2 mb-4">
+			<!-- svelte-ignore a11y_interactive_supports_focus -->
+			<div class="relative">
+				<!-- External label to the left, visible only while dragging -->
+				<div
+					class="absolute pointer-events-none"
+					style="right: calc(100% + 0.75rem); bottom: clamp(0.5rem, calc({bFillPct}% - 0.75rem), calc(100% - 2rem));"
+				>
+					<span
+						class={cn(
+							'text-xl font-bold tabular-nums whitespace-nowrap transition-opacity duration-150',
+							brightnessIsDragging ? 'opacity-100' : 'opacity-0'
+						)}
+						style="color: {brightnessIsDragging ? 'inherit' : 'transparent'};">{bCurrent}%</span
+					>
+				</div>
+				<div
+					class="relative w-26 h-56 rounded-3xl bg-muted border overflow-hidden cursor-pointer touch-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					role="slider"
+					tabindex="0"
+					aria-valuemin={bMin}
+					aria-valuemax={bMax}
+					aria-valuenow={bCurrent}
+					aria-label="Brightness"
+					onpointerdown={onBrightnessPointerDown}
+					onpointermove={onBrightnessPointerMove}
+					onpointerup={onBrightnessPointerUp}
+					onpointercancel={onBrightnessPointerUp}
+					onkeydown={onBrightnessKeyDown}
+				>
+					<!-- Fill from bottom -->
+					<div
+						class={cn(
+							'absolute bottom-0 left-0 right-0 rounded-md',
+							!brightnessIsDragging && 'transition-[height] duration-150 ease-out'
+						)}
+						style="height: {bFillPct}%; background-color: {sliderBackground};"
+					></div>
+					<!-- Sun icon near top -->
+					<div class="absolute inset-x-0 top-4 flex justify-center pointer-events-none">
+						<SunIcon
+							class={cn('size-5 transition-colors duration-150', bFillPct > 85 ? 'opacity-90' : 'opacity-40')}
+							style={bFillPct > 85 ? `color: ${buttonForeground}` : ''}
+						/>
+					</div>
+					<!-- Grab bar centred on the fill's top edge  0.1875rem -->
+					<div
+						class={cn(
+							'absolute inset-x-0 flex justify-center pointer-events-none',
+							!brightnessIsDragging && 'transition-[bottom] duration-150 ease-out'
+						)}
+						style="bottom: calc({bFillPct}% - 0.8rem);"
+					>
+						<div class="w-10 h-1.5 rounded-full opacity-50" style="background-color: {buttonForeground}"></div>
+					</div>
+					<!-- Brightness value floating just above the fill top edge (hidden while dragging) -->
+					<div
+						class={cn(
+							'absolute inset-x-0 flex justify-center pointer-events-none transition-[bottom,opacity] duration-150 ease-out',
+							brightnessIsDragging ? 'opacity-0' : 'opacity-100'
+						)}
+						style="bottom: clamp(0.75rem, calc({bFillPct}% + 0.25rem), calc(100% - 1.75rem));"
+					>
+						<span
+							class="text-xs font-semibold tabular-nums"
+							style="color: {bFillPct > 15 ? buttonForeground : 'var(--color-muted-foreground)'};">{bCurrent}%</span
+						>
+					</div>
+				</div>
+			</div>
+			<span class="text-xs text-muted-foreground">Brightness</span>
+		</div>
+	{/if}
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
 		{#if attrOn !== undefined}
 			<BoolContent name="On" attr={attrOn} onaction={sendActionOn} />
