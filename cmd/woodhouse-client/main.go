@@ -48,8 +48,13 @@ func main() {
 			// Create the client.
 			client := wh.NewClient(store, args.String("addr"), wh.WithClientInfo("woodhouse-client", "Test Client", "Client for testing Woodhouse functionality", "0.1.0"))
 
-			fake1 := NewFakeLightbulb("fake1")
+			fake1 := NewFakeLightbulbColor("fake1")
 			if err := client.AddDevice(fake1.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake1a := NewFakeLightbulbColorTemp("fake1a")
+			if err := client.AddDevice(fake1a.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
 

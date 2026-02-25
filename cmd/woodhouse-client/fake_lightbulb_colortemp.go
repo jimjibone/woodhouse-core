@@ -9,15 +9,15 @@ import (
 	"github.com/jimjibone/woodhouse-4/wh/v1/devices/services"
 )
 
-type FakeLightbulb struct {
+type FakeLightbulbColorTemp struct {
 	dev       *devices.Device
 	info      *services.Info
 	online    *services.Online
 	lightbulb *services.Lightbulb
 }
 
-func NewFakeLightbulb(id string) *FakeLightbulb {
-	dev := &FakeLightbulb{
+func NewFakeLightbulbColorTemp(id string) *FakeLightbulbColorTemp {
+	dev := &FakeLightbulbColorTemp{
 		dev:       devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:      services.NewInfo(),
 		online:    services.NewOnline(),
@@ -47,14 +47,13 @@ func NewFakeLightbulb(id string) *FakeLightbulb {
 	// Set default values.
 	dev.lightbulb.On.Set(false)
 	dev.lightbulb.Brightness.Set(75)
-	dev.lightbulb.ColorTemp.Set(2703)
-	dev.lightbulb.Color.Set(32.0, 82.0, 0.0, 0.0)
+	dev.lightbulb.ColorTemp.Set(454)
 	dev.lightbulb.Transition.Set(time.Second)
 
 	return dev
 }
 
-func (dev *FakeLightbulb) handleLightbulbAction(request *clientsapi.ActionRequest, feedback func(*clientsapi.ActionResponse)) error {
+func (dev *FakeLightbulbColorTemp) handleLightbulbAction(request *clientsapi.ActionRequest, feedback func(*clientsapi.ActionResponse)) error {
 	feedback(&clientsapi.ActionResponse{
 		ActionId: request.ActionId,
 		Status:   clientsapi.ActionResponse_SENT,
@@ -73,6 +72,12 @@ func (dev *FakeLightbulb) handleLightbulbAction(request *clientsapi.ActionReques
 				return services.ErrIncorrectTypeFor(dev.lightbulb.Brightness)
 			}
 			dev.lightbulb.Brightness.HandleAction(req.GetInt())
+
+		case dev.lightbulb.ColorTemp.ID():
+			if req.GetInt() == nil {
+				return services.ErrIncorrectTypeFor(dev.lightbulb.ColorTemp)
+			}
+			dev.lightbulb.ColorTemp.HandleAction(req.GetInt())
 		}
 	}
 
