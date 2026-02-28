@@ -1,6 +1,6 @@
 module github.com/jimjibone/woodhouse-4
 
-go 1.19
+go 1.26
 
 require (
 	github.com/a-h/templ v0.2.543
