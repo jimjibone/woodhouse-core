@@ -5,6 +5,7 @@ import FloatContent from './float.svelte';
 import IntContent from './int.svelte';
 import OthersContent from './others.svelte';
 import VerticalBrightnessContent from './vertical-brightness.svelte';
+import VerticalColorTempContent from './vertical-color-temp.svelte';
 
 export {
 	BoolContent,
@@ -13,5 +14,6 @@ export {
 	FloatContent,
 	IntContent,
 	OthersContent,
-	VerticalBrightnessContent
+	VerticalBrightnessContent,
+	VerticalColorTempContent
 };

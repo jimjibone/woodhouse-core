@@ -24,6 +24,7 @@
 	import { create } from '@bufbuild/protobuf';
 	import { BoolContent, DurationContent, IntContent, FloatContent, OthersContent } from '$lib/components/wh/attributes';
 	import VerticalBrightnessContent from '$lib/components/wh/attributes/vertical-brightness.svelte';
+	import VerticalColorTempContent from '$lib/components/wh/attributes/vertical-color-temp.svelte';
 
 	let { deviceID, online, service, ...rest }: StandardProps = $props();
 
@@ -226,15 +227,19 @@
 	{details}
 	bind:drawerOpen
 >
-	{#if attrBrightness !== undefined}
-		<div class="mb-4 flex justify-center">
-			<VerticalBrightnessContent
-				attr={attrBrightness}
-				fillColor={sliderBackground}
-				labelColor={buttonForeground}
-				onaction={sendActionBrightness}
-				resetOnClose={!drawerOpen}
-			/>
+	{#if attrBrightness !== undefined || attrColorTemp !== undefined}
+		<div class="mb-4 flex justify-center gap-4">
+			{#if attrBrightness !== undefined}
+				<VerticalBrightnessContent
+					attr={attrBrightness}
+					fillColor={sliderBackground}
+					onaction={sendActionBrightness}
+					resetOnClose={!drawerOpen}
+				/>
+			{/if}
+			{#if attrColorTemp !== undefined}
+				<VerticalColorTempContent attr={attrColorTemp} onaction={sendActionColorTemp} resetOnClose={!drawerOpen} />
+			{/if}
 		</div>
 	{/if}
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">

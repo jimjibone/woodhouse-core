@@ -2,17 +2,16 @@
 	import type { IntAttribute } from '$lib/api/v1/clients/client_service_pb';
 	import { SunIcon } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
+	import chroma from 'chroma-js';
 
 	let {
 		attr,
 		fillColor,
-		labelColor,
 		onaction,
 		resetOnClose = false
 	}: {
 		attr: IntAttribute;
 		fillColor: string;
-		labelColor: string;
 		onaction: (value: bigint) => void;
 		resetOnClose?: boolean;
 	} = $props();
@@ -32,6 +31,7 @@
 	const bStep = $derived(Number(attr.step) || 1);
 	const bCurrent = $derived(changing !== null ? changing : Number(attr.value));
 	const bFillPct = $derived(Math.max(0, Math.min(100, ((bCurrent - bMin) / (bMax - bMin)) * 100)));
+	const labelColor: string = $derived(chroma(fillColor).luminance() < 0.45 ? 'hsl(0 0% 100%)' : 'hsl(240 10% 3.9%)');
 
 	const getValueFromPointer = (event: PointerEvent): number => {
 		const el = event.currentTarget as HTMLElement;
@@ -140,7 +140,10 @@
 				)}
 				style="bottom: calc({bFillPct}% - 0.8rem);"
 			>
-				<div class="w-10 h-1.5 rounded-full opacity-50" style="background-color: {labelColor};"></div>
+				<div
+					class={cn('w-10 h-1.5 rounded-full opacity-50', bFillPct < 17 ? 'opacity-0' : '')}
+					style="background-color: {labelColor};"
+				></div>
 			</div>
 
 			<!-- In-pill value, floating just above fill top edge, hidden while dragging -->
@@ -149,12 +152,9 @@
 					'absolute inset-x-0 flex justify-center pointer-events-none transition-[bottom,opacity] duration-150 ease-out',
 					isDragging ? 'opacity-0' : 'opacity-100'
 				)}
-				style="bottom: clamp(0.75rem, calc({bFillPct}% + 0.25rem), calc(100% - 1.75rem));"
+				style="bottom: clamp(0.75rem, calc({bFillPct}% - 2.00rem), calc(100% - 3.50rem));"
 			>
-				<span
-					class="text-xs font-semibold tabular-nums"
-					style="color: {bFillPct > 15 ? labelColor : 'var(--color-muted-foreground)'};">{bCurrent}%</span
-				>
+				<span class="text-xs font-semibold tabular-nums" style="color: {labelColor};">{bCurrent}%</span>
 			</div>
 		</div>
 	</div>
