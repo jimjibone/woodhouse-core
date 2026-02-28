@@ -33,7 +33,6 @@ func NewFakeLightbulbColor(id string) *FakeLightbulbColor {
 	dev.online.LastSeen.Set(time.Now())
 
 	// Set up the light service.
-	dev.lightbulb.OnAction(dev.handleLightbulbAction)
 	dev.lightbulb.On.OnAction(func(val bool) {
 		time.Sleep(500 * time.Millisecond)
 		log.Infof("on set to %t", val)
@@ -43,50 +42,21 @@ func NewFakeLightbulbColor(id string) *FakeLightbulbColor {
 		log.Infof("brightness set to %d%%", val)
 		dev.lightbulb.Brightness.Set(val)
 	})
+	dev.lightbulb.ColorTemp.OnAction(func(val int64) {
+		log.Infof("color temperature set to %d", val)
+		dev.lightbulb.ColorTemp.Set(val)
+	})
+	dev.lightbulb.Color.OnAction(func(huesat *clientsapi.ColorHueSat, xy *clientsapi.ColorXY) {
+		log.Infof("color set to hue %f, sat %f, x %f, y %f", huesat.Hue, huesat.Sat, xy.X, xy.Y)
+		dev.lightbulb.Color.Set(huesat.Hue, huesat.Sat, xy.X, xy.Y)
+	})
 
 	// Set default values.
 	dev.lightbulb.On.Set(false)
 	dev.lightbulb.Brightness.Set(75)
 	dev.lightbulb.ColorTemp.Set(454)
 	dev.lightbulb.Color.Set(32.0, 82.0, 0.0, 0.0)
-	dev.lightbulb.Transition.Set(time.Second)
+	dev.lightbulb.Transition.Set(0)
 
 	return dev
-}
-
-func (dev *FakeLightbulbColor) handleLightbulbAction(request *clientsapi.ActionRequest, feedback func(*clientsapi.ActionResponse)) error {
-	feedback(&clientsapi.ActionResponse{
-		ActionId: request.ActionId,
-		Status:   clientsapi.ActionResponse_SENT,
-	})
-
-	for _, req := range request.Values {
-		switch req.Id {
-		case dev.lightbulb.On.ID():
-			if req.GetBool() == nil {
-				return services.ErrIncorrectTypeFor(dev.lightbulb.On)
-			}
-			dev.lightbulb.On.HandleAction(req.GetBool())
-
-		case dev.lightbulb.Brightness.ID():
-			if req.GetInt() == nil {
-				return services.ErrIncorrectTypeFor(dev.lightbulb.Brightness)
-			}
-			dev.lightbulb.Brightness.HandleAction(req.GetInt())
-
-		case dev.lightbulb.ColorTemp.ID():
-			if req.GetInt() == nil {
-				return services.ErrIncorrectTypeFor(dev.lightbulb.ColorTemp)
-			}
-			dev.lightbulb.ColorTemp.HandleAction(req.GetInt())
-
-		case dev.lightbulb.Color.ID():
-			if req.GetColor() == nil {
-				return services.ErrIncorrectTypeFor(dev.lightbulb.Color)
-			}
-			dev.lightbulb.Color.HandleAction(req.GetColor())
-		}
-	}
-
-	return nil
 }
