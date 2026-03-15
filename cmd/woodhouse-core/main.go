@@ -143,6 +143,12 @@ func main() {
 			favoritesManager := core.NewFavoritesManager(store, deviceManager)
 			defer favoritesManager.Close()
 
+			groupManager, err := core.NewGroupManager(store, deviceManager)
+			if err != nil {
+				return fmt.Errorf("failed to create group manager: %s", err)
+			}
+			defer groupManager.Close()
+
 			userManager, err := core.NewUserManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create user manager: %s", err)
