@@ -254,11 +254,29 @@ func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID st
 }
 
 func (manager *DeviceManager) load() error {
+	// Migrate 'devices' to 'devices.json'.
 	if manager.store.Has("devices") {
+		manager.log.Infof(`migrating "devices" store to "devices.json"`)
+		data, err := manager.store.Get("devices")
+		if err != nil {
+			return err
+		}
+		err = manager.store.Set("devices.json", data)
+		if err != nil {
+			return err
+		}
+		manager.store.Del("devices")
+		if err != nil {
+			return err
+		}
+	}
+
+	// Read devices store.
+	if manager.store.Has("devices.json") {
 		manager.log.Debugf("loading...")
 
 		// Load it.
-		data, err := manager.store.Get("devices")
+		data, err := manager.store.Get("devices.json")
 		if err != nil {
 			return err
 		}
@@ -312,14 +330,16 @@ func (manager *DeviceManager) save() error {
 
 	// Encode it.
 	data := &bytes.Buffer{}
-	err := json.NewEncoder(data).Encode(config)
+	encoder := json.NewEncoder(data)
+	encoder.SetIndent("", "\t")
+	err := encoder.Encode(config)
 	// err := yaml.NewEncoder(data).Encode(config)
 	if err != nil {
 		return err
 	}
 
 	// Save it.
-	err = manager.store.Set("devices", data.Bytes())
+	err = manager.store.Set("devices.json", data.Bytes())
 	if err != nil {
 		return err
 	}
