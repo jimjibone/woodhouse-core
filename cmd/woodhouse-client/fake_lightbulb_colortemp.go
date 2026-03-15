@@ -34,7 +34,7 @@ func NewFakeLightbulbColorTemp(id string) *FakeLightbulbColorTemp {
 
 	// Set up the light service.
 	dev.lightbulb.On.OnAction(func(val bool) {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(2 * time.Second)
 		log.Infof("on set to %t", val)
 		dev.lightbulb.On.Set(val)
 	})
