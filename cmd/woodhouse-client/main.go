@@ -27,6 +27,10 @@ func main() {
 				Required: true,
 			},
 			&cli.BoolFlag{
+				Name:  "sim-sensors",
+				Usage: "simulate sensors",
+			},
+			&cli.BoolFlag{
 				Name:    "debug",
 				Aliases: []string{"v"},
 				Usage:   "enable debug logging",
@@ -63,7 +67,7 @@ func main() {
 				log.Fatalf("failed to add device: %s", err)
 			}
 
-			fake3 := NewFakePresence("fake3")
+			fake3 := NewFakePresence("fake3", args.Bool("sim-sensors"))
 			if err := client.AddDevice(fake3.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
