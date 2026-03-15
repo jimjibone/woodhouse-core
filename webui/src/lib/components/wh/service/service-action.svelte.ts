@@ -1,7 +1,7 @@
 import type { Value, ActionResponse } from '$lib/api/v1/clients/client_service_pb';
 import { ActionResponse_ActionStatus } from '$lib/api/v1/clients/client_service_pb';
 import { SendActionRequest } from '$lib/stores/requests';
-import { toast } from "svelte-sonner";
+import { toast } from 'svelte-sonner';
 
 class ServiceAction {
 	#deviceID: string;
@@ -15,14 +15,14 @@ class ServiceAction {
 	}
 
 	async send(vals: Value[]) {
-		let timeout = setTimeout(() => this.pending = true, 500);
+		let timeout = setTimeout(() => (this.pending = true), 500);
 		SendActionRequest(this.#deviceID, this.#serviceID, vals, (resp: ActionResponse) => {
 			clearTimeout(timeout);
 			this.pending = false;
 			if (resp.status >= ActionResponse_ActionStatus.TIMEOUT) {
-				console.error("action failed:", resp);
+				console.error('action failed:', resp);
 				this.error = Date.now();
-				toast.error("Action Failed", {
+				toast.error('Action Failed', {
 					description: resp.details
 				});
 			}
@@ -30,18 +30,22 @@ class ServiceAction {
 	}
 
 	async delayedSend(delayms: number, vals: Value[]) {
-		let timeout = setTimeout(() => this.pending = true, 500);
-		setTimeout(() => SendActionRequest(this.#deviceID, this.#serviceID, vals, (resp: ActionResponse) => {
-			clearTimeout(timeout);
-			this.pending = false;
-			if (resp.status >= ActionResponse_ActionStatus.TIMEOUT) {
-				console.error("action failed:", resp);
-				this.error = Date.now();
-				toast.error("Action Failed", {
-					description: resp.details
-				});
-			}
-		}), delayms);
+		let timeout = setTimeout(() => (this.pending = true), 500);
+		setTimeout(
+			() =>
+				SendActionRequest(this.#deviceID, this.#serviceID, vals, (resp: ActionResponse) => {
+					clearTimeout(timeout);
+					this.pending = false;
+					if (resp.status >= ActionResponse_ActionStatus.TIMEOUT) {
+						console.error('action failed:', resp);
+						this.error = Date.now();
+						toast.error('Action Failed', {
+							description: resp.details
+						});
+					}
+				}),
+			delayms
+		);
 	}
 }
 
