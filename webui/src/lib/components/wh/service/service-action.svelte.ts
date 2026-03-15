@@ -17,8 +17,10 @@ class ServiceAction {
 	async send(vals: Value[]) {
 		let timeout = setTimeout(() => (this.pending = true), 500);
 		SendActionRequest(this.#deviceID, this.#serviceID, vals, (resp: ActionResponse) => {
-			clearTimeout(timeout);
-			this.pending = false;
+			if (resp.status >= ActionResponse_ActionStatus.COMPLETE) {
+				clearTimeout(timeout);
+				this.pending = false;
+			}
 			if (resp.status >= ActionResponse_ActionStatus.TIMEOUT) {
 				console.error('action failed:', resp);
 				this.error = Date.now();
@@ -34,8 +36,10 @@ class ServiceAction {
 		setTimeout(
 			() =>
 				SendActionRequest(this.#deviceID, this.#serviceID, vals, (resp: ActionResponse) => {
-					clearTimeout(timeout);
-					this.pending = false;
+					if (resp.status >= ActionResponse_ActionStatus.COMPLETE) {
+						clearTimeout(timeout);
+						this.pending = false;
+					}
 					if (resp.status >= ActionResponse_ActionStatus.TIMEOUT) {
 						console.error('action failed:', resp);
 						this.error = Date.now();
