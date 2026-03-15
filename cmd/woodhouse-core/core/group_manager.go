@@ -63,21 +63,6 @@ func NewGroupManager(store stores.Store, deviceManager *DeviceManager) (*GroupMa
 		return nil, fmt.Errorf("failed to load state: %s", err)
 	}
 
-	// TODO: remove temporary fake group
-	if len(manager.groups) == 0 {
-		group1 := &Group{
-			GroupID:   "example-group",
-			ServiceID: "lightbulb",
-			Name:      "Example Group",
-			Type:      clientsapi.Service_LIGHTBULB,
-			Members: []GroupMember{
-				{DeviceID: "fake1", ServiceID: "lightbulb"},
-				{DeviceID: "fake1a", ServiceID: "lightbulb"},
-			},
-		}
-		manager.groups[group1.GroupID] = group1
-	}
-
 	// Save the state if changed.
 	err = manager.saveIfChanged()
 	if err != nil {
@@ -202,8 +187,10 @@ func (manager *GroupManager) save() error {
 	})
 
 	// Encode it.
-	data := bytes.Buffer{}
-	err := json.NewEncoder(&data).Encode(config)
+	data := &bytes.Buffer{}
+	encoder := json.NewEncoder(data)
+	encoder.SetIndent("", "\t")
+	err := encoder.Encode(config)
 	if err != nil {
 		return err
 	}
