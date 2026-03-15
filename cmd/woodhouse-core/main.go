@@ -140,10 +140,7 @@ func main() {
 			}
 			defer deviceManager.Close()
 
-			favoritesManager, err := core.NewFavoritesManager(store, deviceManager)
-			if err != nil {
-				return fmt.Errorf("failed to create favorites manager: %s", err)
-			}
+			favoritesManager := core.NewFavoritesManager(store, deviceManager)
 			defer favoritesManager.Close()
 
 			userManager, err := core.NewUserManager(store)

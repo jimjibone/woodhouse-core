@@ -24,7 +24,7 @@ type FavoriteUpdate struct {
 	Removed *FavoriteID
 }
 
-func NewFavoritesManager(store stores.Store, deviceManager *DeviceManager) (*FavoritesManager, error) {
+func NewFavoritesManager(store stores.Store, deviceManager *DeviceManager) *FavoritesManager {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &FavoritesManager{
 		log:           log.NewContext(log.DefaultLogger, "favorites-manager", log.DebugLevel),
@@ -37,7 +37,7 @@ func NewFavoritesManager(store stores.Store, deviceManager *DeviceManager) (*Fav
 
 	manager.wg.Add(1)
 	go manager.run(ctx)
-	return manager, nil
+	return manager
 }
 
 func (manager *FavoritesManager) Close() {
@@ -134,7 +134,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 				manager.publisher.Send(lis, FavoriteUpdate{Updated: fave.Clone()})
 			}
 
-			// Send and empty update to indicate the end of the initial list.
+			// Send an empty update to indicate the end of the initial list.
 			manager.publisher.Send(lis, FavoriteUpdate{})
 		}
 	}
