@@ -4,6 +4,7 @@ import (
 	"time"
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-4/apitools"
 	"github.com/jimjibone/woodhouse-4/log"
 	"google.golang.org/protobuf/proto"
 )
@@ -73,7 +74,7 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 						favorite.Online.Set(attr.GetBool().GetValue())
 
 					case "last_seen":
-						attrTime := time.Unix(attr.GetTime().GetSeconds(), int64(attr.GetTime().GetNanos()))
+						attrTime := apitools.AttributeToTime(attr.GetTime())
 						if !favorite.LastSeen.Get().Equal(attrTime) {
 							changed = true
 						}
