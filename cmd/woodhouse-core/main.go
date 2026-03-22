@@ -164,7 +164,7 @@ func main() {
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, userManager, clientManager, clientJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, clientJwtManager)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())

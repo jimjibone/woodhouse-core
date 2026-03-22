@@ -19,7 +19,7 @@ type Group struct {
 	Members   []GroupMember                  `json:"members"`
 	online    bool
 	lastSeen  time.Time
-	attrs     map[string]*clientsapi.Attribute // key = id
+	// attrs     map[string]*clientsapi.Attribute // key = id
 }
 
 type GroupMember struct {
@@ -27,19 +27,64 @@ type GroupMember struct {
 	ServiceID string `json:"service_id"`
 	online    bool
 	lastSeen  time.Time
-	attrs     map[string]*clientsapi.Attribute
+	// attrs     map[string]*clientsapi.Attribute
+}
+
+func NewGroup(groupID, serviceID, name string, typ clientsapi.Service_ServiceType) *Group {
+	return &Group{
+		GroupID:   groupID,
+		ServiceID: serviceID,
+		Name:      name,
+		Type:      typ,
+		Members:   []GroupMember{},
+	}
 }
 
 func (group *Group) String() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "group_id:%q, srv_id:%q, name:%q, type:%s, members:%d, attrs:%d", group.GroupID, group.ServiceID, group.Name, group.Type, len(group.Members), len(group.attrs))
+	fmt.Fprintf(&b, "group_id:%q, srv_id:%q, name:%q, type:%s, members:%d", group.GroupID, group.ServiceID, group.Name, group.Type, len(group.Members))
+	// fmt.Fprintf(&b, "group_id:%q, srv_id:%q, name:%q, type:%s, members:%d, attrs:%d", group.GroupID, group.ServiceID, group.Name, group.Type, len(group.Members), len(group.attrs))
 	for i, member := range group.Members {
 		fmt.Fprintf(&b, "\n  %d: device_id:%q, service_id:%q", i, member.DeviceID, member.ServiceID)
 	}
-	for _, attr := range group.attrs {
-		fmt.Fprintf(&b, "\n  attr: %s", attr.String())
-	}
+	// for _, attr := range group.attrs {
+	// 	fmt.Fprintf(&b, "\n  attr: %s", attr.String())
+	// }
 	return b.String()
+}
+
+func (group *Group) Clone() *Group {
+	grp := &Group{
+		GroupID:   group.GroupID,
+		ServiceID: group.ServiceID,
+		Name:      group.Name,
+		Type:      group.Type,
+		Members:   []GroupMember{},
+	}
+	for _, member := range group.Members {
+		grp.Members = append(grp.Members, GroupMember{
+			DeviceID:  member.DeviceID,
+			ServiceID: member.ServiceID,
+		})
+	}
+	return grp
+}
+
+func (group *Group) Pb() *clientsapi.Group {
+	pb := &clientsapi.Group{
+		Id:        group.GroupID,
+		ServiceId: group.ServiceID,
+		Name:      group.Name,
+		Type:      group.Type,
+		Members:   []*clientsapi.GroupMember{},
+	}
+	for _, member := range group.Members {
+		pb.Members = append(pb.Members, &clientsapi.GroupMember{
+			DeviceId:  member.DeviceID,
+			ServiceId: member.ServiceID,
+		})
+	}
+	return pb
 }
 
 // Update accepts service updates from any device and may update the group if
@@ -47,9 +92,9 @@ func (group *Group) String() string {
 // group's update as a clientsapi.Device, or nil if there was no update.
 func (group *Group) Update(log *log.Context, deviceID string, srv *clientsapi.Service) *clientsapi.Device {
 	// Make the group attrs map if not already done.
-	if group.attrs == nil {
-		group.attrs = make(map[string]*clientsapi.Attribute)
-	}
+	// if group.attrs == nil {
+	// 	group.attrs = make(map[string]*clientsapi.Attribute)
+	// }
 
 	var update *clientsapi.Device
 	addAttributeUpdate := func(attrUpdate *clientsapi.Attribute) {
@@ -87,16 +132,16 @@ func (group *Group) Update(log *log.Context, deviceID string, srv *clientsapi.Se
 			// Update attributes in the member.
 			for _, next := range srv.Attrs {
 				// Make the member attrs map if not already done.
-				if member.attrs == nil {
-					member.attrs = make(map[string]*clientsapi.Attribute)
-				}
+				// if member.attrs == nil {
+				// 	member.attrs = make(map[string]*clientsapi.Attribute)
+				// }
 
 				// Add or update the attribute in the member.
-				member.attrs[next.GetId()] = proto.Clone(next).(*clientsapi.Attribute)
+				// member.attrs[next.GetId()] = proto.Clone(next).(*clientsapi.Attribute)
 
 				// Calculate the 'merged' attribute value, which for now is just the latest.
 				attrUpdate := proto.Clone(next).(*clientsapi.Attribute)
-				group.attrs[next.GetId()] = attrUpdate
+				// group.attrs[next.GetId()] = attrUpdate
 
 				// Output the changes to the group.
 				addAttributeUpdate(attrUpdate)
@@ -197,23 +242,6 @@ func (group *Group) UpdateOnline(log *log.Context, deviceID string, srv *clients
 
 	// Return the update if any.
 	return update
-}
-
-func (group *Group) Clone() *Group {
-	grp := &Group{
-		GroupID:   group.GroupID,
-		ServiceID: group.ServiceID,
-		Name:      group.Name,
-		Type:      group.Type,
-		Members:   []GroupMember{},
-	}
-	for _, member := range group.Members {
-		grp.Members = append(grp.Members, GroupMember{
-			DeviceID:  member.DeviceID,
-			ServiceID: member.ServiceID,
-		})
-	}
-	return grp
 }
 
 func (group *Group) HandleRequest(req *clientsapi.ActionRequest, deviceManager *DeviceManager) {

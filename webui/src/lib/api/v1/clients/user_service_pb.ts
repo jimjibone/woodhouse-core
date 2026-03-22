@@ -6,15 +6,17 @@ import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobu
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Client, ClientSchema, PairingRequest } from "./client_pb";
 import { file_clients_client } from "./client_pb";
-import type { ActionRequestSchema, ActionResponseSchema, DeviceSchema, ImageRequestSchema, ImageResponseSchema, Service, TimeValue } from "./client_service_pb";
+import type { ActionRequestSchema, ActionResponseSchema, DeviceSchema, ImageRequestSchema, ImageResponseSchema, Service, Service_ServiceType, TimeValue } from "./client_service_pb";
 import { file_clients_client_service } from "./client_service_pb";
+import type { Group, GroupMember } from "./group_pb";
+import { file_clients_group } from "./group_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file clients/user_service.proto.
  */
 export const file_clients_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldENsaWVudHNSZXF1ZXN0IhYKFENsaWVudHNTdHJlYW1SZXF1ZXN0ImEKFUNsaWVudHNTdHJlYW1SZXNwb25zZRIwCgZjbGllbnQYASABKAsyIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50EhYKDmNsaWVudF9yZW1vdmVkGAIgASgJIh4KHFBhaXJpbmdSZXF1ZXN0c1N0cmVhbVJlcXVlc3QiewodUGFpcmluZ1JlcXVlc3RzU3RyZWFtUmVzcG9uc2USQQoPcGFpcmluZ19yZXF1ZXN0GAEgASgLMigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJpbmdSZXF1ZXN0EhcKD3BhaXJpbmdfcmVtb3ZlZBgCIAEoCSJAChVBcHByb3ZlUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEhQKDHBhaXJpbmdfY29kZRgCIAEoCSIYChZBcHByb3ZlUGFpcmluZ1Jlc3BvbnNlIicKEkRlbnlQYWlyaW5nUmVxdWVzdBIRCgljbGllbnRfaWQYASABKAkiFQoTRGVueVBhaXJpbmdSZXNwb25zZSIoChNVbnBhaXJDbGllbnRSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCSIWChRVbnBhaXJDbGllbnRSZXNwb25zZSIoChNGb3JnZXRDbGllbnRSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCSIWChRGb3JnZXRDbGllbnRSZXNwb25zZSITChFHZXREZXZpY2VzUmVxdWVzdCIyChREZXZpY2VzU3RyZWFtUmVxdWVzdBIaChJpbmNsdWRlX2RldmljZV9pZHMYASADKAkiugIKDURldmljZVNlcnZpY2USCwoDa2V5GAEgASgJEhEKCWRldmljZV9pZBgCIAEoCRISCgpmdWxsX3N0YXRlGAMgASgIEhgKC2RldmljZV9uYW1lGAUgASgJSACIAQESEwoGb25saW5lGAcgASgISAGIAQESOwoJbGFzdF9zZWVuGAkgASgLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlRpbWVWYWx1ZUgCiAEBEhoKDWJhdHRlcnlfbGV2ZWwYCyABKANIA4gBARIyCgdzZXJ2aWNlGAwgASgLMiEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNlcnZpY2VCDgoMX2RldmljZV9uYW1lQgkKB19vbmxpbmVCDAoKX2xhc3Rfc2VlbkIQCg5fYmF0dGVyeV9sZXZlbCIYChZGYXZvcml0ZXNTdHJlYW1SZXF1ZXN0Im8KF0Zhdm9yaXRlc1N0cmVhbVJlc3BvbnNlEj8KDmRldmljZV9zZXJ2aWNlGAEgASgLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZVNlcnZpY2USEwoLa2V5X3JlbW92ZWQYAiABKAkiOwoSQWRkRmF2b3JpdGVSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJIhUKE0FkZEZhdm9yaXRlUmVzcG9uc2UiPgoVUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJIhgKFlJlbW92ZUZhdm9yaXRlUmVzcG9uc2UiFAoSVXNlcnNTdHJlYW1SZXF1ZXN0IlkKE1VzZXJzU3RyZWFtUmVzcG9uc2USLAoEdXNlchgBIAEoCzIeLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyEhQKDHVzZXJfcmVtb3ZlZBgCIAEoCSKAAQoOQWRkVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkSEAoIZnVsbG5hbWUYAiABKAkSMAoEcm9sZRgDIAEoDjIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUm9sZRIYChBpbml0aWFsX3Bhc3N3b3JkGAQgASgJIhEKD0FkZFVzZXJSZXNwb25zZSKtAQoRVXBkYXRlVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkSFQoIZnVsbG5hbWUYAiABKAlIAIgBARI1CgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlSAGIAQESFQoIcGFzc3dvcmQYBCABKAlIAogBAUILCglfZnVsbG5hbWVCBwoFX3JvbGVCCwoJX3Bhc3N3b3JkIhQKElVwZGF0ZVVzZXJSZXNwb25zZSIlChFSZW1vdmVVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCSIUChJSZW1vdmVVc2VyUmVzcG9uc2UiXAoEVXNlchIQCgh1c2VybmFtZRgBIAEoCRIQCghmdWxsbmFtZRgCIAEoCRIwCgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlKkwKCFVzZXJSb2xlEhcKE1VTRVJfUk9MRV9VTkRFRklORUQQABITCg9VU0VSX1JPTEVfQURNSU4QARISCg5VU0VSX1JPTEVfVVNFUhACMrUPCgtVc2VyU2VydmljZRJdCgpHZXRDbGllbnRzEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdldENsaWVudHNSZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNsaWVudDABEnIKDUNsaWVudHNTdHJlYW0SLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50c1N0cmVhbVJlcXVlc3QaLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50c1N0cmVhbVJlc3BvbnNlMAESigEKFVBhaXJpbmdSZXF1ZXN0c1N0cmVhbRI2Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyaW5nUmVxdWVzdHNTdHJlYW1SZXF1ZXN0Gjcud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJpbmdSZXF1ZXN0c1N0cmVhbVJlc3BvbnNlMAEScwoOQXBwcm92ZVBhaXJpbmcSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQXBwcm92ZVBhaXJpbmdSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFwcHJvdmVQYWlyaW5nUmVzcG9uc2USagoLRGVueVBhaXJpbmcSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGVueVBhaXJpbmdSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRlbnlQYWlyaW5nUmVzcG9uc2USbQoMVW5wYWlyQ2xpZW50Ei0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVucGFpckNsaWVudFJlcXVlc3QaLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVW5wYWlyQ2xpZW50UmVzcG9uc2USbQoMRm9yZ2V0Q2xpZW50Ei0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZvcmdldENsaWVudFJlcXVlc3QaLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRm9yZ2V0Q2xpZW50UmVzcG9uc2USXQoKR2V0RGV2aWNlcxIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXREZXZpY2VzUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJjCg1EZXZpY2VzU3RyZWFtEi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZXNTdHJlYW1SZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZTABEngKD0Zhdm9yaXRlc1N0cmVhbRIwLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXF1ZXN0GjEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZhdm9yaXRlc1N0cmVhbVJlc3BvbnNlMAESagoLQWRkRmF2b3JpdGUSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkRmF2b3JpdGVSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVzcG9uc2UScwoOUmVtb3ZlRmF2b3JpdGUSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVzcG9uc2USYQoKU2VuZEFjdGlvbhInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlc3BvbnNlMAESZQoQU2VuZEltYWdlUmVxdWVzdBImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlcXVlc3QaJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXNwb25zZTABEmwKC1VzZXJzU3RyZWFtEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJzU3RyZWFtUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2Vyc1N0cmVhbVJlc3BvbnNlMAESXgoHQWRkVXNlchIoLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRVc2VyUmVxdWVzdBopLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRVc2VyUmVzcG9uc2USZwoKVXBkYXRlVXNlchIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VcGRhdGVVc2VyUmVxdWVzdBosLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VcGRhdGVVc2VyUmVzcG9uc2USZwoKUmVtb3ZlVXNlchIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVVc2VyUmVxdWVzdBosLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVVc2VyUmVzcG9uc2VCP1o9Z2l0aHViLmNvbS9qaW1qaWJvbmUvd29vZGhvdXNlLTQvYXBpL2dvL3YxL2NsaWVudHM7Y2xpZW50c2FwaWIGcHJvdG8z", [file_clients_client, file_clients_client_service]);
+  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldENsaWVudHNSZXF1ZXN0IhYKFENsaWVudHNTdHJlYW1SZXF1ZXN0ImEKFUNsaWVudHNTdHJlYW1SZXNwb25zZRIwCgZjbGllbnQYASABKAsyIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50EhYKDmNsaWVudF9yZW1vdmVkGAIgASgJIh4KHFBhaXJpbmdSZXF1ZXN0c1N0cmVhbVJlcXVlc3QiewodUGFpcmluZ1JlcXVlc3RzU3RyZWFtUmVzcG9uc2USQQoPcGFpcmluZ19yZXF1ZXN0GAEgASgLMigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJpbmdSZXF1ZXN0EhcKD3BhaXJpbmdfcmVtb3ZlZBgCIAEoCSJAChVBcHByb3ZlUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEhQKDHBhaXJpbmdfY29kZRgCIAEoCSIYChZBcHByb3ZlUGFpcmluZ1Jlc3BvbnNlIicKEkRlbnlQYWlyaW5nUmVxdWVzdBIRCgljbGllbnRfaWQYASABKAkiFQoTRGVueVBhaXJpbmdSZXNwb25zZSIoChNVbnBhaXJDbGllbnRSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCSIWChRVbnBhaXJDbGllbnRSZXNwb25zZSIoChNGb3JnZXRDbGllbnRSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCSIWChRGb3JnZXRDbGllbnRSZXNwb25zZSITChFHZXREZXZpY2VzUmVxdWVzdCIyChREZXZpY2VzU3RyZWFtUmVxdWVzdBIaChJpbmNsdWRlX2RldmljZV9pZHMYASADKAkiugIKDURldmljZVNlcnZpY2USCwoDa2V5GAEgASgJEhEKCWRldmljZV9pZBgCIAEoCRISCgpmdWxsX3N0YXRlGAMgASgIEhgKC2RldmljZV9uYW1lGAUgASgJSACIAQESEwoGb25saW5lGAcgASgISAGIAQESOwoJbGFzdF9zZWVuGAkgASgLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlRpbWVWYWx1ZUgCiAEBEhoKDWJhdHRlcnlfbGV2ZWwYCyABKANIA4gBARIyCgdzZXJ2aWNlGAwgASgLMiEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNlcnZpY2VCDgoMX2RldmljZV9uYW1lQgkKB19vbmxpbmVCDAoKX2xhc3Rfc2VlbkIQCg5fYmF0dGVyeV9sZXZlbCIYChZGYXZvcml0ZXNTdHJlYW1SZXF1ZXN0Im8KF0Zhdm9yaXRlc1N0cmVhbVJlc3BvbnNlEj8KDmRldmljZV9zZXJ2aWNlGAEgASgLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZVNlcnZpY2USEwoLa2V5X3JlbW92ZWQYAiABKAkiOwoSQWRkRmF2b3JpdGVSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJIhUKE0FkZEZhdm9yaXRlUmVzcG9uc2UiPgoVUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJIhgKFlJlbW92ZUZhdm9yaXRlUmVzcG9uc2UiFAoSR3JvdXBTdHJlYW1SZXF1ZXN0ImAKE0dyb3VwU3RyZWFtUmVzcG9uc2USNQoMZ3JvdXBfdXBkYXRlGAEgASgLMh8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3VwEhIKCnJlbW92ZWRfaWQYAiABKAkilAEKD0FkZEdyb3VwUmVxdWVzdBIMCgRuYW1lGAEgASgJEjsKBHR5cGUYAiABKA4yLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZS5TZXJ2aWNlVHlwZRI2CgdtZW1iZXJzGAMgAygLMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3VwTWVtYmVyIkIKEEFkZEdyb3VwUmVzcG9uc2USLgoFZ3JvdXAYASABKAsyHy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR3JvdXAidAoSVXBkYXRlR3JvdXBSZXF1ZXN0EgoKAmlkGAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARI2CgdtZW1iZXJzGAMgAygLMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3VwTWVtYmVyQgcKBV9uYW1lIhUKE1VwZGF0ZUdyb3VwUmVzcG9uc2UiIAoSUmVtb3ZlR3JvdXBSZXF1ZXN0EgoKAmlkGAEgASgJIhUKE1JlbW92ZUdyb3VwUmVzcG9uc2UiFAoSVXNlcnNTdHJlYW1SZXF1ZXN0IlkKE1VzZXJzU3RyZWFtUmVzcG9uc2USLAoEdXNlchgBIAEoCzIeLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyEhQKDHVzZXJfcmVtb3ZlZBgCIAEoCSKAAQoOQWRkVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkSEAoIZnVsbG5hbWUYAiABKAkSMAoEcm9sZRgDIAEoDjIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUm9sZRIYChBpbml0aWFsX3Bhc3N3b3JkGAQgASgJIhEKD0FkZFVzZXJSZXNwb25zZSKtAQoRVXBkYXRlVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkSFQoIZnVsbG5hbWUYAiABKAlIAIgBARI1CgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlSAGIAQESFQoIcGFzc3dvcmQYBCABKAlIAogBAUILCglfZnVsbG5hbWVCBwoFX3JvbGVCCwoJX3Bhc3N3b3JkIhQKElVwZGF0ZVVzZXJSZXNwb25zZSIlChFSZW1vdmVVc2VyUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCSIUChJSZW1vdmVVc2VyUmVzcG9uc2UiXAoEVXNlchIQCgh1c2VybmFtZRgBIAEoCRIQCghmdWxsbmFtZRgCIAEoCRIwCgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlKkwKCFVzZXJSb2xlEhcKE1VTRVJfUk9MRV9VTkRFRklORUQQABITCg9VU0VSX1JPTEVfQURNSU4QARISCg5VU0VSX1JPTEVfVVNFUhACMt4SCgtVc2VyU2VydmljZRJdCgpHZXRDbGllbnRzEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdldENsaWVudHNSZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNsaWVudDABEnIKDUNsaWVudHNTdHJlYW0SLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50c1N0cmVhbVJlcXVlc3QaLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50c1N0cmVhbVJlc3BvbnNlMAESigEKFVBhaXJpbmdSZXF1ZXN0c1N0cmVhbRI2Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyaW5nUmVxdWVzdHNTdHJlYW1SZXF1ZXN0Gjcud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJpbmdSZXF1ZXN0c1N0cmVhbVJlc3BvbnNlMAEScwoOQXBwcm92ZVBhaXJpbmcSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQXBwcm92ZVBhaXJpbmdSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFwcHJvdmVQYWlyaW5nUmVzcG9uc2USagoLRGVueVBhaXJpbmcSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGVueVBhaXJpbmdSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRlbnlQYWlyaW5nUmVzcG9uc2USbQoMVW5wYWlyQ2xpZW50Ei0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVucGFpckNsaWVudFJlcXVlc3QaLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVW5wYWlyQ2xpZW50UmVzcG9uc2USbQoMRm9yZ2V0Q2xpZW50Ei0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZvcmdldENsaWVudFJlcXVlc3QaLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRm9yZ2V0Q2xpZW50UmVzcG9uc2USXQoKR2V0RGV2aWNlcxIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXREZXZpY2VzUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UwARJjCg1EZXZpY2VzU3RyZWFtEi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZXNTdHJlYW1SZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZTABEngKD0Zhdm9yaXRlc1N0cmVhbRIwLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXF1ZXN0GjEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZhdm9yaXRlc1N0cmVhbVJlc3BvbnNlMAESagoLQWRkRmF2b3JpdGUSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkRmF2b3JpdGVSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVzcG9uc2UScwoOUmVtb3ZlRmF2b3JpdGUSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRmF2b3JpdGVSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVzcG9uc2USbAoLR3JvdXBTdHJlYW0SLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR3JvdXBTdHJlYW1SZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3VwU3RyZWFtUmVzcG9uc2UwARJhCghBZGRHcm91cBIpLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRHcm91cFJlcXVlc3QaKi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkR3JvdXBSZXNwb25zZRJqCgtVcGRhdGVHcm91cBIsLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VcGRhdGVHcm91cFJlcXVlc3QaLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlR3JvdXBSZXNwb25zZRJqCgtSZW1vdmVHcm91cBIsLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVHcm91cFJlcXVlc3QaLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlR3JvdXBSZXNwb25zZRJhCgpTZW5kQWN0aW9uEicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlcXVlc3QaKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVzcG9uc2UwARJlChBTZW5kSW1hZ2VSZXF1ZXN0EiYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVxdWVzdBonLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlc3BvbnNlMAESbAoLVXNlcnNTdHJlYW0SLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlcnNTdHJlYW1SZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJzU3RyZWFtUmVzcG9uc2UwARJeCgdBZGRVc2VyEigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFVzZXJSZXF1ZXN0Gikud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFVzZXJSZXNwb25zZRJnCgpVcGRhdGVVc2VyEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVVzZXJSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVVzZXJSZXNwb25zZRJnCgpSZW1vdmVVc2VyEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVVzZXJSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVVzZXJSZXNwb25zZUI/Wj1naXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtNC9hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM", [file_clients_client, file_clients_client_service, file_clients_group]);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetClientsRequest
@@ -445,6 +447,165 @@ export const RemoveFavoriteResponseSchema: GenMessage<RemoveFavoriteResponse> = 
   messageDesc(file_clients_user_service, 21);
 
 /**
+ * @generated from message woodhouse.api.v1.clients.GroupStreamRequest
+ */
+export type GroupStreamRequest = Message<"woodhouse.api.v1.clients.GroupStreamRequest"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.GroupStreamRequest.
+ * Use `create(GroupStreamRequestSchema)` to create a new message.
+ */
+export const GroupStreamRequestSchema: GenMessage<GroupStreamRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 22);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.GroupStreamResponse
+ */
+export type GroupStreamResponse = Message<"woodhouse.api.v1.clients.GroupStreamResponse"> & {
+  /**
+   * Optional: A Group update.
+   *
+   * @generated from field: woodhouse.api.v1.clients.Group group_update = 1;
+   */
+  groupUpdate?: Group;
+
+  /**
+   * Optional: Indicates the group ID of a Group that was removed.
+   *
+   * @generated from field: string removed_id = 2;
+   */
+  removedId: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.GroupStreamResponse.
+ * Use `create(GroupStreamResponseSchema)` to create a new message.
+ */
+export const GroupStreamResponseSchema: GenMessage<GroupStreamResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 23);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AddGroupRequest
+ */
+export type AddGroupRequest = Message<"woodhouse.api.v1.clients.AddGroupRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.Service.ServiceType type = 2;
+   */
+  type: Service_ServiceType;
+
+  /**
+   * @generated from field: repeated woodhouse.api.v1.clients.GroupMember members = 3;
+   */
+  members: GroupMember[];
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.AddGroupRequest.
+ * Use `create(AddGroupRequestSchema)` to create a new message.
+ */
+export const AddGroupRequestSchema: GenMessage<AddGroupRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 24);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AddGroupResponse
+ */
+export type AddGroupResponse = Message<"woodhouse.api.v1.clients.AddGroupResponse"> & {
+  /**
+   * The added group, including the generated ID.
+   *
+   * @generated from field: woodhouse.api.v1.clients.Group group = 1;
+   */
+  group?: Group;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.AddGroupResponse.
+ * Use `create(AddGroupResponseSchema)` to create a new message.
+ */
+export const AddGroupResponseSchema: GenMessage<AddGroupResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 25);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.UpdateGroupRequest
+ */
+export type UpdateGroupRequest = Message<"woodhouse.api.v1.clients.UpdateGroupRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Optional: If not set, the name will not be updated.
+   *
+   * @generated from field: optional string name = 2;
+   */
+  name?: string;
+
+  /**
+   * The full list of members for the group. If empty, the members will not be updated.
+   *
+   * @generated from field: repeated woodhouse.api.v1.clients.GroupMember members = 3;
+   */
+  members: GroupMember[];
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.UpdateGroupRequest.
+ * Use `create(UpdateGroupRequestSchema)` to create a new message.
+ */
+export const UpdateGroupRequestSchema: GenMessage<UpdateGroupRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 26);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.UpdateGroupResponse
+ */
+export type UpdateGroupResponse = Message<"woodhouse.api.v1.clients.UpdateGroupResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.UpdateGroupResponse.
+ * Use `create(UpdateGroupResponseSchema)` to create a new message.
+ */
+export const UpdateGroupResponseSchema: GenMessage<UpdateGroupResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 27);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveGroupRequest
+ */
+export type RemoveGroupRequest = Message<"woodhouse.api.v1.clients.RemoveGroupRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.RemoveGroupRequest.
+ * Use `create(RemoveGroupRequestSchema)` to create a new message.
+ */
+export const RemoveGroupRequestSchema: GenMessage<RemoveGroupRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 28);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.RemoveGroupResponse
+ */
+export type RemoveGroupResponse = Message<"woodhouse.api.v1.clients.RemoveGroupResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.RemoveGroupResponse.
+ * Use `create(RemoveGroupResponseSchema)` to create a new message.
+ */
+export const RemoveGroupResponseSchema: GenMessage<RemoveGroupResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 29);
+
+/**
  * @generated from message woodhouse.api.v1.clients.UsersStreamRequest
  */
 export type UsersStreamRequest = Message<"woodhouse.api.v1.clients.UsersStreamRequest"> & {
@@ -455,7 +616,7 @@ export type UsersStreamRequest = Message<"woodhouse.api.v1.clients.UsersStreamRe
  * Use `create(UsersStreamRequestSchema)` to create a new message.
  */
 export const UsersStreamRequestSchema: GenMessage<UsersStreamRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 22);
+  messageDesc(file_clients_user_service, 30);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UsersStreamResponse
@@ -481,7 +642,7 @@ export type UsersStreamResponse = Message<"woodhouse.api.v1.clients.UsersStreamR
  * Use `create(UsersStreamResponseSchema)` to create a new message.
  */
 export const UsersStreamResponseSchema: GenMessage<UsersStreamResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 23);
+  messageDesc(file_clients_user_service, 31);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddUserRequest
@@ -513,7 +674,7 @@ export type AddUserRequest = Message<"woodhouse.api.v1.clients.AddUserRequest"> 
  * Use `create(AddUserRequestSchema)` to create a new message.
  */
 export const AddUserRequestSchema: GenMessage<AddUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 24);
+  messageDesc(file_clients_user_service, 32);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddUserResponse
@@ -526,7 +687,7 @@ export type AddUserResponse = Message<"woodhouse.api.v1.clients.AddUserResponse"
  * Use `create(AddUserResponseSchema)` to create a new message.
  */
 export const AddUserResponseSchema: GenMessage<AddUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 25);
+  messageDesc(file_clients_user_service, 33);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateUserRequest
@@ -558,7 +719,7 @@ export type UpdateUserRequest = Message<"woodhouse.api.v1.clients.UpdateUserRequ
  * Use `create(UpdateUserRequestSchema)` to create a new message.
  */
 export const UpdateUserRequestSchema: GenMessage<UpdateUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 26);
+  messageDesc(file_clients_user_service, 34);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateUserResponse
@@ -571,7 +732,7 @@ export type UpdateUserResponse = Message<"woodhouse.api.v1.clients.UpdateUserRes
  * Use `create(UpdateUserResponseSchema)` to create a new message.
  */
 export const UpdateUserResponseSchema: GenMessage<UpdateUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 27);
+  messageDesc(file_clients_user_service, 35);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveUserRequest
@@ -588,7 +749,7 @@ export type RemoveUserRequest = Message<"woodhouse.api.v1.clients.RemoveUserRequ
  * Use `create(RemoveUserRequestSchema)` to create a new message.
  */
 export const RemoveUserRequestSchema: GenMessage<RemoveUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 28);
+  messageDesc(file_clients_user_service, 36);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveUserResponse
@@ -601,7 +762,7 @@ export type RemoveUserResponse = Message<"woodhouse.api.v1.clients.RemoveUserRes
  * Use `create(RemoveUserResponseSchema)` to create a new message.
  */
 export const RemoveUserResponseSchema: GenMessage<RemoveUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 29);
+  messageDesc(file_clients_user_service, 37);
 
 /**
  * @generated from message woodhouse.api.v1.clients.User
@@ -628,7 +789,7 @@ export type User = Message<"woodhouse.api.v1.clients.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 30);
+  messageDesc(file_clients_user_service, 38);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.UserRole
@@ -792,6 +953,44 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof RemoveFavoriteRequestSchema;
     output: typeof RemoveFavoriteResponseSchema;
+  },
+  /**
+   * Get a stream of Group updates for groups. The first batch of replies will
+   * be the current state of the group infos, followed by updates when they
+   * occur. The stream also includes a 10 second heartbeat (an empty response)
+   * which should be ignored, but can be used to monitor the stream for
+   * disconnects.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.GroupStream
+   */
+  groupStream: {
+    methodKind: "server_streaming";
+    input: typeof GroupStreamRequestSchema;
+    output: typeof GroupStreamResponseSchema;
+  },
+  /**
+   * @generated from rpc woodhouse.api.v1.clients.UserService.AddGroup
+   */
+  addGroup: {
+    methodKind: "unary";
+    input: typeof AddGroupRequestSchema;
+    output: typeof AddGroupResponseSchema;
+  },
+  /**
+   * @generated from rpc woodhouse.api.v1.clients.UserService.UpdateGroup
+   */
+  updateGroup: {
+    methodKind: "unary";
+    input: typeof UpdateGroupRequestSchema;
+    output: typeof UpdateGroupResponseSchema;
+  },
+  /**
+   * @generated from rpc woodhouse.api.v1.clients.UserService.RemoveGroup
+   */
+  removeGroup: {
+    methodKind: "unary";
+    input: typeof RemoveGroupRequestSchema;
+    output: typeof RemoveGroupResponseSchema;
   },
   /**
    * Send an action to a device service.

@@ -10,6 +10,8 @@ import (
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/woodhouse-4/shared/random"
+	"github.com/jimjibone/woodhouse-4/wh/v1/devices/services"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -19,16 +21,18 @@ type UserService struct {
 	log              *log.Context
 	deviceManager    *core.DeviceManager
 	favoritesManager *core.FavoritesManager
+	groupManager     *core.GroupManager
 	userManager      *core.UserManager
 	clientManager    *core.ClientManager
 	clientJwt        *clients.JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, userManager *core.UserManager, clientManager *core.ClientManager, clientJwt *clients.JWTManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, userManager *core.UserManager, clientManager *core.ClientManager, clientJwt *clients.JWTManager) *UserService {
 	service := &UserService{
 		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:    deviceManager,
 		favoritesManager: favoritesManager,
+		groupManager:     groupManager,
 		userManager:      userManager,
 		clientManager:    clientManager,
 		clientJwt:        clientJwt,
@@ -412,6 +416,130 @@ func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.
 	}
 	service.deviceManager.SetFavorite(req.DeviceId, req.ServiceId, false)
 	return &clientsapi.RemoveFavoriteResponse{}, nil
+}
+
+func (service *UserService) GroupStream(req *clientsapi.GroupStreamRequest, server clientsapi.UserService_GroupStreamServer) error {
+	service.log.Infof("group stream started")
+	defer service.log.Infof("group stream finished")
+
+	lis := service.groupManager.GetListener()
+	defer lis.Close()
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			// Send an empty message as a keepalive for the client.
+			err := server.Send(&clientsapi.GroupStreamResponse{})
+			if err != nil {
+				service.log.Errorf("failed to send group stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case update := <-lis.Sub():
+			msg := &clientsapi.GroupStreamResponse{}
+			if update.Updated != nil {
+				msg.GroupUpdate = update.Updated.Pb()
+			}
+			if update.Removed != nil {
+				msg.RemovedId = *update.Removed
+			}
+			err := server.Send(msg)
+			if err != nil {
+				service.log.Errorf("failed to send group stream update: %s", err)
+				return status.Errorf(codes.Internal, "failed to send update")
+			}
+		}
+	}
+}
+
+func (service *UserService) AddGroup(ctx context.Context, req *clientsapi.AddGroupRequest) (*clientsapi.AddGroupResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to add groups")
+	}
+	if req.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name not defined")
+	}
+	if req.GetType() == clientsapi.Service_UNDEFINED {
+		return nil, status.Errorf(codes.InvalidArgument, "type not defined")
+	}
+	// Determine the service ID based on the type.
+	serviceID := services.DefaultServiceID(req.GetType())
+	if serviceID == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "type not supported")
+	}
+	// Generate a unique ID for the group.
+	groupID, err := random.GenerateRandomString(10)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate group id: %s", err)
+	}
+	group := core.NewGroup(groupID, serviceID, req.GetName(), req.GetType())
+	service.groupManager.AddGroup(group)
+	return &clientsapi.AddGroupResponse{
+		Group: group.Pb(),
+	}, nil
+}
+
+func (service *UserService) UpdateGroup(ctx context.Context, req *clientsapi.UpdateGroupRequest) (*clientsapi.UpdateGroupResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to update groups")
+	}
+	if req.GetId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "id not defined")
+	}
+	if req.Name != nil {
+		err := service.groupManager.UpdateGroupName(req.GetId(), req.GetName())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to update group name: %s", err)
+		}
+	}
+	if len(req.GetMembers()) > 0 {
+		members := make([]core.GroupMember, len(req.GetMembers()))
+		for i, member := range req.GetMembers() {
+			members[i] = core.GroupMember{
+				DeviceID:  member.GetDeviceId(),
+				ServiceID: member.GetServiceId(),
+			}
+		}
+		err := service.groupManager.UpdateGroupMembers(req.GetId(), members)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to update group members: %s", err)
+		}
+	}
+	return &clientsapi.UpdateGroupResponse{}, status.Errorf(codes.Unimplemented, "not implemented")
+}
+
+func (service *UserService) RemoveGroup(ctx context.Context, req *clientsapi.RemoveGroupRequest) (*clientsapi.RemoveGroupResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to remove groups")
+	}
+	if req.GetId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "id not defined")
+	}
+
+	err := service.groupManager.RemoveGroup(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to remove group: %s", err)
+	}
+
+	return &clientsapi.RemoveGroupResponse{}, nil
 }
 
 func (service *UserService) SendAction(req *clientsapi.ActionRequest, server clientsapi.UserService_SendActionServer) error {

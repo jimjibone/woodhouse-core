@@ -394,7 +394,7 @@ export const ImageResponse_ImageStatusSchema: GenEnum<ImageResponse_ImageStatus>
  */
 export type Device = Message<"woodhouse.api.v1.clients.Device"> & {
   /**
-   * The universally unique device ID (typically a hardware address or other static and unique identifier, e.g. "00158d00045c089f").
+   * The universally unique device ID (typically a hardware address or other static and unique identifier and prefixed with the protocol, e.g. "zigbee00158d00045c089f").
    *
    * @generated from field: string id = 1;
    */

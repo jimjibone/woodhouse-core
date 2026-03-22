@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,7 +18,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var GroupClientID = "_group"
+var (
+	GroupClientID         = "_group"
+	ErrGroupNotFound      = errors.New("group not found")
+	ErrGroupAlreadyExists = errors.New("group already exists")
+)
 
 // GroupManager enables grouping of services of the same type. Groups are
 // defined by the user and are populated with data based on the current values
@@ -90,7 +95,7 @@ func (manager *GroupManager) AddGroup(grp *Group) error {
 	defer manager.mu.Unlock()
 
 	if manager.groups[grp.GroupID] != nil {
-		return ErrAlreadyExists
+		return ErrGroupAlreadyExists
 	}
 
 	manager.groups[grp.GroupID] = grp.Clone()
@@ -112,6 +117,76 @@ func (manager *GroupManager) UpdateGroup(grp *Group) error {
 	manager.changed = true
 
 	manager.log.Infof("group %q updated", grp.GroupID)
+
+	// Publish the new/updated group to the listeners.
+	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})
+
+	return nil
+}
+
+func (manager *GroupManager) UpdateGroupName(groupID, name string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	grp := manager.groups[groupID]
+	if grp == nil {
+		return ErrGroupNotFound
+	}
+
+	oldName := grp.Name
+	grp.Name = name
+	manager.changed = true
+
+	manager.log.Infof("group %q updated name from %q to %q", grp.GroupID, oldName, name)
+
+	// Publish the new/updated group to the listeners.
+	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})
+
+	return nil
+}
+
+func (manager *GroupManager) UpdateGroupMembers(groupID string, members []GroupMember) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	// Verify that the group exists.
+	grp := manager.groups[groupID]
+	if grp == nil {
+		return ErrGroupNotFound
+	}
+
+	// Verify that the members exist - device id and service id.
+	var deviceIDs []string
+	for _, member := range members {
+		deviceIDs = append(deviceIDs, member.DeviceID)
+	}
+	serviceType := clientsapi.Service_UNDEFINED
+	for dev := range manager.deviceManager.GetDevicesByIDs(deviceIDs) {
+		if dev == nil {
+			return fmt.Errorf("device %q not found", dev.GetId())
+		}
+		for _, member := range members {
+			if dev.GetId() == member.DeviceID {
+				for _, srv := range dev.Services {
+					if srv.GetId() == member.ServiceID {
+						// Verify that all services are of the same type.
+						if serviceType != clientsapi.Service_UNDEFINED && srv.Typ != serviceType {
+							return fmt.Errorf("service %q on device %q is of type %q, expected type %q", member.ServiceID, member.DeviceID, srv.Typ, serviceType)
+						}
+						// Found the service, move to the next member.
+						goto nextMember
+					}
+				}
+				return fmt.Errorf("service %q not found on device %q", member.ServiceID, member.DeviceID)
+			}
+		}
+	nextMember:
+	}
+
+	grp.Members = members
+	manager.changed = true
+
+	manager.log.Infof("group %q updated members", grp.GroupID)
 
 	// Publish the new/updated group to the listeners.
 	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})

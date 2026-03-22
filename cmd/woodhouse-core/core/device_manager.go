@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,6 +20,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	ErrDeviceNotFound = errors.New("device not found")
 )
 
 type DeviceManager struct {
@@ -208,6 +213,23 @@ func (manager *DeviceManager) GetDevices() <-chan *clientsapi.Device {
 	ch := make(chan *clientsapi.Device, len(manager.devices))
 	for _, dev := range manager.devices {
 		ch <- dev.pb()
+	}
+	close(ch)
+
+	return ch
+}
+
+// Get a channel on which all devices will be sent. The channel will close when
+// all devices have been sent.
+func (manager *DeviceManager) GetDevicesByIDs(ids []string) <-chan *clientsapi.Device {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	ch := make(chan *clientsapi.Device, len(ids))
+	for _, id := range ids {
+		if dev, found := manager.devices[id]; found {
+			ch <- dev.pb()
+		}
 	}
 	close(ch)
 
