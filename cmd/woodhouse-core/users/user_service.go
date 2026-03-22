@@ -472,18 +472,26 @@ func (service *UserService) AddGroup(ctx context.Context, req *clientsapi.AddGro
 	if req.GetType() == clientsapi.Service_UNDEFINED {
 		return nil, status.Errorf(codes.InvalidArgument, "type not defined")
 	}
+
 	// Determine the service ID based on the type.
 	serviceID := services.DefaultServiceID(req.GetType())
 	if serviceID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "type not supported")
 	}
+
 	// Generate a unique ID for the group.
 	groupID, err := random.GenerateRandomString(10)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate group id: %s", err)
 	}
+
+	// Create the group and add it to the manager.
 	group := core.NewGroup(groupID, serviceID, req.GetName(), req.GetType())
-	service.groupManager.AddGroup(group)
+	err = service.groupManager.AddGroup(group)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to add group: %s", err)
+	}
+
 	return &clientsapi.AddGroupResponse{
 		Group: group.Pb(),
 	}, nil
