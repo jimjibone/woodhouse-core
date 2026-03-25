@@ -312,7 +312,9 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 	// Start by sending the full list of devices.
 	for dev := range service.deviceManager.GetDevices() {
 		if isInFilter(dev.GetId(), req.IncludeDeviceIds) {
-			err := server.Send(dev)
+			err := server.Send(&clientsapi.DevicesStreamResponse{
+				Device: dev,
+			})
 			if err != nil {
 				service.log.Errorf("failed to send device stream: %s", err)
 				return status.Errorf(codes.Internal, "failed to send device")
@@ -321,7 +323,7 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 	}
 
 	// Send an empty device to indicate the end of the initial list.
-	err := server.Send(&clientsapi.Device{})
+	err := server.Send(&clientsapi.DevicesStreamResponse{})
 	if err != nil {
 		service.log.Errorf("failed to send empty device: %s", err)
 		return status.Errorf(codes.Internal, "failed to send empty device")
@@ -338,18 +340,32 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 
 		case <-ticker.C:
 			// Send an empty Device message as a keepalive for the client.
-			err := server.Send(&clientsapi.Device{})
+			err := server.Send(&clientsapi.DevicesStreamResponse{})
 			if err != nil {
 				service.log.Errorf("failed to send device stream keepalive: %s", err)
 				return status.Errorf(codes.Internal, "failed to send device keepalive")
 			}
 
 		case update := <-sub.Sub():
-			if isInFilter(update.GetId(), req.IncludeDeviceIds) {
-				err := server.Send(update)
-				if err != nil {
-					service.log.Errorf("failed to send device stream update: %s", err)
-					return status.Errorf(codes.Internal, "failed to send device update")
+			if update.Update != nil {
+				if isInFilter(update.Update.GetId(), req.IncludeDeviceIds) {
+					err := server.Send(&clientsapi.DevicesStreamResponse{
+						Device: update.Update,
+					})
+					if err != nil {
+						service.log.Errorf("failed to send device stream update: %s", err)
+						return status.Errorf(codes.Internal, "failed to send device update")
+					}
+				}
+			} else if update.RemovedID != "" {
+				if isInFilter(update.RemovedID, req.IncludeDeviceIds) {
+					err := server.Send(&clientsapi.DevicesStreamResponse{
+						DeviceRemoved: update.RemovedID,
+					})
+					if err != nil {
+						service.log.Errorf("failed to send device stream remove update: %s", err)
+						return status.Errorf(codes.Internal, "failed to send device remove update")
+					}
 				}
 			}
 		}
@@ -418,7 +434,7 @@ func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.
 	return &clientsapi.RemoveFavoriteResponse{}, nil
 }
 
-func (service *UserService) GroupStream(req *clientsapi.GroupStreamRequest, server clientsapi.UserService_GroupStreamServer) error {
+func (service *UserService) GroupsStream(req *clientsapi.GroupsStreamRequest, server clientsapi.UserService_GroupsStreamServer) error {
 	service.log.Infof("group stream started")
 	defer service.log.Infof("group stream finished")
 
@@ -435,14 +451,14 @@ func (service *UserService) GroupStream(req *clientsapi.GroupStreamRequest, serv
 
 		case <-ticker.C:
 			// Send an empty message as a keepalive for the client.
-			err := server.Send(&clientsapi.GroupStreamResponse{})
+			err := server.Send(&clientsapi.GroupsStreamResponse{})
 			if err != nil {
 				service.log.Errorf("failed to send group stream keepalive: %s", err)
 				return status.Errorf(codes.Internal, "failed to send keepalive")
 			}
 
 		case update := <-lis.Sub():
-			msg := &clientsapi.GroupStreamResponse{}
+			msg := &clientsapi.GroupsStreamResponse{}
 			if update.Updated != nil {
 				msg.GroupUpdate = update.Updated.Pb()
 			}
@@ -486,7 +502,14 @@ func (service *UserService) AddGroup(ctx context.Context, req *clientsapi.AddGro
 	}
 
 	// Create the group and add it to the manager.
-	group := core.NewGroup(groupID, serviceID, req.GetName(), req.GetType())
+	members := make([]*core.GroupMember, len(req.GetMembers()))
+	for i, member := range req.GetMembers() {
+		members[i] = &core.GroupMember{
+			DeviceID:  member.GetDeviceId(),
+			ServiceID: member.GetServiceId(),
+		}
+	}
+	group := core.NewGroup(groupID, serviceID, req.GetName(), req.GetType(), members)
 	err = service.groupManager.AddGroup(group)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to add group: %s", err)
@@ -515,9 +538,9 @@ func (service *UserService) UpdateGroup(ctx context.Context, req *clientsapi.Upd
 		}
 	}
 	if len(req.GetMembers()) > 0 {
-		members := make([]core.GroupMember, len(req.GetMembers()))
+		members := make([]*core.GroupMember, len(req.GetMembers()))
 		for i, member := range req.GetMembers() {
-			members[i] = core.GroupMember{
+			members[i] = &core.GroupMember{
 				DeviceID:  member.GetDeviceId(),
 				ServiceID: member.GetServiceId(),
 			}
@@ -527,7 +550,7 @@ func (service *UserService) UpdateGroup(ctx context.Context, req *clientsapi.Upd
 			return nil, status.Errorf(codes.Internal, "failed to update group members: %s", err)
 		}
 	}
-	return &clientsapi.UpdateGroupResponse{}, status.Errorf(codes.Unimplemented, "not implemented")
+	return &clientsapi.UpdateGroupResponse{}, nil
 }
 
 func (service *UserService) RemoveGroup(ctx context.Context, req *clientsapi.RemoveGroupRequest) (*clientsapi.RemoveGroupResponse, error) {

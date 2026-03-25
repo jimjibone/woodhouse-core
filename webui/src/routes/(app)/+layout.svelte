@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { HeartIcon, LampIcon, UsersIcon, ChevronsLeftRightEllipsisIcon } from '@lucide/svelte';
+	import { HeartIcon, LampIcon, UsersIcon, ChevronsLeftRightEllipsisIcon, LayersIcon } from '@lucide/svelte';
 	import AppSidebar, { type Dashboards } from '$lib/components/app-sidebar.svelte';
 	import AppMobilebar from '$lib/components/app-mobilebar.svelte';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
@@ -32,6 +32,11 @@
 			name: 'Users',
 			url: '/users',
 			icon: UsersIcon
+		},
+		{
+			name: 'Groups',
+			url: '/groups',
+			icon: LayersIcon
 		}
 	];
 

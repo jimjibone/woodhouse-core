@@ -323,7 +323,9 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 	// Start by sending the full list of devices.
 	for dev := range service.deviceManager.GetDevices() {
 		// if isInFilter(dev.GetId(), req.IncludeDeviceIds) {
-		err := server.Send(dev)
+		err := server.Send(&clientsapi.DeviceStreamResponse{
+			Device: dev,
+		})
 		if err != nil {
 			service.log.Errorf("failed to send device stream: %s", err)
 			return status.Errorf(codes.Internal, "failed to send device")
@@ -351,7 +353,9 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 				// Send the requested device full state.
 				dev := service.deviceManager.GetDevice(req.GetDeviceId)
 				if dev != nil {
-					err := server.Send(dev)
+					err := server.Send(&clientsapi.DeviceStreamResponse{
+						Device: dev,
+					})
 					if err != nil {
 						service.log.Errorf("failed to send device stream: %s", err)
 						return
@@ -362,7 +366,7 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 	}()
 
 	// Send an empty Device message to indicate the end of current device states.
-	err := server.Send(&clientsapi.Device{})
+	err := server.Send(&clientsapi.DeviceStreamResponse{})
 	if err != nil {
 		service.log.Errorf("failed to send device stream keepalive: %s", err)
 		return status.Errorf(codes.Internal, "failed to send device keepalive")
@@ -379,7 +383,7 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 
 		case <-ticker.C:
 			// Send an empty Device message as a keepalive for the client.
-			err := server.Send(&clientsapi.Device{})
+			err := server.Send(&clientsapi.DeviceStreamResponse{})
 			if err != nil {
 				service.log.Errorf("failed to send device stream keepalive: %s", err)
 				return status.Errorf(codes.Internal, "failed to send device keepalive")
@@ -387,10 +391,22 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 
 		case update := <-sub.Sub():
 			// if isInFilter(update.GetId(), req.IncludeDeviceIds) {
-			err := server.Send(update)
-			if err != nil {
-				service.log.Errorf("failed to send device stream update: %s", err)
-				return status.Errorf(codes.Internal, "failed to send device update")
+			if update.Update != nil {
+				err := server.Send(&clientsapi.DeviceStreamResponse{
+					Device: update.Update,
+				})
+				if err != nil {
+					service.log.Errorf("failed to send device stream update: %s", err)
+					return status.Errorf(codes.Internal, "failed to send device update")
+				}
+			} else if update.RemovedID != "" {
+				err := server.Send(&clientsapi.DeviceStreamResponse{
+					DeviceRemoved: update.RemovedID,
+				})
+				if err != nil {
+					service.log.Errorf("failed to send device stream removed update: %s", err)
+					return status.Errorf(codes.Internal, "failed to send device removed update")
+				}
 			}
 			// }
 		}

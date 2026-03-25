@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/client_service.proto.
  */
 export const file_clients_client_service: GenFile = /*@__PURE__*/
-  fileDesc("ChxjbGllbnRzL2NsaWVudF9zZXJ2aWNlLnByb3RvEhh3b29kaG91c2UuYXBpLnYxLmNsaWVudHMiBwoFRW1wdHkigAEKDFN0YXR1c1VwZGF0ZRI5CgtjbGllbnRfaW5mbxgBIAEoCzIkLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5DbGllbnRJbmZvEjUKC2RldmljZV9pbmZvGAIgAygLMiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZSJ6Cg1BY3Rpb25SZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCRIRCglkZXZpY2VfaWQYAiABKAkSEgoKc2VydmljZV9pZBgDIAEoCRIvCgZ2YWx1ZXMYBCADKAsyHy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVmFsdWUi9gEKDkFjdGlvblJlc3BvbnNlEhEKCWFjdGlvbl9pZBgBIAEoCRJFCgZzdGF0dXMYAiABKA4yNS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVzcG9uc2UuQWN0aW9uU3RhdHVzEg8KB2RldGFpbHMYAyABKAkieQoMQWN0aW9uU3RhdHVzEg0KCVVOREVGSU5FRBAAEgoKBlFVRVVFRBABEggKBFNFTlQQAhIMCghDT01QTEVURRADEgsKB1RJTUVPVVQQBBIMCghDQU5DRUxFRBAFEgkKBUVSUk9SEAYSEAoMRVJSX1JFQURPTkxZEAciTAoKQ2xpZW50SW5mbxIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkiLAoTRGV2aWNlU3RyZWFtUmVxdWVzdBIVCg1nZXRfZGV2aWNlX2lkGAEgASgJIl8KDEltYWdlUmVxdWVzdBISCgpyZXF1ZXN0X2lkGAEgASgJEhEKCWRldmljZV9pZBgCIAEoCRISCgpzZXJ2aWNlX2lkGAMgASgJEhQKDGF0dHJpYnV0ZV9pZBgEIAEoCSLwAQoNSW1hZ2VSZXNwb25zZRISCgpyZXF1ZXN0X2lkGAEgASgJEkMKBnN0YXR1cxgCIAEoDjIzLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlc3BvbnNlLkltYWdlU3RhdHVzEg8KB2RldGFpbHMYAyABKAkSDAoEZGF0YRgEIAEoDCJnCgtJbWFnZVN0YXR1cxINCglVTkRFRklORUQQABILCgdQRU5ESU5HEAESCAoEU0VOVBACEgwKCENPTVBMRVRFEAMSCwoHVElNRU9VVBAEEgwKCENBTkNFTEVEEAUSCQoFRVJST1IQBiL5AQoGRGV2aWNlEgoKAmlkGAEgASgJEhIKCmZ1bGxfc3RhdGUYAiABKAgSOAoDdHlwGAMgASgOMisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZS5EZXZpY2VUeXBlEjMKCHNlcnZpY2VzGAQgAygLMiEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNlcnZpY2USEQoJY2xpZW50X2lkGAUgASgJIk0KCkRldmljZVR5cGUSDQoJVU5ERUZJTkVEEAASCgoGQlJJREdFEAESCwoHUkVBQ1RPUhACEgoKBkRFVklDRRADEgsKB0dST1VQRUQQBCLjAwoHU2VydmljZRIKCgJpZBgBIAEoCRI6CgN0eXAYAiABKA4yLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZS5TZXJ2aWNlVHlwZRINCgVhbGlhcxgDIAEoCRIyCgVhdHRycxgEIAMoCzIjLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BdHRyaWJ1dGUSEAoIZmF2b3JpdGUYBSABKAgiugIKC1NlcnZpY2VUeXBlEg0KCVVOREVGSU5FRBAAEggKBElORk8QARIKCgZPTkxJTkUQAhILCgdHRU5FUklDEAMSCQoFSU5QVVQQBBIJCgVSRUxBWRAFEg0KCUxJR0hUQlVMQhAGEgsKB0NMSU1BVEUQBxILCgdCQVRURVJZEAgSCgoGQlVUVE9OEAkSDwoLRU5WSVJPTk1FTlQQChILCgdDT05UQUNUEAsSCgoGVVBEQVRFEAwSCAoEQk9PTBANEgcKA0lOVBAOEgkKBUZMT0FUEA8SCAoEVEVYVBAQEgwKCERVUkFUSU9OEBESCAoEVElNRRASEgkKBUNPTE9SEBMSCAoERU5VTRAUEgoKBkNBTUVSQRAVEgkKBUNPVkVSEBYSCgoGTU9USU9OEBcSDAoIUFJFU0VOQ0UQGCKSBAoJQXR0cmlidXRlEgoKAmlkGAEgASgJEjUKBGJvb2wYAiABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQm9vbEF0dHJpYnV0ZRIzCgNpbnQYAyABKAsyJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW50QXR0cmlidXRlEjcKBWZsb2F0GAQgASgLMigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZsb2F0QXR0cmlidXRlEjUKBHRleHQYBSABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGV4dEF0dHJpYnV0ZRI9CghkdXJhdGlvbhgHIAEoCzIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EdXJhdGlvbkF0dHJpYnV0ZRI1CgR0aW1lGAggASgLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlRpbWVBdHRyaWJ1dGUSNwoFY29sb3IYCiABKAsyKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ29sb3JBdHRyaWJ1dGUSNQoEZW51bRgLIAEoCzInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5FbnVtQXR0cmlidXRlEjcKBWltYWdlGAwgASgLMigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlQXR0cmlidXRlIuoDCgVWYWx1ZRIKCgJpZBgBIAEoCRIxCgRib29sGAIgASgLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkJvb2xWYWx1ZRIvCgNpbnQYAyABKAsyIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW50VmFsdWUSMwoFZmxvYXQYBCABKAsyJC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmxvYXRWYWx1ZRIxCgR0ZXh0GAUgASgLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlRleHRWYWx1ZRI5CghkdXJhdGlvbhgHIAEoCzInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EdXJhdGlvblZhbHVlEjEKBHRpbWUYCCABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlEjMKBWNvbG9yGAogASgLMiQud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNvbG9yVmFsdWUSMQoEZW51bRgLIAEoCzIjLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5FbnVtVmFsdWUSMwoFaW1hZ2UYDCABKAsyJC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VWYWx1ZSJUCg1Cb29sQXR0cmlidXRlEg0KBXZhbHVlGAEgASgIEjQKBXBlcm1zGAIgASgOMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBlcm1pc3Npb25zIhoKCUJvb2xWYWx1ZRINCgV2YWx1ZRgBIAEoCCKpAQoMSW50QXR0cmlidXRlEg0KBXZhbHVlGAEgASgSEgsKA21pbhgCIAEoEhILCgNtYXgYAyABKBISDAoEc3RlcBgEIAEoBBIsCgR1bml0GAUgASgOMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVuaXQSNAoFcGVybXMYBiABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiGQoISW50VmFsdWUSDQoFdmFsdWUYASABKBIiqwEKDkZsb2F0QXR0cmlidXRlEg0KBXZhbHVlGAEgASgBEgsKA21pbhgCIAEoARILCgNtYXgYAyABKAESDAoEc3RlcBgEIAEoARIsCgR1bml0GAUgASgOMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVuaXQSNAoFcGVybXMYBiABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiGwoKRmxvYXRWYWx1ZRINCgV2YWx1ZRgBIAEoASJUCg1UZXh0QXR0cmlidXRlEg0KBXZhbHVlGAEgASgJEjQKBXBlcm1zGAIgASgOMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBlcm1pc3Npb25zIhoKCVRleHRWYWx1ZRINCgV2YWx1ZRgBIAEoCSKAAQoRRHVyYXRpb25BdHRyaWJ1dGUSDQoFdmFsdWUYASABKBISCwoDbWluGAIgASgSEgsKA21heBgDIAEoEhIMCgRzdGVwGAQgASgEEjQKBXBlcm1zGAUgASgOMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBlcm1pc3Npb25zIh4KDUR1cmF0aW9uVmFsdWUSDQoFdmFsdWUYASABKBIiZQoNVGltZUF0dHJpYnV0ZRIPCgdzZWNvbmRzGAEgASgSEg0KBW5hbm9zGAIgASgREjQKBXBlcm1zGAMgASgOMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBlcm1pc3Npb25zIisKCVRpbWVWYWx1ZRIPCgdzZWNvbmRzGAEgASgSEg0KBW5hbm9zGAIgASgRIq0BCg5Db2xvckF0dHJpYnV0ZRI2CgdodWVfc2F0GAEgASgLMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNvbG9ySHVlU2F0Ei0KAnh5GAIgASgLMiEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNvbG9yWFkSNAoFcGVybXMYAyABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMicwoKQ29sb3JWYWx1ZRI2CgdodWVfc2F0GAEgASgLMiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNvbG9ySHVlU2F0Ei0KAnh5GAIgASgLMiEud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNvbG9yWFkiJwoLQ29sb3JIdWVTYXQSCwoDaHVlGAEgASgBEgsKA3NhdBgCIAEoASIfCgdDb2xvclhZEgkKAXgYASABKAESCQoBeRgCIAEoASJlCg1FbnVtQXR0cmlidXRlEg8KB29wdGlvbnMYASADKAkSDQoFdmFsdWUYAiABKAkSNAoFcGVybXMYAyABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiGgoJRW51bVZhbHVlEg0KBXZhbHVlGAEgASgJIhAKDkltYWdlQXR0cmlidXRlIgwKCkltYWdlVmFsdWUqXAoLUGVybWlzc2lvbnMSEgoOUEVSTV9VTkRFRklORUQQABIRCg1QRVJNX1JFQURPTkxZEAESEgoOUEVSTV9XUklURU9OTFkQAhISCg5QRVJNX1JFQURXUklURRADKpECCgRVbml0EhIKDlVOSVRfVU5ERUZJTkVEEAASEwoPVU5JVF9QRVJDRU5UQUdFEAESFAoQVU5JVF9BUkNfREVHUkVFUxACEhAKDFVOSVRfQ0VMU0lVUxADEgwKCFVOSVRfTFVYEAQSEAoMVU5JVF9TRUNPTkRTEAUSDAoIVU5JVF9QUE0QBhIjCh9VTklUX01JQ1JPR1JBTVNfUEVSX0NVQklDX01FVEVSEAcSDgoKVU5JVF9WT0xUUxAIEg0KCVVOSVRfQU1QUxAJEg4KClVOSVRfV0FUVFMQChIPCgtVTklUX01JUkVEUxALEhQKEFVOSVRfSEVDVE9QQVNDQUwQDBIPCgtVTklUX01FVEVSUxANMuQECg1DbGllbnRTZXJ2aWNlElkKDFN0YXR1c1N0cmVhbRImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5TdGF0dXNVcGRhdGUaHy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRW1wdHkoARJlCgxBY3Rpb25TdHJlYW0SKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVzcG9uc2UaJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVxdWVzdCgBMAESYgoLSW1hZ2VTdHJlYW0SJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXNwb25zZRomLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlcXVlc3QoATABEmMKDERldmljZVN0cmVhbRItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VTdHJlYW1SZXF1ZXN0GiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZSgBMAESYQoKU2VuZEFjdGlvbhInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlc3BvbnNlMAESZQoQU2VuZEltYWdlUmVxdWVzdBImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlcXVlc3QaJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXNwb25zZTABQj9aPWdpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS00L2FwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
+  fileDesc("ChxjbGllbnRzL2NsaWVudF9zZXJ2aWNlLnByb3RvEhh3b29kaG91c2UuYXBpLnYxLmNsaWVudHMiBwoFRW1wdHkigAEKDFN0YXR1c1VwZGF0ZRI5CgtjbGllbnRfaW5mbxgBIAEoCzIkLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5DbGllbnRJbmZvEjUKC2RldmljZV9pbmZvGAIgAygLMiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZSJ6Cg1BY3Rpb25SZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCRIRCglkZXZpY2VfaWQYAiABKAkSEgoKc2VydmljZV9pZBgDIAEoCRIvCgZ2YWx1ZXMYBCADKAsyHy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVmFsdWUi9gEKDkFjdGlvblJlc3BvbnNlEhEKCWFjdGlvbl9pZBgBIAEoCRJFCgZzdGF0dXMYAiABKA4yNS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVzcG9uc2UuQWN0aW9uU3RhdHVzEg8KB2RldGFpbHMYAyABKAkieQoMQWN0aW9uU3RhdHVzEg0KCVVOREVGSU5FRBAAEgoKBlFVRVVFRBABEggKBFNFTlQQAhIMCghDT01QTEVURRADEgsKB1RJTUVPVVQQBBIMCghDQU5DRUxFRBAFEgkKBUVSUk9SEAYSEAoMRVJSX1JFQURPTkxZEAciTAoKQ2xpZW50SW5mbxIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkiLAoTRGV2aWNlU3RyZWFtUmVxdWVzdBIVCg1nZXRfZGV2aWNlX2lkGAEgASgJImAKFERldmljZVN0cmVhbVJlc3BvbnNlEjAKBmRldmljZRgBIAEoCzIgLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2USFgoOZGV2aWNlX3JlbW92ZWQYAiABKAkiXwoMSW1hZ2VSZXF1ZXN0EhIKCnJlcXVlc3RfaWQYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCnNlcnZpY2VfaWQYAyABKAkSFAoMYXR0cmlidXRlX2lkGAQgASgJIvABCg1JbWFnZVJlc3BvbnNlEhIKCnJlcXVlc3RfaWQYASABKAkSQwoGc3RhdHVzGAIgASgOMjMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVzcG9uc2UuSW1hZ2VTdGF0dXMSDwoHZGV0YWlscxgDIAEoCRIMCgRkYXRhGAQgASgMImcKC0ltYWdlU3RhdHVzEg0KCVVOREVGSU5FRBAAEgsKB1BFTkRJTkcQARIICgRTRU5UEAISDAoIQ09NUExFVEUQAxILCgdUSU1FT1VUEAQSDAoIQ0FOQ0VMRUQQBRIJCgVFUlJPUhAGIvkBCgZEZXZpY2USCgoCaWQYASABKAkSEgoKZnVsbF9zdGF0ZRgCIAEoCBI4CgN0eXAYAyABKA4yKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlLkRldmljZVR5cGUSMwoIc2VydmljZXMYBCADKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZRIRCgljbGllbnRfaWQYBSABKAkiTQoKRGV2aWNlVHlwZRINCglVTkRFRklORUQQABIKCgZCUklER0UQARILCgdSRUFDVE9SEAISCgoGREVWSUNFEAMSCwoHR1JPVVBFRBAEIuMDCgdTZXJ2aWNlEgoKAmlkGAEgASgJEjoKA3R5cBgCIAEoDjItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5TZXJ2aWNlLlNlcnZpY2VUeXBlEg0KBWFsaWFzGAMgASgJEjIKBWF0dHJzGAQgAygLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkF0dHJpYnV0ZRIQCghmYXZvcml0ZRgFIAEoCCK6AgoLU2VydmljZVR5cGUSDQoJVU5ERUZJTkVEEAASCAoESU5GTxABEgoKBk9OTElORRACEgsKB0dFTkVSSUMQAxIJCgVJTlBVVBAEEgkKBVJFTEFZEAUSDQoJTElHSFRCVUxCEAYSCwoHQ0xJTUFURRAHEgsKB0JBVFRFUlkQCBIKCgZCVVRUT04QCRIPCgtFTlZJUk9OTUVOVBAKEgsKB0NPTlRBQ1QQCxIKCgZVUERBVEUQDBIICgRCT09MEA0SBwoDSU5UEA4SCQoFRkxPQVQQDxIICgRURVhUEBASDAoIRFVSQVRJT04QERIICgRUSU1FEBISCQoFQ09MT1IQExIICgRFTlVNEBQSCgoGQ0FNRVJBEBUSCQoFQ09WRVIQFhIKCgZNT1RJT04QFxIMCghQUkVTRU5DRRAYIpIECglBdHRyaWJ1dGUSCgoCaWQYASABKAkSNQoEYm9vbBgCIAEoCzInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Cb29sQXR0cmlidXRlEjMKA2ludBgDIAEoCzImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbnRBdHRyaWJ1dGUSNwoFZmxvYXQYBCABKAsyKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmxvYXRBdHRyaWJ1dGUSNQoEdGV4dBgFIAEoCzInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5UZXh0QXR0cmlidXRlEj0KCGR1cmF0aW9uGAcgASgLMisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkR1cmF0aW9uQXR0cmlidXRlEjUKBHRpbWUYCCABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZUF0dHJpYnV0ZRI3CgVjb2xvchgKIAEoCzIoLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Db2xvckF0dHJpYnV0ZRI1CgRlbnVtGAsgASgLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkVudW1BdHRyaWJ1dGUSNwoFaW1hZ2UYDCABKAsyKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VBdHRyaWJ1dGUi6gMKBVZhbHVlEgoKAmlkGAEgASgJEjEKBGJvb2wYAiABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQm9vbFZhbHVlEi8KA2ludBgDIAEoCzIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbnRWYWx1ZRIzCgVmbG9hdBgEIAEoCzIkLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GbG9hdFZhbHVlEjEKBHRleHQYBSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGV4dFZhbHVlEjkKCGR1cmF0aW9uGAcgASgLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkR1cmF0aW9uVmFsdWUSMQoEdGltZRgIIAEoCzIjLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5UaW1lVmFsdWUSMwoFY29sb3IYCiABKAsyJC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ29sb3JWYWx1ZRIxCgRlbnVtGAsgASgLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkVudW1WYWx1ZRIzCgVpbWFnZRgMIAEoCzIkLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVZhbHVlIlQKDUJvb2xBdHRyaWJ1dGUSDQoFdmFsdWUYASABKAgSNAoFcGVybXMYAiABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiGgoJQm9vbFZhbHVlEg0KBXZhbHVlGAEgASgIIqkBCgxJbnRBdHRyaWJ1dGUSDQoFdmFsdWUYASABKBISCwoDbWluGAIgASgSEgsKA21heBgDIAEoEhIMCgRzdGVwGAQgASgEEiwKBHVuaXQYBSABKA4yHi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVW5pdBI0CgVwZXJtcxgGIAEoDjIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QZXJtaXNzaW9ucyIZCghJbnRWYWx1ZRINCgV2YWx1ZRgBIAEoEiKrAQoORmxvYXRBdHRyaWJ1dGUSDQoFdmFsdWUYASABKAESCwoDbWluGAIgASgBEgsKA21heBgDIAEoARIMCgRzdGVwGAQgASgBEiwKBHVuaXQYBSABKA4yHi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVW5pdBI0CgVwZXJtcxgGIAEoDjIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QZXJtaXNzaW9ucyIbCgpGbG9hdFZhbHVlEg0KBXZhbHVlGAEgASgBIlQKDVRleHRBdHRyaWJ1dGUSDQoFdmFsdWUYASABKAkSNAoFcGVybXMYAiABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiGgoJVGV4dFZhbHVlEg0KBXZhbHVlGAEgASgJIoABChFEdXJhdGlvbkF0dHJpYnV0ZRINCgV2YWx1ZRgBIAEoEhILCgNtaW4YAiABKBISCwoDbWF4GAMgASgSEgwKBHN0ZXAYBCABKAQSNAoFcGVybXMYBSABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiHgoNRHVyYXRpb25WYWx1ZRINCgV2YWx1ZRgBIAEoEiJlCg1UaW1lQXR0cmlidXRlEg8KB3NlY29uZHMYASABKBISDQoFbmFub3MYAiABKBESNAoFcGVybXMYAyABKA4yJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGVybWlzc2lvbnMiKwoJVGltZVZhbHVlEg8KB3NlY29uZHMYASABKBISDQoFbmFub3MYAiABKBEirQEKDkNvbG9yQXR0cmlidXRlEjYKB2h1ZV9zYXQYASABKAsyJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ29sb3JIdWVTYXQSLQoCeHkYAiABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ29sb3JYWRI0CgVwZXJtcxgDIAEoDjIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QZXJtaXNzaW9ucyJzCgpDb2xvclZhbHVlEjYKB2h1ZV9zYXQYASABKAsyJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ29sb3JIdWVTYXQSLQoCeHkYAiABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ29sb3JYWSInCgtDb2xvckh1ZVNhdBILCgNodWUYASABKAESCwoDc2F0GAIgASgBIh8KB0NvbG9yWFkSCQoBeBgBIAEoARIJCgF5GAIgASgBImUKDUVudW1BdHRyaWJ1dGUSDwoHb3B0aW9ucxgBIAMoCRINCgV2YWx1ZRgCIAEoCRI0CgVwZXJtcxgDIAEoDjIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QZXJtaXNzaW9ucyIaCglFbnVtVmFsdWUSDQoFdmFsdWUYASABKAkiEAoOSW1hZ2VBdHRyaWJ1dGUiDAoKSW1hZ2VWYWx1ZSpcCgtQZXJtaXNzaW9ucxISCg5QRVJNX1VOREVGSU5FRBAAEhEKDVBFUk1fUkVBRE9OTFkQARISCg5QRVJNX1dSSVRFT05MWRACEhIKDlBFUk1fUkVBRFdSSVRFEAMqkQIKBFVuaXQSEgoOVU5JVF9VTkRFRklORUQQABITCg9VTklUX1BFUkNFTlRBR0UQARIUChBVTklUX0FSQ19ERUdSRUVTEAISEAoMVU5JVF9DRUxTSVVTEAMSDAoIVU5JVF9MVVgQBBIQCgxVTklUX1NFQ09ORFMQBRIMCghVTklUX1BQTRAGEiMKH1VOSVRfTUlDUk9HUkFNU19QRVJfQ1VCSUNfTUVURVIQBxIOCgpVTklUX1ZPTFRTEAgSDQoJVU5JVF9BTVBTEAkSDgoKVU5JVF9XQVRUUxAKEg8KC1VOSVRfTUlSRURTEAsSFAoQVU5JVF9IRUNUT1BBU0NBTBAMEg8KC1VOSVRfTUVURVJTEA0y8gQKDUNsaWVudFNlcnZpY2USWQoMU3RhdHVzU3RyZWFtEiYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlN0YXR1c1VwZGF0ZRofLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5FbXB0eSgBEmUKDEFjdGlvblN0cmVhbRIoLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXNwb25zZRonLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXF1ZXN0KAEwARJiCgtJbWFnZVN0cmVhbRInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVJlc3BvbnNlGiYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVxdWVzdCgBMAEScQoMRGV2aWNlU3RyZWFtEi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZVN0cmVhbVJlcXVlc3QaLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU3RyZWFtUmVzcG9uc2UoATABEmEKClNlbmRBY3Rpb24SJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVxdWVzdBooLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXNwb25zZTABEmUKEFNlbmRJbWFnZVJlcXVlc3QSJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXF1ZXN0Gicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVzcG9uc2UwAUI/Wj1naXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtNC9hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
 
 /**
  * Empty message is intentionally empty - i.e. it will never contain any data.
@@ -251,6 +251,32 @@ export const DeviceStreamRequestSchema: GenMessage<DeviceStreamRequest> = /*@__P
   messageDesc(file_clients_client_service, 5);
 
 /**
+ * @generated from message woodhouse.api.v1.clients.DeviceStreamResponse
+ */
+export type DeviceStreamResponse = Message<"woodhouse.api.v1.clients.DeviceStreamResponse"> & {
+  /**
+   * Optional: A device update, possibly containing the full state.
+   *
+   * @generated from field: woodhouse.api.v1.clients.Device device = 1;
+   */
+  device?: Device;
+
+  /**
+   * Optional: Indicates the device_id of a device that was removed.
+   *
+   * @generated from field: string device_removed = 2;
+   */
+  deviceRemoved: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.DeviceStreamResponse.
+ * Use `create(DeviceStreamResponseSchema)` to create a new message.
+ */
+export const DeviceStreamResponseSchema: GenMessage<DeviceStreamResponse> = /*@__PURE__*/
+  messageDesc(file_clients_client_service, 6);
+
+/**
  * @generated from message woodhouse.api.v1.clients.ImageRequest
  */
 export type ImageRequest = Message<"woodhouse.api.v1.clients.ImageRequest"> & {
@@ -288,7 +314,7 @@ export type ImageRequest = Message<"woodhouse.api.v1.clients.ImageRequest"> & {
  * Use `create(ImageRequestSchema)` to create a new message.
  */
 export const ImageRequestSchema: GenMessage<ImageRequest> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 6);
+  messageDesc(file_clients_client_service, 7);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ImageResponse
@@ -320,7 +346,7 @@ export type ImageResponse = Message<"woodhouse.api.v1.clients.ImageResponse"> & 
  * Use `create(ImageResponseSchema)` to create a new message.
  */
 export const ImageResponseSchema: GenMessage<ImageResponse> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 7);
+  messageDesc(file_clients_client_service, 8);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.ImageResponse.ImageStatus
@@ -382,7 +408,7 @@ export enum ImageResponse_ImageStatus {
  * Describes the enum woodhouse.api.v1.clients.ImageResponse.ImageStatus.
  */
 export const ImageResponse_ImageStatusSchema: GenEnum<ImageResponse_ImageStatus> = /*@__PURE__*/
-  enumDesc(file_clients_client_service, 7, 0);
+  enumDesc(file_clients_client_service, 8, 0);
 
 /**
  * Device contains either the full or partial (update) state of a device. The id
@@ -434,7 +460,7 @@ export type Device = Message<"woodhouse.api.v1.clients.Device"> & {
  * Use `create(DeviceSchema)` to create a new message.
  */
 export const DeviceSchema: GenMessage<Device> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 8);
+  messageDesc(file_clients_client_service, 9);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.Device.DeviceType
@@ -470,7 +496,7 @@ export enum Device_DeviceType {
  * Describes the enum woodhouse.api.v1.clients.Device.DeviceType.
  */
 export const Device_DeviceTypeSchema: GenEnum<Device_DeviceType> = /*@__PURE__*/
-  enumDesc(file_clients_client_service, 8, 0);
+  enumDesc(file_clients_client_service, 9, 0);
 
 /**
  * @generated from message woodhouse.api.v1.clients.Service
@@ -517,7 +543,7 @@ export type Service = Message<"woodhouse.api.v1.clients.Service"> & {
  * Use `create(ServiceSchema)` to create a new message.
  */
 export const ServiceSchema: GenMessage<Service> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 9);
+  messageDesc(file_clients_client_service, 10);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.Service.ServiceType
@@ -653,7 +679,7 @@ export enum Service_ServiceType {
  * Describes the enum woodhouse.api.v1.clients.Service.ServiceType.
  */
 export const Service_ServiceTypeSchema: GenEnum<Service_ServiceType> = /*@__PURE__*/
-  enumDesc(file_clients_client_service, 9, 0);
+  enumDesc(file_clients_client_service, 10, 0);
 
 /**
  * @generated from message woodhouse.api.v1.clients.Attribute
@@ -723,7 +749,7 @@ export type Attribute = Message<"woodhouse.api.v1.clients.Attribute"> & {
  * Use `create(AttributeSchema)` to create a new message.
  */
 export const AttributeSchema: GenMessage<Attribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 10);
+  messageDesc(file_clients_client_service, 11);
 
 /**
  * @generated from message woodhouse.api.v1.clients.Value
@@ -793,7 +819,7 @@ export type Value = Message<"woodhouse.api.v1.clients.Value"> & {
  * Use `create(ValueSchema)` to create a new message.
  */
 export const ValueSchema: GenMessage<Value> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 11);
+  messageDesc(file_clients_client_service, 12);
 
 /**
  * @generated from message woodhouse.api.v1.clients.BoolAttribute
@@ -815,7 +841,7 @@ export type BoolAttribute = Message<"woodhouse.api.v1.clients.BoolAttribute"> & 
  * Use `create(BoolAttributeSchema)` to create a new message.
  */
 export const BoolAttributeSchema: GenMessage<BoolAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 12);
+  messageDesc(file_clients_client_service, 13);
 
 /**
  * @generated from message woodhouse.api.v1.clients.BoolValue
@@ -832,7 +858,7 @@ export type BoolValue = Message<"woodhouse.api.v1.clients.BoolValue"> & {
  * Use `create(BoolValueSchema)` to create a new message.
  */
 export const BoolValueSchema: GenMessage<BoolValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 13);
+  messageDesc(file_clients_client_service, 14);
 
 /**
  * @generated from message woodhouse.api.v1.clients.IntAttribute
@@ -874,7 +900,7 @@ export type IntAttribute = Message<"woodhouse.api.v1.clients.IntAttribute"> & {
  * Use `create(IntAttributeSchema)` to create a new message.
  */
 export const IntAttributeSchema: GenMessage<IntAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 14);
+  messageDesc(file_clients_client_service, 15);
 
 /**
  * @generated from message woodhouse.api.v1.clients.IntValue
@@ -891,7 +917,7 @@ export type IntValue = Message<"woodhouse.api.v1.clients.IntValue"> & {
  * Use `create(IntValueSchema)` to create a new message.
  */
 export const IntValueSchema: GenMessage<IntValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 15);
+  messageDesc(file_clients_client_service, 16);
 
 /**
  * @generated from message woodhouse.api.v1.clients.FloatAttribute
@@ -933,7 +959,7 @@ export type FloatAttribute = Message<"woodhouse.api.v1.clients.FloatAttribute"> 
  * Use `create(FloatAttributeSchema)` to create a new message.
  */
 export const FloatAttributeSchema: GenMessage<FloatAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 16);
+  messageDesc(file_clients_client_service, 17);
 
 /**
  * @generated from message woodhouse.api.v1.clients.FloatValue
@@ -950,7 +976,7 @@ export type FloatValue = Message<"woodhouse.api.v1.clients.FloatValue"> & {
  * Use `create(FloatValueSchema)` to create a new message.
  */
 export const FloatValueSchema: GenMessage<FloatValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 17);
+  messageDesc(file_clients_client_service, 18);
 
 /**
  * @generated from message woodhouse.api.v1.clients.TextAttribute
@@ -972,7 +998,7 @@ export type TextAttribute = Message<"woodhouse.api.v1.clients.TextAttribute"> & 
  * Use `create(TextAttributeSchema)` to create a new message.
  */
 export const TextAttributeSchema: GenMessage<TextAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 18);
+  messageDesc(file_clients_client_service, 19);
 
 /**
  * @generated from message woodhouse.api.v1.clients.TextValue
@@ -989,7 +1015,7 @@ export type TextValue = Message<"woodhouse.api.v1.clients.TextValue"> & {
  * Use `create(TextValueSchema)` to create a new message.
  */
 export const TextValueSchema: GenMessage<TextValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 19);
+  messageDesc(file_clients_client_service, 20);
 
 /**
  * @generated from message woodhouse.api.v1.clients.DurationAttribute
@@ -1034,7 +1060,7 @@ export type DurationAttribute = Message<"woodhouse.api.v1.clients.DurationAttrib
  * Use `create(DurationAttributeSchema)` to create a new message.
  */
 export const DurationAttributeSchema: GenMessage<DurationAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 20);
+  messageDesc(file_clients_client_service, 21);
 
 /**
  * @generated from message woodhouse.api.v1.clients.DurationValue
@@ -1053,7 +1079,7 @@ export type DurationValue = Message<"woodhouse.api.v1.clients.DurationValue"> & 
  * Use `create(DurationValueSchema)` to create a new message.
  */
 export const DurationValueSchema: GenMessage<DurationValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 21);
+  messageDesc(file_clients_client_service, 22);
 
 /**
  * @generated from message woodhouse.api.v1.clients.TimeAttribute
@@ -1089,7 +1115,7 @@ export type TimeAttribute = Message<"woodhouse.api.v1.clients.TimeAttribute"> & 
  * Use `create(TimeAttributeSchema)` to create a new message.
  */
 export const TimeAttributeSchema: GenMessage<TimeAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 22);
+  messageDesc(file_clients_client_service, 23);
 
 /**
  * @generated from message woodhouse.api.v1.clients.TimeValue
@@ -1120,7 +1146,7 @@ export type TimeValue = Message<"woodhouse.api.v1.clients.TimeValue"> & {
  * Use `create(TimeValueSchema)` to create a new message.
  */
 export const TimeValueSchema: GenMessage<TimeValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 23);
+  messageDesc(file_clients_client_service, 24);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ColorAttribute
@@ -1147,7 +1173,7 @@ export type ColorAttribute = Message<"woodhouse.api.v1.clients.ColorAttribute"> 
  * Use `create(ColorAttributeSchema)` to create a new message.
  */
 export const ColorAttributeSchema: GenMessage<ColorAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 24);
+  messageDesc(file_clients_client_service, 25);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ColorValue
@@ -1169,7 +1195,7 @@ export type ColorValue = Message<"woodhouse.api.v1.clients.ColorValue"> & {
  * Use `create(ColorValueSchema)` to create a new message.
  */
 export const ColorValueSchema: GenMessage<ColorValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 25);
+  messageDesc(file_clients_client_service, 26);
 
 /**
  * Color expressed as hue/saturation.
@@ -1193,7 +1219,7 @@ export type ColorHueSat = Message<"woodhouse.api.v1.clients.ColorHueSat"> & {
  * Use `create(ColorHueSatSchema)` to create a new message.
  */
 export const ColorHueSatSchema: GenMessage<ColorHueSat> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 26);
+  messageDesc(file_clients_client_service, 27);
 
 /**
  * Color expressed in the CIE 1931 color space (x/y).
@@ -1217,7 +1243,7 @@ export type ColorXY = Message<"woodhouse.api.v1.clients.ColorXY"> & {
  * Use `create(ColorXYSchema)` to create a new message.
  */
 export const ColorXYSchema: GenMessage<ColorXY> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 27);
+  messageDesc(file_clients_client_service, 28);
 
 /**
  * @generated from message woodhouse.api.v1.clients.EnumAttribute
@@ -1244,7 +1270,7 @@ export type EnumAttribute = Message<"woodhouse.api.v1.clients.EnumAttribute"> & 
  * Use `create(EnumAttributeSchema)` to create a new message.
  */
 export const EnumAttributeSchema: GenMessage<EnumAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 28);
+  messageDesc(file_clients_client_service, 29);
 
 /**
  * @generated from message woodhouse.api.v1.clients.EnumValue
@@ -1261,7 +1287,7 @@ export type EnumValue = Message<"woodhouse.api.v1.clients.EnumValue"> & {
  * Use `create(EnumValueSchema)` to create a new message.
  */
 export const EnumValueSchema: GenMessage<EnumValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 29);
+  messageDesc(file_clients_client_service, 30);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ImageAttribute
@@ -1274,7 +1300,7 @@ export type ImageAttribute = Message<"woodhouse.api.v1.clients.ImageAttribute"> 
  * Use `create(ImageAttributeSchema)` to create a new message.
  */
 export const ImageAttributeSchema: GenMessage<ImageAttribute> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 30);
+  messageDesc(file_clients_client_service, 31);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ImageValue
@@ -1287,7 +1313,7 @@ export type ImageValue = Message<"woodhouse.api.v1.clients.ImageValue"> & {
  * Use `create(ImageValueSchema)` to create a new message.
  */
 export const ImageValueSchema: GenMessage<ImageValue> = /*@__PURE__*/
-  messageDesc(file_clients_client_service, 31);
+  messageDesc(file_clients_client_service, 32);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.Permissions
@@ -1478,7 +1504,7 @@ export const ClientService: GenService<{
   deviceStream: {
     methodKind: "bidi_streaming";
     input: typeof DeviceStreamRequestSchema;
-    output: typeof DeviceSchema;
+    output: typeof DeviceStreamResponseSchema;
   },
   /**
    * Send an action to a device service.

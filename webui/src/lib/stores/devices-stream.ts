@@ -1,7 +1,11 @@
 import { type Subscriber, writable } from 'svelte/store';
 import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
-import { create } from '@bufbuild/protobuf';
-import { DevicesStreamRequestSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
+import { create, toJsonString } from '@bufbuild/protobuf';
+import {
+	DevicesStreamRequestSchema,
+	DevicesStreamResponseSchema,
+	UserService
+} from '$lib/api/v1/clients/user_service_pb';
 import {
 	Device_DeviceType,
 	Service_ServiceType,
@@ -151,6 +155,7 @@ const streamDevices = async (
 	heartbeat: HeartbeatHandler
 ) => {
 	let didConnect = false;
+
 	const request = create(DevicesStreamRequestSchema, {});
 	try {
 		// console.log("streamDevices: starting stream");
@@ -158,26 +163,35 @@ const streamDevices = async (
 			signal: abortSignal,
 			headers: { authorization: getAccessToken() }
 		};
+		let gotInitialSet = false;
+		let retainIDs: string[] = [];
+
 		for await (const response of client.devicesStream(request, options)) {
 			heartbeat();
 			didConnect = true;
 
 			// All fields will be empty if this is a keepalive message.
-			if (response.id !== '') {
+			if (response.device !== undefined) {
 				// console.log("streamDevices: update: " + response.toJsonString());
 				update((prev: DevicesStoreType) => {
 					let foundDeviceService = false;
 					for (let d = 0; d < prev.devices.length; d++) {
-						if (prev.devices[d].id === response.id) {
+						if (prev.devices[d].id === response.device!.id) {
 							// console.log("streamDevices: update: found " + response.deviceService?.key);
 							foundDeviceService = true;
-							prev.devices[d] = updateDevice(prev.devices[d], response);
+							prev.devices[d] = updateDevice(prev.devices[d], response.device!);
 							break;
 						}
 					}
 					if (!foundDeviceService) {
 						// console.log("streamDevices: update: not found " + response.id);
-						prev.devices = [...prev.devices, createDevice(response)];
+						prev.devices = [...prev.devices, createDevice(response.device!)];
+					}
+
+					// If we're still receiving the initial set then store this
+					// ID for device retention later.
+					if (!gotInitialSet) {
+						retainIDs = [...retainIDs, response.device!.id];
 					}
 
 					prev.devices = prev.devices.sort((a, b) => {
@@ -190,11 +204,50 @@ const streamDevices = async (
 
 					return prev;
 				});
-			} else {
+			} else if (response.deviceRemoved !== '') {
+				// console.log('streamDevices: removed: ' + toJsonString(DevicesStreamResponseSchema, response));
 				update((prev: DevicesStoreType) => {
+					for (let d = 0; d < prev.devices.length; d++) {
+						if (prev.devices[d].id === response.deviceRemoved) {
+							// console.log('streamDevices: removed: found ' + response.deviceRemoved);
+							prev.devices.splice(d, 1);
+							break;
+						}
+					}
+
 					prev.connected = true;
+
 					return prev;
 				});
+			} else {
+				// An empty message indicates the end of the initial batch of
+				// devices after we connect (as well as heartbeats). Use this to
+				// tidy up devices that were removed while we were not listening.
+				if (!gotInitialSet) {
+					gotInitialSet = true;
+
+					// Remove any devices not in the retain list.
+					update((prev: DevicesStoreType) => {
+						for (let d = 0; d < prev.devices.length; d++) {
+							if (!retainIDs.includes(prev.devices[d].id)) {
+								// console.log('streamDevices: not retained ' + prev.devices[d].id);
+								prev.devices.splice(d, 1);
+								d--;
+							}
+						}
+
+						// Don't need this anymore.
+						retainIDs = [];
+
+						prev.connected = true;
+						return prev;
+					});
+				} else {
+					update((prev: DevicesStoreType) => {
+						prev.connected = true;
+						return prev;
+					});
+				}
 			}
 		}
 	} catch (err) {

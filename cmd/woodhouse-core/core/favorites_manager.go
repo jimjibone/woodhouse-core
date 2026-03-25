@@ -87,8 +87,18 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 		case update := <-deviceUpdates.Sub():
 			// Update faves and publish to listeners.
 			for _, fave := range faves {
-				if fave.DeviceID == update.GetId() {
-					if fave.Update(update) {
+				if fave.DeviceID == update.RemovedID {
+					// Remove from the faves.}
+					faveID := FavoriteID{
+						DeviceID:  fave.DeviceID,
+						ServiceID: fave.ServiceID,
+					}
+					delete(faves, faveID.Key())
+
+					// Publish the removed fave to the listeners.
+					manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
+				} else if update.Update != nil && fave.DeviceID == update.Update.GetId() {
+					if fave.Update(update.Update) {
 						// Publish the updated fave to the listeners.
 						manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
 					}
@@ -96,34 +106,36 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 			}
 
 			// Add missing faves.
-			for _, service := range update.Services {
-				faveID := FavoriteID{
-					DeviceID:  update.GetId(),
-					ServiceID: service.GetId(),
-				}
-				if service.GetFavorite() {
-					if _, found := faves[faveID.Key()]; !found {
-						// Get the device state.
-						dev := manager.deviceManager.GetDevice(faveID.DeviceID)
-
-						// Create the new fave.
-						fave := &Favorite{
-							DeviceID:  faveID.DeviceID,
-							ServiceID: faveID.ServiceID,
-						}
-						fave.Update(dev)
-						faves[faveID.Key()] = fave
-
-						// Publish the new fave to the listeners.
-						manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
+			if update.Update != nil {
+				for _, service := range update.Update.Services {
+					faveID := FavoriteID{
+						DeviceID:  update.Update.GetId(),
+						ServiceID: service.GetId(),
 					}
-				} else {
-					if _, found := faves[faveID.Key()]; found {
-						// Remove from the faves.
-						delete(faves, faveID.Key())
+					if service.GetFavorite() {
+						if _, found := faves[faveID.Key()]; !found {
+							// Get the device state.
+							dev := manager.deviceManager.GetDevice(faveID.DeviceID)
 
-						// Publish the removed fave to the listeners.
-						manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
+							// Create the new fave.
+							fave := &Favorite{
+								DeviceID:  faveID.DeviceID,
+								ServiceID: faveID.ServiceID,
+							}
+							fave.Update(dev)
+							faves[faveID.Key()] = fave
+
+							// Publish the new fave to the listeners.
+							manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
+						}
+					} else {
+						if _, found := faves[faveID.Key()]; found {
+							// Remove from the faves.
+							delete(faves, faveID.Key())
+
+							// Publish the removed fave to the listeners.
+							manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
+						}
 					}
 				}
 			}

@@ -1,6 +1,6 @@
 import { type Subscriber, writable } from 'svelte/store';
 import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
-import { create, toJsonString } from "@bufbuild/protobuf";
+import { create, toJsonString } from '@bufbuild/protobuf';
 import { FavoritesStreamResponseSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
 import { type DeviceService, FavoritesStreamRequestSchema } from '$lib/api/v1/clients/user_service_pb';
 import { UserServiceClient } from './user-service-client';
@@ -21,16 +21,16 @@ let streamer: Streamer<typeof UserService> | undefined = undefined;
 const { subscribe, set, update } = writable<FavoritesStoreType>(
 	{ connected: false, backoff: 0, deviceServices: [] },
 	(set: Subscriber<FavoritesStoreType>) => {
-		console.log("favorites stream subscriber started");
+		console.log('favorites stream subscriber started');
 
 		if (streamer === undefined) {
-			streamer = new Streamer("faves", UserServiceClient, streamFavorites, backoffHandler);
+			streamer = new Streamer('faves', UserServiceClient, streamFavorites, backoffHandler);
 		} else {
 			streamer.restart();
 		}
 
 		return () => {
-			console.log("favorites stream subscriber finished");
+			console.log('favorites stream subscriber finished');
 			if (streamer !== undefined) {
 				streamer.stop();
 			}
@@ -49,23 +49,31 @@ const updateDeviceService = (prev: DeviceService, next: DeviceService): DeviceSe
 
 const getDeviceServiceName = (ds: DeviceService): string => {
 	if (ds.deviceName !== undefined && ds.service !== undefined) {
-		if (ds.service.alias!=='') {
-			return ds.deviceName+": "+ds.service.alias
+		if (ds.service.alias !== '') {
+			return ds.deviceName + ': ' + ds.service.alias;
 		}
-		return ds.deviceName
+		return ds.deviceName;
 	}
-	return ds.key
+	return ds.key;
 };
 
-const streamFavorites = async (client: Client<typeof UserService>, abortSignal: AbortSignal, heartbeat: HeartbeatHandler) => {
+const streamFavorites = async (
+	client: Client<typeof UserService>,
+	abortSignal: AbortSignal,
+	heartbeat: HeartbeatHandler
+) => {
 	let didConnect = false;
+
 	const request = create(FavoritesStreamRequestSchema, {});
 	try {
 		// console.log("streamFavorites: starting stream");
 		const options: CallOptions = {
 			signal: abortSignal,
-			headers: { "authorization": getAccessToken() }
+			headers: { authorization: getAccessToken() }
 		};
+		let gotInitialSet = false;
+		let retainKeys: string[] = [];
+
 		for await (const response of client.favoritesStream(request, options)) {
 			heartbeat();
 			didConnect = true;
@@ -88,6 +96,12 @@ const streamFavorites = async (client: Client<typeof UserService>, abortSignal: 
 						prev.deviceServices = [...prev.deviceServices, response.deviceService!];
 					}
 
+					// If we're still receiving the initial set then store this
+					// ID for favorite retention later.
+					if (!gotInitialSet) {
+						retainKeys = [...retainKeys, response.deviceService!.key];
+					}
+
 					prev.deviceServices = prev.deviceServices.sort((a, b) => {
 						const aName = getDeviceServiceName(a);
 						const bName = getDeviceServiceName(b);
@@ -99,11 +113,11 @@ const streamFavorites = async (client: Client<typeof UserService>, abortSignal: 
 					return prev;
 				});
 			} else if (response.keyRemoved !== '') {
-				console.log("streamFavorites: removed: " + toJsonString(FavoritesStreamResponseSchema, response));
+				// console.log('streamFavorites: removed: ' + toJsonString(FavoritesStreamResponseSchema, response));
 				update((prev: FavoritesStoreType) => {
 					for (let d = 0; d < prev.deviceServices.length; d++) {
 						if (prev.deviceServices[d].key === response.keyRemoved) {
-							console.log("streamFavorites: removed: found " + response.keyRemoved);
+							// console.log('streamFavorites: removed: found ' + response.keyRemoved);
 							prev.deviceServices.splice(d, 1);
 							break;
 						}
@@ -118,6 +132,36 @@ const streamFavorites = async (client: Client<typeof UserService>, abortSignal: 
 					prev.connected = true;
 					return prev;
 				});
+
+				// An empty message indicates the end of the initial batch of
+				// favorites after we connect (as well as heartbeats). Use this
+				// to tidy up favorites that were removed while we were not
+				// listening.
+				if (!gotInitialSet) {
+					gotInitialSet = true;
+
+					// Remove any favorites not in the retain list.
+					update((prev: FavoritesStoreType) => {
+						for (let d = 0; d < prev.deviceServices.length; d++) {
+							if (!retainKeys.includes(prev.deviceServices[d].key)) {
+								// console.log('streamFavorites: not retained ' + prev.deviceServices[d].key);
+								prev.deviceServices.splice(d, 1);
+								d--;
+							}
+						}
+
+						// Don't need this anymore.
+						retainKeys = [];
+
+						prev.connected = true;
+						return prev;
+					});
+				} else {
+					update((prev: FavoritesStoreType) => {
+						prev.connected = true;
+						return prev;
+					});
+				}
 			}
 		}
 	} catch (err) {

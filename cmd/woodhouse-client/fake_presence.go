@@ -15,7 +15,7 @@ type FakePresence struct {
 	presence *services.Presence
 }
 
-func NewFakePresence(id string, sim bool) *FakePresence {
+func NewFakePresence(id, name string, sim bool) *FakePresence {
 	dev := &FakePresence{
 		dev:      devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:     services.NewInfo(),
@@ -25,7 +25,7 @@ func NewFakePresence(id string, sim bool) *FakePresence {
 	dev.dev.AddService(dev.info, dev.online, dev.presence)
 
 	// Set up the info service.
-	dev.info.Name.Set("Fake Presence")
+	dev.info.Name.Set(name)
 	dev.info.Model.Set("Fake Presence Thing")
 	dev.info.Manufacturer.Set("Fake Things Inc")
 	dev.online.Online.Set(true)

@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/jimjibone/queue/v2"
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
@@ -90,71 +91,7 @@ func (manager *GroupManager) GetListener() *queue.Sub[GroupUpdate] {
 	return sub
 }
 
-func (manager *GroupManager) AddGroup(grp *Group) error {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	if manager.groups[grp.GroupID] != nil {
-		return ErrGroupAlreadyExists
-	}
-
-	manager.groups[grp.GroupID] = grp.Clone()
-	manager.changed = true
-
-	manager.log.Infof("group %q added", grp.GroupID)
-
-	// Publish the new/updated group to the listeners.
-	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})
-
-	return nil
-}
-
-func (manager *GroupManager) UpdateGroup(grp *Group) error {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	manager.groups[grp.GroupID] = grp.Clone()
-	manager.changed = true
-
-	manager.log.Infof("group %q updated", grp.GroupID)
-
-	// Publish the new/updated group to the listeners.
-	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})
-
-	return nil
-}
-
-func (manager *GroupManager) UpdateGroupName(groupID, name string) error {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	grp := manager.groups[groupID]
-	if grp == nil {
-		return ErrGroupNotFound
-	}
-
-	oldName := grp.Name
-	grp.Name = name
-	manager.changed = true
-
-	manager.log.Infof("group %q updated name from %q to %q", grp.GroupID, oldName, name)
-
-	// Publish the new/updated group to the listeners.
-	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})
-
-	return nil
-}
-
-func (manager *GroupManager) UpdateGroupMembers(groupID string, members []GroupMember) error {
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	// Verify that the group exists.
-	grp := manager.groups[groupID]
-	if grp == nil {
-		return ErrGroupNotFound
-	}
-
+func (manager *GroupManager) verifyGroupMembers(members []*GroupMember) error {
 	// Verify that the members exist - device id and service id.
 	var deviceIDs []string
 	for _, member := range members {
@@ -182,14 +119,133 @@ func (manager *GroupManager) UpdateGroupMembers(groupID string, members []GroupM
 		}
 	nextMember:
 	}
+	return nil
+}
 
+func (manager *GroupManager) forceGroupUpdate(grp *Group) {
+	update := grp.initUpdate(true)
+	grp.updateInfo(update)
+
+	// Get all device states that make up the group.
+	var deviceIDs []string
+	for _, member := range grp.Members {
+		deviceIDs = append(deviceIDs, member.DeviceID)
+	}
+	for dev := range manager.deviceManager.GetDevicesByIDs(deviceIDs) {
+		if dev != nil {
+			for _, srv := range dev.Services {
+				grp.updateOnline(true, update, dev.Id, srv)
+				grp.updateMembers(true, update, dev.Id, srv)
+			}
+		}
+	}
+
+	// Publish the update to the device manager, whatever it is.
+	manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
+}
+
+func (manager *GroupManager) AddGroup(grp *Group) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if manager.groups[grp.GroupID] != nil {
+		return ErrGroupAlreadyExists
+	}
+
+	// Verify that the members exist - device id and service id.
+	err := manager.verifyGroupMembers(grp.Members)
+	if err != nil {
+		return err
+	}
+
+	// Add the group.
+	manager.groups[grp.GroupID] = grp
+	manager.changed = true
+
+	// Publish the new/updated group to the listeners.
+	manager.publisher.Pub(GroupUpdate{Updated: grp.ShallowClone()})
+
+	// Populate the group with the current state of the devices.
+	manager.forceGroupUpdate(grp)
+
+	manager.log.Infof("group added %s", grp.String())
+
+	return nil
+}
+
+func (manager *GroupManager) UpdateGroup(grp *Group) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	manager.groups[grp.GroupID] = grp
+	manager.changed = true
+
+	// Publish the new/updated group to the listeners.
+	manager.publisher.Pub(GroupUpdate{Updated: grp.ShallowClone()})
+
+	// Populate the group with the current state of the devices.
+	manager.forceGroupUpdate(grp)
+
+	manager.log.Infof("group %q updated: %s", grp.GroupID, grp.String())
+
+	return nil
+}
+
+func (manager *GroupManager) UpdateGroupName(groupID, name string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	// Verify that the group exists.
+	grp := manager.groups[groupID]
+	if grp == nil {
+		return ErrGroupNotFound
+	}
+
+	oldName := grp.Name
+	grp.Name = name
+	manager.changed = true
+
+	manager.log.Infof("group %q updated name from %q to %q", grp.GroupID, oldName, name)
+
+	// Publish the new/updated group to the listeners.
+	manager.publisher.Pub(GroupUpdate{Updated: grp.ShallowClone()})
+
+	update := grp.initUpdate(false)
+	grp.updateInfo(update)
+	if update != nil {
+		manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
+	}
+
+	return nil
+}
+
+func (manager *GroupManager) UpdateGroupMembers(groupID string, members []*GroupMember) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	// Verify that the group exists.
+	grp := manager.groups[groupID]
+	if grp == nil {
+		return ErrGroupNotFound
+	}
+
+	// Verify that the members exist - device id and service id.
+	err := manager.verifyGroupMembers(members)
+	if err != nil {
+		return err
+	}
+
+	// Update the members.
 	grp.Members = members
 	manager.changed = true
 
 	manager.log.Infof("group %q updated members", grp.GroupID)
 
 	// Publish the new/updated group to the listeners.
-	manager.publisher.Pub(GroupUpdate{Updated: grp.Clone()})
+	manager.publisher.Pub(GroupUpdate{Updated: grp.ShallowClone()})
+
+	// Populate the group with the current state of the devices.
+	manager.forceGroupUpdate(grp)
 
 	return nil
 }
@@ -198,7 +254,9 @@ func (manager *GroupManager) RemoveGroup(groupID string) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
-	if _, found := manager.groups[groupID]; !found {
+	manager.log.Infof("want to remove group %q", groupID)
+
+	if _, found := manager.groups[groupID]; found {
 		delete(manager.groups, groupID)
 		manager.changed = true
 
@@ -207,6 +265,9 @@ func (manager *GroupManager) RemoveGroup(groupID string) error {
 		// Publish the new/updated group to the listeners.
 		manager.publisher.Pub(GroupUpdate{Removed: &groupID})
 	}
+
+	// Delete the group from the device manager.
+	manager.deviceManager.RemoveDevice(groupID)
 
 	return nil
 }
@@ -304,7 +365,8 @@ func (manager *GroupManager) run(ctx context.Context) {
 	// Send initial group info.
 	manager.mu.RLock()
 	for _, grp := range manager.groups {
-		update := grp.UpdateInfo()
+		update := grp.initUpdate(false)
+		grp.updateInfo(update)
 		if update != nil {
 			manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
 		}
@@ -312,26 +374,33 @@ func (manager *GroupManager) run(ctx context.Context) {
 	manager.mu.RUnlock()
 
 	// Func to loop over groups and update them with the device update.
-	updateGroups := func(dev *clientsapi.Device) {
+	updateInGroups := func(dev *clientsapi.Device) {
 		manager.mu.RLock()
 		defer manager.mu.RUnlock()
 		for _, srv := range dev.Services {
 			for _, grp := range manager.groups {
-				for _, member := range grp.Members {
-					if dev.GetId() == member.DeviceID {
-						if srv.Typ == clientsapi.Service_ONLINE {
-							update := grp.UpdateOnline(manager.log, dev.GetId(), srv)
-							if update != nil {
-								manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
-							}
-						}
-						if srv.GetId() == member.ServiceID {
-							update := grp.Update(manager.log, dev.GetId(), srv)
-							if update != nil {
-								manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
-							}
-						}
+				if grp.WantsServiceUpdate(dev.Id, srv) {
+					update := grp.initUpdate(false)
+					grp.updateOnline(false, update, dev.Id, srv)
+					grp.updateMembers(false, update, dev.Id, srv)
+					if update != nil {
+						manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
 					}
+				}
+			}
+		}
+	}
+
+	// Func to loop over groups and remove a device.
+	removeFromGroups := func(deviceID string) {
+		manager.mu.RLock()
+		defer manager.mu.RUnlock()
+		for _, grp := range manager.groups {
+			if grp.WantsDevice(deviceID) {
+				update := grp.initUpdate(false)
+				grp.removeDevice(update, deviceID)
+				if update != nil {
+					manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
 				}
 			}
 		}
@@ -352,7 +421,7 @@ func (manager *GroupManager) run(ctx context.Context) {
 
 	// Build up group states from initial deviceManager state.
 	for dev := range manager.deviceManager.GetDevices() {
-		updateGroups(dev)
+		updateInGroups(dev)
 	}
 
 	manager.mu.RLock()
@@ -362,13 +431,23 @@ func (manager *GroupManager) run(ctx context.Context) {
 	}
 	manager.mu.RUnlock()
 
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
 		case update := <-deviceUpdates.Sub():
-			updateGroups(update)
+			if update.Update != nil {
+				updateInGroups(update.Update)
+			}
+
+			// If a device is removed, we need to update the groups that contain it.
+			if update.RemovedID != "" {
+				removeFromGroups(update.RemovedID)
+			}
 
 		case request := <-actionRequests.Sub():
 			if request.ClientID == GroupClientID {
@@ -379,12 +458,18 @@ func (manager *GroupManager) run(ctx context.Context) {
 			// Publish all faves to the new listener.
 			manager.mu.RLock()
 			for _, grp := range manager.groups {
-				manager.publisher.Send(lis, GroupUpdate{Updated: grp.Clone()})
+				manager.publisher.Send(lis, GroupUpdate{Updated: grp.ShallowClone()})
 			}
 			manager.mu.RUnlock()
 
 			// Send an empty update to indicate the end of the initial list.
 			manager.publisher.Send(lis, GroupUpdate{})
+
+		case <-ticker.C:
+			err := manager.saveIfChanged()
+			if err != nil {
+				manager.log.Fatalf("failed to save state: %s", err)
+			}
 		}
 	}
 }

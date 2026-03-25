@@ -33,27 +33,38 @@ type DeviceManager struct {
 	ctx             context.Context
 	close           func()
 	store           stores.Store
-	rxDeviceUpdates *queue.Queue[deviceUpdate]
-	txDeviceUpdates *queue.Pub[*clientsapi.Device]
+	rxDeviceUpdates *queue.Queue[rxDeviceUpdate]
+	txDeviceUpdates *queue.Pub[txDeviceUpdate]
 	actionRequests  *queue.Pub[ActionRequest]
 	actionResponses *queue.Pub[ActionResponse]
 	imageRequests   *queue.Pub[ImageRequest]
 	imageResponses  *queue.Pub[ImageResponse]
-	setFavourites   *queue.Queue[favoriteUpdate]
+	rxSetFavourites *queue.Queue[favoriteUpdate]
+	rxRemoveDevices *queue.Queue[removalUpdate]
 	devices         map[string]*Device // key=device id
 	changed         bool
 }
 
-type deviceUpdate struct {
+type rxDeviceUpdate struct {
 	ClientID string
 	Update   *clientsapi.Device
 	Offline  bool
+}
+
+type txDeviceUpdate struct {
+	ClientID  string             // The client that caused the update.
+	Update    *clientsapi.Device // The updated device.
+	RemovedID string             // If the device was removed, the ID of the removed device.
 }
 
 type favoriteUpdate struct {
 	DeviceID  string
 	ServiceID string
 	Favorite  bool
+}
+
+type removalUpdate struct {
+	DeviceID string
 }
 
 type ActionRequest struct {
@@ -92,13 +103,14 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 		ctx:             ctx,
 		close:           close,
 		store:           store,
-		rxDeviceUpdates: queue.New[deviceUpdate](),
-		txDeviceUpdates: queue.NewPub[*clientsapi.Device](),
+		rxDeviceUpdates: queue.New[rxDeviceUpdate](),
+		txDeviceUpdates: queue.NewPub[txDeviceUpdate](),
 		actionRequests:  queue.NewPub[ActionRequest](),
 		actionResponses: queue.NewPub[ActionResponse](),
 		imageRequests:   queue.NewPub[ImageRequest](),
 		imageResponses:  queue.NewPub[ImageResponse](),
-		setFavourites:   queue.New[favoriteUpdate](),
+		rxSetFavourites: queue.New[favoriteUpdate](),
+		rxRemoveDevices: queue.New[removalUpdate](),
 		devices:         make(map[string]*Device),
 	}
 
@@ -135,15 +147,19 @@ func (manager *DeviceManager) Close() {
 }
 
 func (manager *DeviceManager) SetFavorite(deviceID, serviceID string, favorite bool) {
-	manager.setFavourites.Push(favoriteUpdate{DeviceID: deviceID, ServiceID: serviceID, Favorite: favorite})
+	manager.rxSetFavourites.Push(favoriteUpdate{DeviceID: deviceID, ServiceID: serviceID, Favorite: favorite})
+}
+
+func (manager *DeviceManager) RemoveDevice(deviceID string) {
+	manager.rxRemoveDevices.Push(removalUpdate{DeviceID: deviceID})
 }
 
 func (manager *DeviceManager) PushDeviceUpdate(clientID string, update *clientsapi.Device) {
-	manager.rxDeviceUpdates.Push(deviceUpdate{ClientID: clientID, Update: update})
+	manager.rxDeviceUpdates.Push(rxDeviceUpdate{ClientID: clientID, Update: update})
 }
 
 func (manager *DeviceManager) SetClientOffline(clientID string) {
-	manager.rxDeviceUpdates.Push(deviceUpdate{ClientID: clientID, Offline: true})
+	manager.rxDeviceUpdates.Push(rxDeviceUpdate{ClientID: clientID, Offline: true})
 }
 
 func (manager *DeviceManager) PushActionRequest(clientID string, req *clientsapi.ActionRequest) {
@@ -236,7 +252,7 @@ func (manager *DeviceManager) GetDevicesByIDs(ids []string) <-chan *clientsapi.D
 	return ch
 }
 
-func (manager *DeviceManager) GetDeviceUpdates() *queue.Sub[*clientsapi.Device] {
+func (manager *DeviceManager) GetDeviceUpdates() *queue.Sub[txDeviceUpdate] {
 	return manager.txDeviceUpdates.NewSub()
 }
 
@@ -396,8 +412,11 @@ func (manager *DeviceManager) run(ctx context.Context) {
 		case update := <-manager.rxDeviceUpdates.Pop():
 			manager.handleDeviceUpdate(update)
 
-		case update := <-manager.setFavourites.Pop():
+		case update := <-manager.rxSetFavourites.Pop():
 			manager.handleFavoriteUpdate(update)
+
+		case update := <-manager.rxRemoveDevices.Pop():
+			manager.handleDeviceRemoval(update)
 
 		case <-ticker.C:
 			err := manager.saveIfChanged()
@@ -408,7 +427,7 @@ func (manager *DeviceManager) run(ctx context.Context) {
 	}
 }
 
-func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
+func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
@@ -435,7 +454,9 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 					}
 				}
 
-				manager.txDeviceUpdates.Pub(changes)
+				manager.txDeviceUpdates.Pub(txDeviceUpdate{
+					Update: changes,
+				})
 			} else {
 				manager.log.Warnf("device updated has empty device ID: %s", update)
 			}
@@ -446,7 +467,9 @@ func (manager *DeviceManager) handleDeviceUpdate(update deviceUpdate) {
 					changes := dev.setOffline(manager.log)
 					if changes != nil {
 						manager.changed = true
-						manager.txDeviceUpdates.Pub(changes)
+						manager.txDeviceUpdates.Pub(txDeviceUpdate{
+							Update: changes,
+						})
 					}
 				}
 			}
@@ -468,9 +491,30 @@ func (manager *DeviceManager) handleFavoriteUpdate(update favoriteUpdate) {
 			manager.log.Warnf("failed to update favorite device %q, service %q: %s", update.DeviceID, update.ServiceID, err)
 		} else {
 			manager.changed = true
-			manager.txDeviceUpdates.Pub(dev.pb())
+			manager.txDeviceUpdates.Pub(txDeviceUpdate{
+				Update: dev.pb(),
+			})
 		}
 	} else {
 		manager.log.Warnf("favorite update device ID not found: %s", update)
+	}
+}
+
+func (manager *DeviceManager) handleDeviceRemoval(update removalUpdate) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	// TODO: inform clients that the device was removed.
+	// TODO: inform favorites manager that the device was removed.
+
+	if dev, found := manager.devices[update.DeviceID]; found {
+		manager.changed = true
+		manager.txDeviceUpdates.Pub(txDeviceUpdate{
+			RemovedID: dev.ID,
+		})
+		delete(manager.devices, dev.ID)
+		manager.log.Infof("removed device %q", dev.ID)
+	} else {
+		manager.log.Warnf("removal device ID not found: %s", update)
 	}
 }

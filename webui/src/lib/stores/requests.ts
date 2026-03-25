@@ -3,10 +3,13 @@ import {
 	ActionResponseSchema,
 	ActionResponse_ActionStatus,
 	type Value,
-	type ActionResponse
+	type ActionResponse,
+	Service_ServiceType
 } from '$lib/api/v1/clients/client_service_pb';
 import {
 	AddFavoriteRequestSchema,
+	AddGroupRequestSchema,
+	AddGroupResponseSchema,
 	AddUserRequestSchema,
 	AddUserResponseSchema,
 	ApprovePairingRequestSchema,
@@ -14,15 +17,20 @@ import {
 	DenyPairingRequestSchema,
 	DenyPairingResponseSchema,
 	RemoveFavoriteRequestSchema,
+	RemoveGroupRequestSchema,
+	RemoveGroupResponseSchema,
 	UnpairClientRequestSchema,
 	UnpairClientResponseSchema,
 	ForgetClientRequestSchema,
 	ForgetClientResponseSchema,
+	UpdateGroupRequestSchema,
+	UpdateGroupResponseSchema,
 	UpdateUserRequestSchema,
 	UpdateUserResponseSchema,
 	UserRole,
 	type UpdateUserRequest
 } from '$lib/api/v1/clients/user_service_pb';
+import { type GroupMember } from '$lib/api/v1/clients/group_pb';
 import { UserServiceClient } from './user-service-client';
 import { ConnectError, type CallOptions } from '@connectrpc/connect';
 import { create, toJsonString } from '@bufbuild/protobuf';
@@ -218,6 +226,64 @@ export const UnpairClient = async (clientID: string): Promise<null | ConnectErro
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error unpair client: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const AddGroup = async (
+	name: string,
+	type: Service_ServiceType,
+	members: GroupMember[]
+): Promise<null | ConnectError> => {
+	const request = create(AddGroupRequestSchema, { name, type, members });
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending add group: ' + toJsonString(AddGroupRequestSchema, request));
+	try {
+		const response = await UserServiceClient.addGroup(request, options);
+		console.log('received add group: ' + toJsonString(AddGroupResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error add group: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const UpdateGroup = async (id: string, name?: string, members?: GroupMember[]): Promise<null | ConnectError> => {
+	const request = create(UpdateGroupRequestSchema, { id, name, members: members ?? [] });
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending update group: ' + toJsonString(UpdateGroupRequestSchema, request));
+	try {
+		const response = await UserServiceClient.updateGroup(request, options);
+		console.log('received update group: ' + toJsonString(UpdateGroupResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error update group: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const RemoveGroup = async (id: string): Promise<null | ConnectError> => {
+	const request = create(RemoveGroupRequestSchema, { id });
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending remove group: ' + toJsonString(RemoveGroupRequestSchema, request));
+	try {
+		const response = await UserServiceClient.removeGroup(request, options);
+		console.log('received remove group: ' + toJsonString(RemoveGroupResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error remove group: ' + err.message);
 			return err;
 		}
 	}

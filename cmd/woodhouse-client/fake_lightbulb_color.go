@@ -16,7 +16,7 @@ type FakeLightbulbColor struct {
 	lightbulb *services.Lightbulb
 }
 
-func NewFakeLightbulbColor(id string) *FakeLightbulbColor {
+func NewFakeLightbulbColor(id, name string) *FakeLightbulbColor {
 	dev := &FakeLightbulbColor{
 		dev:       devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:      services.NewInfo(),
@@ -26,7 +26,7 @@ func NewFakeLightbulbColor(id string) *FakeLightbulbColor {
 	dev.dev.AddService(dev.info, dev.online, dev.lightbulb)
 
 	// Set up the info service.
-	dev.info.Name.Set("Fake Lightbulb")
+	dev.info.Name.Set(name)
 	dev.info.Model.Set("Fake Lightbulb Thing")
 	dev.info.Manufacturer.Set("Fake Things Inc")
 	dev.online.Online.Set(true)

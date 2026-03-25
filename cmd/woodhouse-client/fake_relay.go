@@ -16,7 +16,7 @@ type FakeRelay struct {
 	relay  *services.Relay
 }
 
-func NewFakeRelay(id string) *FakeRelay {
+func NewFakeRelay(id, name string) *FakeRelay {
 	dev := &FakeRelay{
 		dev:    devices.NewDevice(id, clientsapi.Device_DEVICE),
 		info:   services.NewInfo(),
@@ -26,7 +26,7 @@ func NewFakeRelay(id string) *FakeRelay {
 	dev.dev.AddService(dev.info, dev.online, dev.relay)
 
 	// Set up the info service.
-	dev.info.Name.Set("Fake Relay")
+	dev.info.Name.Set(name)
 	dev.info.Model.Set("Fake Relay Thing")
 	dev.info.Manufacturer.Set("Fake Things Inc")
 	dev.online.Online.Set(true)

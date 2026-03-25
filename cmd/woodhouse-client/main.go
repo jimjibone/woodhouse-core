@@ -52,22 +52,47 @@ func main() {
 			// Create the client.
 			client := wh.NewClient(store, args.String("addr"), wh.WithClientInfo("woodhouse-client", "Test Client", "Client for testing Woodhouse functionality", "0.1.0"))
 
-			fake1 := NewFakeLightbulbColor("fake1")
+			fake1 := NewFakeLightbulbColor("fake1", "Living Room Light")
 			if err := client.AddDevice(fake1.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
 
-			fake1a := NewFakeLightbulbColorTemp("fake1a")
+			fake1a := NewFakeLightbulbColorTemp("fake1a", "Hallway Light")
 			if err := client.AddDevice(fake1a.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
 
-			fake2 := NewFakeRelay("fake2")
+			fake1b := NewFakeLightbulbColorTemp("fake1b", "Kitchen Light")
+			if err := client.AddDevice(fake1b.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake1c := NewFakeLightbulbColor("fake1c", "Bedroom Light")
+			if err := client.AddDevice(fake1c.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake1d := NewFakeLightbulbColorTemp("fake1d", "Bedroom Lamp")
+			if err := client.AddDevice(fake1d.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake1e := NewFakeLightbulbColorTemp("fake1e", "Hallway Lamp")
+			if err := client.AddDevice(fake1e.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake2 := NewFakeRelay("fake2", "Boiler")
 			if err := client.AddDevice(fake2.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
 
-			fake3 := NewFakePresence("fake3", args.Bool("sim-sensors"))
+			fake2a := NewFakeRelay("fake2a", "Washing Machine")
+			if err := client.AddDevice(fake2a.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake3 := NewFakePresence("fake3", "Kitchen Presence", args.Bool("sim-sensors"))
 			if err := client.AddDevice(fake3.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
