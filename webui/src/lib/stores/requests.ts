@@ -16,6 +16,7 @@ import {
 	ApprovePairingResponseSchema,
 	DenyPairingRequestSchema,
 	DenyPairingResponseSchema,
+	RemoveDeviceRequestSchema,
 	RemoveFavoriteRequestSchema,
 	RemoveGroupRequestSchema,
 	RemoveGroupResponseSchema,
@@ -65,6 +66,25 @@ export const SendActionRequest = async (
 			responseHandler(response);
 		}
 	}
+};
+
+export const SendRemoveDeviceRequest = async (deviceID: string): Promise<null | ConnectError> => {
+	const request = create(RemoveDeviceRequestSchema, {
+		deviceId: deviceID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending remove device request: ' + toJsonString(RemoveDeviceRequestSchema, request));
+	try {
+		await UserServiceClient.removeDevice(request, options);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error sending remove device request: ' + err.message);
+			return err;
+		}
+	}
+	return null;
 };
 
 export const SendFavoriteRequest = async (deviceID: string, serviceID: string, fave: boolean) => {

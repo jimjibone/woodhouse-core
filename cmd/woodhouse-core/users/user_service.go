@@ -372,6 +372,45 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 	}
 }
 
+func (service *UserService) RemoveDevice(ctx context.Context, req *clientsapi.RemoveDeviceRequest) (*clientsapi.RemoveDeviceResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to remove device")
+	}
+	if req.GetDeviceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "device_id not defined")
+	}
+	if service.deviceManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "device manager not configured")
+	}
+
+	if err := service.deviceManager.RemoveDevice(req.GetDeviceId(), false); err != nil {
+		if err == core.ErrDeviceIsGroup {
+			// Try using the group removal which will handle the group device.
+			_, err := service.RemoveGroup(ctx, &clientsapi.RemoveGroupRequest{
+				Id: req.GetDeviceId(),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return &clientsapi.RemoveDeviceResponse{}, nil
+		}
+
+		if err == core.ErrDeviceNotFound {
+			return nil, status.Errorf(codes.NotFound, "device not found")
+		}
+		if err == core.ErrDeviceIsOnline {
+			return nil, status.Errorf(codes.FailedPrecondition, "device is online, cannot remove")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to remove device: %s", err)
+	}
+
+	return &clientsapi.RemoveDeviceResponse{}, nil
+}
+
 func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamRequest, server clientsapi.UserService_FavoritesStreamServer) error {
 	service.log.Infof("favorites stream started")
 	defer service.log.Infof("favorites stream finished")

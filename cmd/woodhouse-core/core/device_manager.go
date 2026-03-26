@@ -24,6 +24,8 @@ import (
 
 var (
 	ErrDeviceNotFound = errors.New("device not found")
+	ErrDeviceIsOnline = errors.New("device is online")
+	ErrDeviceIsGroup  = errors.New("device is a group")
 )
 
 type DeviceManager struct {
@@ -65,6 +67,8 @@ type favoriteUpdate struct {
 
 type removalUpdate struct {
 	DeviceID string
+	Force    bool
+	Callback func(error)
 }
 
 type ActionRequest struct {
@@ -150,8 +154,20 @@ func (manager *DeviceManager) SetFavorite(deviceID, serviceID string, favorite b
 	manager.rxSetFavourites.Push(favoriteUpdate{DeviceID: deviceID, ServiceID: serviceID, Favorite: favorite})
 }
 
-func (manager *DeviceManager) RemoveDevice(deviceID string) {
-	manager.rxRemoveDevices.Push(removalUpdate{DeviceID: deviceID})
+// Remove a device from the manager. Devices are not normally removable if they
+// are online to avoid state inconsistencies if the client is still active. If
+// force is true then the device will be removed. This is normally only true
+// when removing groups.
+func (manager *DeviceManager) RemoveDevice(deviceID string, force bool) error {
+	err := make(chan error, 1)
+	manager.rxRemoveDevices.Push(removalUpdate{
+		DeviceID: deviceID,
+		Force:    force,
+		Callback: func(e error) {
+			err <- e
+		},
+	})
+	return <-err
 }
 
 func (manager *DeviceManager) PushDeviceUpdate(clientID string, update *clientsapi.Device) {
@@ -508,13 +524,23 @@ func (manager *DeviceManager) handleDeviceRemoval(update removalUpdate) {
 	// TODO: inform favorites manager that the device was removed.
 
 	if dev, found := manager.devices[update.DeviceID]; found {
+		if dev.ClientID == GroupClientID && !update.Force {
+			update.Callback(ErrDeviceIsGroup)
+			return
+		}
+		if dev.isOnline() && !update.Force {
+			update.Callback(ErrDeviceIsOnline)
+			return
+		}
 		manager.changed = true
 		manager.txDeviceUpdates.Pub(txDeviceUpdate{
 			RemovedID: dev.ID,
 		})
 		delete(manager.devices, dev.ID)
 		manager.log.Infof("removed device %q", dev.ID)
+		update.Callback(nil)
 	} else {
 		manager.log.Warnf("removal device ID not found: %s", update)
+		update.Callback(ErrDeviceNotFound)
 	}
 }

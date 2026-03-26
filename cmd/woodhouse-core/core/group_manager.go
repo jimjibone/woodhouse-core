@@ -267,7 +267,7 @@ func (manager *GroupManager) RemoveGroup(groupID string) error {
 	}
 
 	// Delete the group from the device manager.
-	manager.deviceManager.RemoveDevice(groupID)
+	manager.deviceManager.RemoveDevice(groupID, true)
 
 	return nil
 }
