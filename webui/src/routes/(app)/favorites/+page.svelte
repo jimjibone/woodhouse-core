@@ -7,6 +7,7 @@
 	import Fuse from 'fuse.js';
 	import { onDestroy } from 'svelte';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
+	import { HeartIcon } from '@lucide/svelte';
 
 	let services = $state<DeviceService[]>([]);
 	let query = $state('');
@@ -41,21 +42,41 @@
 	});
 </script>
 
-<main class="grid gap-2 md:grid-cols-2 lg:grid-cols-3 mb-20 md:mb-0">
-	{#each filtered as dev, i (dev.key)}
-		{#if dev.service !== undefined}
-			<ServiceEnumerator
-				deviceName={dev.deviceName ? dev.deviceName : ''}
-				deviceID={dev.deviceId}
-				online={dev.online ? dev.online : false}
-				lastSeen={dev.lastSeen ? valueToDate(dev.lastSeen) : undefined}
-				batteryLevel={dev.batteryLevel}
-				service={dev.service}
-			/>
-		{/if}
-	{:else}
-		<div>
-			<p>No favorites!</p>
+{#if services.length === 0}
+	<main class="flex flex-col items-center justify-center min-h-[65vh] gap-6 text-center px-4">
+		<div class="relative">
+			<div class="rounded-full bg-muted p-8">
+				<HeartIcon class="size-12 text-muted-foreground" strokeWidth={1.5} />
+			</div>
 		</div>
-	{/each}
-</main>
+		<div class="grid gap-2 max-w-xs">
+			<h2 class="text-xl font-semibold">No favorites yet</h2>
+			<p class="text-sm text-muted-foreground leading-relaxed">
+				Favorite a service from the
+				<a href="/devices" class="text-foreground underline underline-offset-2 hover:no-underline"> Devices </a>
+				page to pin it here for quick access.
+			</p>
+		</div>
+	</main>
+{:else}
+	<main class="grid gap-2 md:grid-cols-2 lg:grid-cols-3 mb-20 md:mb-0">
+		{#each filtered as dev (dev.key)}
+			{#if dev.service !== undefined}
+				<ServiceEnumerator
+					deviceName={dev.deviceName ? dev.deviceName : ''}
+					deviceID={dev.deviceId}
+					online={dev.online ? dev.online : false}
+					lastSeen={dev.lastSeen ? valueToDate(dev.lastSeen) : undefined}
+					batteryLevel={dev.batteryLevel}
+					service={dev.service}
+				/>
+			{/if}
+		{:else}
+			<div class="col-span-full flex flex-col items-center gap-2 py-12 text-center">
+				<p class="text-sm text-muted-foreground">
+					No results for "<span class="font-medium text-foreground">{query}</span>"
+				</p>
+			</div>
+		{/each}
+	</main>
+{/if}
