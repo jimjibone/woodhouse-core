@@ -50,7 +50,12 @@ func main() {
 			store := stores.NewFSStore(args.String("store"))
 
 			// Create the client.
-			client := wh.NewClient(store, args.String("addr"), wh.WithClientInfo("woodhouse-client", "Test Client", "Client for testing Woodhouse functionality", "0.1.0"))
+			client := wh.NewClient(
+				store,
+				args.String("addr"),
+				wh.WithClientID(args.String("id")),
+				wh.WithClientInfo("Test Client", "Client for testing Woodhouse functionality", "0.1.0"),
+			)
 
 			fake1 := NewFakeLightbulbColor("fake1", "Living Room Light")
 			if err := client.AddDevice(fake1.dev); err != nil {

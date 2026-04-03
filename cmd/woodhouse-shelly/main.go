@@ -54,7 +54,8 @@ func main() {
 			client := wh.NewClient(
 				store,
 				args.String("addr"),
-				wh.WithClientInfo(args.String("id"), "Shelly Bridge", "Bridge for Shelly devices", "0.1.0"),
+				wh.WithClientID(args.String("id")),
+				wh.WithClientInfo("Shelly Bridge", "Bridge for Shelly devices", "0.1.0"),
 			)
 
 			// Start the Shelly goroutine.

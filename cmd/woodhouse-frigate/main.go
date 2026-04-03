@@ -61,7 +61,8 @@ func main() {
 			client := wh.NewClient(
 				store,
 				args.String("addr"),
-				wh.WithClientInfo(args.String("id"), "Frigate Bridge", "Bridge for integrating Frigate with Woodhouse", "0.1.0"),
+				wh.WithClientID(args.String("id")),
+				wh.WithClientInfo("Frigate Bridge", "Bridge for integrating Frigate with Woodhouse", "0.1.0"),
 				wh.WithImages(),
 			)
 

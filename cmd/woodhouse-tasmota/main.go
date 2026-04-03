@@ -354,7 +354,8 @@ func main() {
 			client := wh.NewClient(
 				store,
 				args.String("addr"),
-				wh.WithClientInfo(args.String("id"), "Tasmota Bridge", "Bridge for Tasmota devices", "0.1.0"),
+				wh.WithClientID(args.String("id")),
+				wh.WithClientInfo("Tasmota Bridge", "Bridge for Tasmota devices", "0.1.0"),
 			)
 
 			// Set up devices.
