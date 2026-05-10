@@ -2,8 +2,12 @@ import {
 	ActionRequestSchema,
 	ActionResponseSchema,
 	ActionResponse_ActionStatus,
+	ImageRequestSchema,
+	ImageResponseSchema,
+	ImageResponse_ImageStatus,
 	type Value,
 	type ActionResponse,
+	type ImageResponse,
 	Service_ServiceType
 } from '$lib/api/v1/clients/client_service_pb';
 import {
@@ -308,6 +312,41 @@ export const RemoveGroup = async (id: string): Promise<null | ConnectError> => {
 		}
 	}
 	return null;
+};
+
+export const SendImageRequest = async (
+	deviceID: string,
+	serviceID: string,
+	attributeID: string,
+	responseHandler: (response: ImageResponse) => void
+) => {
+	const request = create(ImageRequestSchema, {
+		deviceId: deviceID,
+		serviceId: serviceID,
+		attributeId: attributeID
+	});
+	const options: CallOptions = {
+		headers: { authorization: getAccessToken() }
+	};
+	console.log('sending image request: deviceId=' + deviceID + ' serviceId=' + serviceID);
+	try {
+		for await (const response of UserServiceClient.sendImageRequest(request, options)) {
+			console.log('received image response: status=' + response.status + ' dataLen=' + response.data.length);
+			responseHandler(response);
+			if (response.status >= ImageResponse_ImageStatus.COMPLETE) {
+				break;
+			}
+		}
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error image request: ' + err.message);
+			const response = create(ImageResponseSchema, {
+				status: ImageResponse_ImageStatus.ERROR,
+				details: err.message
+			});
+			responseHandler(response);
+		}
+	}
 };
 
 export const ForgetClient = async (clientID: string): Promise<null | ConnectError> => {

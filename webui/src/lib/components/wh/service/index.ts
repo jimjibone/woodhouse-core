@@ -1,5 +1,6 @@
 import BatteryService from './battery.svelte';
 import ButtonService from './button.svelte';
+import CameraService from './camera.svelte';
 import ClimateService from './climate.svelte';
 import ContactService from './contact.svelte';
 import CoverService from './cover.svelte';
@@ -17,6 +18,7 @@ import ServiceRoot, { type StandardProps } from './service-root.svelte';
 export {
 	BatteryService,
 	ButtonService,
+	CameraService,
 	ClimateService,
 	ContactService,
 	CoverService,

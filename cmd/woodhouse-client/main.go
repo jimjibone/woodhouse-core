@@ -55,6 +55,7 @@ func main() {
 				args.String("addr"),
 				wh.WithClientID(args.String("id")),
 				wh.WithClientInfo("Test Client", "Client for testing Woodhouse functionality", "0.1.0"),
+				wh.WithImages(),
 			)
 
 			fake1 := NewFakeLightbulbColor("fake1", "Living Room Light")
@@ -99,6 +100,11 @@ func main() {
 
 			fake3 := NewFakePresence("fake3", "Kitchen Presence", args.Bool("sim-sensors"))
 			if err := client.AddDevice(fake3.dev); err != nil {
+				log.Fatalf("failed to add device: %s", err)
+			}
+
+			fake4 := NewFakeCamera("fake4", "Front Door Camera")
+			if err := client.AddDevice(fake4.dev); err != nil {
 				log.Fatalf("failed to add device: %s", err)
 			}
 

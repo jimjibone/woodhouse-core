@@ -20,6 +20,8 @@
 			<Services.BatteryService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.BUTTON}
 			<Services.ButtonService {service} {...rest} />
+		{:else if service.typ == Service_ServiceType.CAMERA}
+			<Services.CameraService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.CLIMATE}
 			<Services.ClimateService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.CONTACT}
