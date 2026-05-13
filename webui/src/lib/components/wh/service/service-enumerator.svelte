@@ -6,16 +6,14 @@
 	let {
 		class: className,
 		service,
-		naturalWidth = false,
 		...rest
 	}: Services.StandardProps & {
 		class?: string | undefined;
-		naturalWidth?: boolean;
 	} = $props();
 </script>
 
 {#if service.typ !== Service_ServiceType.INFO && service.typ !== Service_ServiceType.ONLINE}
-	<div class={cn(className, naturalWidth && 'flex-none')}>
+	<div class={cn(className, rest.naturalWidth && 'flex-none')}>
 		{#if service.typ == Service_ServiceType.BATTERY}
 			<Services.BatteryService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.BUTTON}

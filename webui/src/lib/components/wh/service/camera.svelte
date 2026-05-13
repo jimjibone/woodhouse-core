@@ -23,7 +23,7 @@
 	import { toHeadlineCase } from '$lib/tools/headline-case';
 	import { ImagesStore } from '$lib/stores/images-stream';
 
-	let { deviceID, deviceName, showDeviceName = true, service, online, ...rest }: StandardProps = $props();
+	let { deviceID, deviceName, showDeviceName = true, service, online, naturalWidth, ...rest }: StandardProps = $props();
 
 	let imageAttrID = $state('image');
 	$effect(() => {
@@ -73,7 +73,8 @@
 
 <div
 	class={cn(
-		'relative w-full min-w-64 flex-none overflow-hidden rounded-xl border bg-card/50 text-card-foreground shadow-sm',
+		'relative min-w-64 flex-none overflow-hidden rounded-xl border bg-card/50 text-card-foreground shadow-sm',
+		naturalWidth ? 'w-80' : 'w-full',
 		!online && 'opacity-60'
 	)}
 >

@@ -38,6 +38,7 @@
 		lastSeen?: Date;
 		batteryLevel?: bigint;
 		service: Service;
+		naturalWidth?: boolean;
 	};
 
 	export type Props = StandardProps & {
@@ -74,7 +75,8 @@
 		oniconclick,
 		details = undefined,
 		children = undefined,
-		drawerOpen = $bindable(false)
+		drawerOpen = $bindable(false),
+		naturalWidth = false
 	}: Props = $props();
 
 	let serviceTitle = $derived.by(() => {
