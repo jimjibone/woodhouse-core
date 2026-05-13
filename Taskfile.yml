@@ -161,6 +161,16 @@ tasks:
       - task: build-and-deploy-component
         vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-zigbee" }
 
+  build-frigate:
+    cmds:
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-frigate" }
+
+  deploy-frigate:
+    cmds:
+      - task: build-and-deploy-component
+        vars: { GOOS: "{{.DEPLOY_GOOS}}", GOARCH: "{{.DEPLOY_GOARCH}}", COMPONENT: "woodhouse-frigate" }
+
   deploy-all:
     cmds:
       - task: deploy-core-full
