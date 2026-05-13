@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Frame struct {
@@ -29,4 +30,11 @@ func SaveJSON(filename string, data []byte) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func SanitiseJSON(raw []byte) []byte {
+	payload := strings.ReplaceAll(string(raw), `\"`, `"`)
+	payload = strings.TrimPrefix(payload, `"`)
+	payload = strings.TrimSuffix(payload, `"`)
+	return json.RawMessage(payload)
 }

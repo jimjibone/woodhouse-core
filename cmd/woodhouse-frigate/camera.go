@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"os"
 	"time"
 
 	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
@@ -69,10 +67,10 @@ func (dev *FrigateCamera) handleCameraImageRequest() ([]byte, error) {
 	} else {
 		dev.log.Infof("got latest image: %d bytes", len(data))
 
-		err = os.WriteFile(fmt.Sprintf("frigate-%s-%s.jpeg", dev.name, time.Now().Format("2006-01-02-15-04-05")), data, 0644)
-		if err != nil {
-			panic(err)
-		}
+		// err = os.WriteFile(fmt.Sprintf("frigate-%s-%s.jpeg", dev.name, time.Now().Format("2006-01-02-15-04-05")), data, 0644)
+		// if err != nil {
+		// 	panic(err)
+		// }
 	}
 	return data, err
 }

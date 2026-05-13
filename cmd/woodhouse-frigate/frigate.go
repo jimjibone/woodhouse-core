@@ -144,10 +144,7 @@ func (frig *Frigate) recv(ctx context.Context, conn *websocket.Conn) {
 
 		switch frame.Topic {
 		case "stats":
-			payload := strings.ReplaceAll(string(frame.Payload), `\"`, `"`)
-			payload = strings.TrimPrefix(payload, `"`)
-			payload = strings.TrimSuffix(payload, `"`)
-			frame.Payload = json.RawMessage(payload)
+			frame.Payload = api.SanitiseJSON(frame.Payload)
 			var message api.Stats
 			err = json.Unmarshal(frame.Payload, &message)
 			if err != nil {
@@ -172,7 +169,8 @@ func (frig *Frigate) recv(ctx context.Context, conn *websocket.Conn) {
 			} else {
 				frig.log.Warnf("----> recv unknown: %s", frame)
 				if debugSaveJson {
-					api.SaveJSON(fmt.Sprintf("frigate-unknown-%s.json", frame.Topic), frame.Payload)
+					name := strings.ReplaceAll(strings.TrimSpace(strings.TrimPrefix(frame.Topic, "/")), "/", "_")
+					api.SaveJSON(fmt.Sprintf("frigate-unknown-%s.json", name), api.SanitiseJSON(frame.Payload))
 				}
 			}
 		}
