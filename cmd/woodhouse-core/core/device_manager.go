@@ -29,22 +29,25 @@ var (
 )
 
 type DeviceManager struct {
-	log             *log.Context
-	wg              sync.WaitGroup
-	mu              sync.RWMutex
-	ctx             context.Context
-	close           func()
-	store           stores.Store
-	rxDeviceUpdates *queue.Queue[rxDeviceUpdate]
-	txDeviceUpdates *queue.Pub[txDeviceUpdate]
-	actionRequests  *queue.Pub[ActionRequest]
-	actionResponses *queue.Pub[ActionResponse]
-	imageRequests   *queue.Pub[ImageRequest]
-	imageResponses  *queue.Pub[ImageResponse]
-	rxSetFavourites *queue.Queue[favoriteUpdate]
-	rxRemoveDevices *queue.Queue[removalUpdate]
-	devices         map[string]*Device // key=device id
-	changed         bool
+	log               *log.Context
+	wg                sync.WaitGroup
+	mu                sync.RWMutex
+	ctx               context.Context
+	close             func()
+	store             stores.Store
+	rxDeviceUpdates   *queue.Queue[rxDeviceUpdate]
+	txDeviceUpdates   *queue.Pub[txDeviceUpdate]
+	actionRequests    *queue.Pub[ActionRequest]
+	actionResponses   *queue.Pub[ActionResponse]
+	imageRequests     *queue.Pub[ImageRequest]
+	imageResponses    *queue.Pub[ImageResponse]
+	imageCacheMu      sync.RWMutex
+	imageCache        map[string]*CachedImage // key = deviceID+":"+serviceID+":"+attributeID
+	imageCacheUpdates *queue.Pub[*CachedImage]
+	rxSetFavourites   *queue.Queue[favoriteUpdate]
+	rxRemoveDevices   *queue.Queue[removalUpdate]
+	devices           map[string]*Device // key=device id
+	changed           bool
 }
 
 type rxDeviceUpdate struct {
@@ -93,6 +96,16 @@ type ImageResponse struct {
 	Offline  bool
 }
 
+// CachedImage holds the most recently fetched image for a camera attribute.
+type CachedImage struct {
+	DeviceID    string
+	ServiceID   string
+	AttributeID string
+	Data        []byte
+	MimeType    string
+	FetchedAt   time.Time
+}
+
 func (ar ActionResponse) String() string {
 	if ar.Response != nil {
 		return fmt.Sprintf("client_id:%q response:{%s}", ar.ClientID, ar.Response)
@@ -103,19 +116,21 @@ func (ar ActionResponse) String() string {
 func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 	ctx, close := context.WithCancel(context.Background())
 	manager := &DeviceManager{
-		log:             log.NewContext(log.DefaultLogger, "device-manager", log.DebugLevel),
-		ctx:             ctx,
-		close:           close,
-		store:           store,
-		rxDeviceUpdates: queue.New[rxDeviceUpdate](),
-		txDeviceUpdates: queue.NewPub[txDeviceUpdate](),
-		actionRequests:  queue.NewPub[ActionRequest](),
-		actionResponses: queue.NewPub[ActionResponse](),
-		imageRequests:   queue.NewPub[ImageRequest](),
-		imageResponses:  queue.NewPub[ImageResponse](),
-		rxSetFavourites: queue.New[favoriteUpdate](),
-		rxRemoveDevices: queue.New[removalUpdate](),
-		devices:         make(map[string]*Device),
+		log:               log.NewContext(log.DefaultLogger, "device-manager", log.DebugLevel),
+		ctx:               ctx,
+		close:             close,
+		store:             store,
+		rxDeviceUpdates:   queue.New[rxDeviceUpdate](),
+		txDeviceUpdates:   queue.NewPub[txDeviceUpdate](),
+		actionRequests:    queue.NewPub[ActionRequest](),
+		actionResponses:   queue.NewPub[ActionResponse](),
+		imageRequests:     queue.NewPub[ImageRequest](),
+		imageResponses:    queue.NewPub[ImageResponse](),
+		imageCache:        make(map[string]*CachedImage),
+		imageCacheUpdates: queue.NewPub[*CachedImage](),
+		rxSetFavourites:   queue.New[favoriteUpdate](),
+		rxRemoveDevices:   queue.New[removalUpdate](),
+		devices:           make(map[string]*Device),
 	}
 
 	// Load the previous state.
@@ -135,8 +150,9 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 		dev.setOffline(manager.log)
 	}
 
-	manager.wg.Add(1)
+	manager.wg.Add(2)
 	go manager.run(ctx)
+	go manager.runImageScheduler(ctx)
 	return manager, nil
 }
 
@@ -222,6 +238,82 @@ func (manager *DeviceManager) PushImageResponse(clientID string, res *clientsapi
 
 func (manager *DeviceManager) GetImageResponses() *queue.Sub[ImageResponse] {
 	return manager.imageResponses.NewSub()
+}
+
+// UpdateImageCache stores a newly fetched image in the cache and publishes it
+// to all ImagesStream subscribers.
+func (manager *DeviceManager) UpdateImageCache(deviceID, serviceID, attributeID string, data []byte, mimeType string) {
+	key := deviceID + ":" + serviceID + ":" + attributeID
+	cached := &CachedImage{
+		DeviceID:    deviceID,
+		ServiceID:   serviceID,
+		AttributeID: attributeID,
+		Data:        data,
+		MimeType:    mimeType,
+		FetchedAt:   time.Now(),
+	}
+	manager.imageCacheMu.Lock()
+	manager.imageCache[key] = cached
+	manager.imageCacheMu.Unlock()
+	manager.imageCacheUpdates.Pub(cached)
+}
+
+// GetCachedImages returns a channel that yields all currently cached images
+// then closes.
+func (manager *DeviceManager) GetCachedImages() <-chan *CachedImage {
+	manager.imageCacheMu.RLock()
+	defer manager.imageCacheMu.RUnlock()
+
+	ch := make(chan *CachedImage, len(manager.imageCache))
+	for _, img := range manager.imageCache {
+		ch <- img
+	}
+	close(ch)
+	return ch
+}
+
+// GetImageCacheUpdates returns a subscription that receives new CachedImage
+// entries whenever the cache is updated.
+func (manager *DeviceManager) GetImageCacheUpdates() *queue.Sub[*CachedImage] {
+	return manager.imageCacheUpdates.NewSub()
+}
+
+type CameraDevice struct {
+	DeviceID    string
+	ServiceID   string
+	AttributeID string
+	ClientID    string
+}
+
+// GetCameraDevices returns a snapshot of all online devices that have at least
+// one Camera service, along with the attribute ID and client ID needed to
+// request an image.
+func (manager *DeviceManager) GetCameraDevices() []CameraDevice {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	var devices []CameraDevice
+	for _, dev := range manager.devices {
+		if !dev.isOnline() {
+			continue
+		}
+		for _, svc := range dev.Services {
+			if svc.GetTyp() != clientsapi.Service_CAMERA {
+				continue
+			}
+			for _, attr := range svc.GetAttrs() {
+				if attr.GetImage() != nil {
+					devices = append(devices, CameraDevice{
+						DeviceID:    dev.ID,
+						ServiceID:   svc.GetId(),
+						AttributeID: attr.GetId(),
+						ClientID:    dev.ClientID,
+					})
+				}
+			}
+		}
+	}
+	return devices
 }
 
 // Get the device by ID. Returns nil if the device was not found.
@@ -542,5 +634,85 @@ func (manager *DeviceManager) handleDeviceRemoval(update removalUpdate) {
 	} else {
 		manager.log.Warnf("removal device ID not found: %s", update)
 		update.Callback(ErrDeviceNotFound)
+	}
+}
+
+func (manager *DeviceManager) runImageScheduler(ctx context.Context) {
+	defer manager.wg.Done()
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			manager.pollAllCameras(ctx)
+		}
+	}
+}
+
+// pollAllCameras fires an ImageRequest for every online camera device and
+// stores the result in the image cache.
+func (manager *DeviceManager) pollAllCameras(ctx context.Context) {
+	devices := manager.GetCameraDevices()
+	for _, dev := range devices {
+		go manager.pollCamera(ctx, dev)
+	}
+}
+
+func (manager *DeviceManager) pollCamera(ctx context.Context, dev CameraDevice) {
+	requestID, err := random.GenerateRandomPin(10)
+	if err != nil {
+		manager.log.Errorf("image scheduler: failed to generate request id: %s", err)
+		return
+	}
+
+	req := &clientsapi.ImageRequest{
+		RequestId:   requestID,
+		DeviceId:    dev.DeviceID,
+		ServiceId:   dev.ServiceID,
+		AttributeId: dev.AttributeID,
+	}
+
+	sub := manager.GetImageResponses()
+	defer sub.Close()
+
+	manager.PushImageRequest(dev.ClientID, req)
+
+	timeout := time.NewTimer(10 * time.Second)
+	defer timeout.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timeout.C:
+			manager.log.Warnf("image scheduler: request %q for device %q timed out", requestID, dev.DeviceID)
+			return
+		case update := <-sub.Sub():
+			if update.ClientID != dev.ClientID {
+				continue
+			}
+			if update.Offline {
+				manager.log.Debugf("image scheduler: client for device %q went offline", dev.DeviceID)
+				return
+			}
+			if update.Response == nil || update.Response.GetRequestId() != requestID {
+				continue
+			}
+			if update.Response.Status == clientsapi.ImageResponse_COMPLETE {
+				if len(update.Response.Data) > 0 {
+					manager.log.Debugf("image scheduler: cached image for device %q (%d bytes)", dev.DeviceID, len(update.Response.Data))
+					manager.UpdateImageCache(dev.DeviceID, dev.ServiceID, dev.AttributeID, update.Response.Data, "image/jpeg")
+				}
+				return
+			}
+			if update.Response.Status >= clientsapi.ImageResponse_TIMEOUT {
+				manager.log.Warnf("image scheduler: request %q for device %q failed: %s", requestID, dev.DeviceID, update.Response.Details)
+				return
+			}
+		}
 	}
 }

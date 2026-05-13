@@ -14,7 +14,6 @@
 		LampIcon
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
-	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
@@ -22,6 +21,7 @@
 	import { toJsonString } from '@bufbuild/protobuf';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { toHeadlineCase } from '$lib/tools/headline-case';
+	import { ImagesStore } from '$lib/stores/images-stream';
 
 	let { deviceID, deviceName, showDeviceName = true, service, online, ...rest }: StandardProps = $props();
 
@@ -35,30 +35,29 @@
 		}
 	});
 
-	let imageURL: string | null = $state(null);
-	let fetchedAt: Date | null = $state(null);
+	// Look up this camera's latest image from the shared store.
+	let cachedImage = $derived.by(() => {
+		const key = `${deviceID}:${service.id}:${imageAttrID}`;
+		return $ImagesStore.images.get(key) ?? null;
+	});
+
+	let imageURL = $derived(cachedImage?.url ?? null);
+	let fetchedAt = $derived(cachedImage?.fetchedAt ?? null);
+
 	let pending = $state(false);
 	let rawPanelOpen = $state(false);
 
+	// Trigger an immediate image fetch — result arrives via ImagesStore stream.
 	const fetchImage = async () => {
 		if (pending) return;
 		pending = true;
 		await SendImageRequest(deviceID, service.id, imageAttrID, (response) => {
-			if (response.status === ImageResponse_ImageStatus.COMPLETE && response.data.length > 0) {
-				if (imageURL !== null) URL.revokeObjectURL(imageURL);
-				const blob = new Blob([response.data], { type: 'image/jpeg' });
-				imageURL = URL.createObjectURL(blob);
-				fetchedAt = new Date();
-			} else if (response.status >= ImageResponse_ImageStatus.TIMEOUT) {
+			if (response.status >= ImageResponse_ImageStatus.TIMEOUT) {
 				toast.error('Image request failed', { description: response.details });
 			}
 		});
 		pending = false;
 	};
-
-	onMount(() => {
-		if (online) fetchImage();
-	});
 
 	let serviceTitle = $derived.by(() => {
 		if (showDeviceName) {

@@ -758,6 +758,12 @@ func (service *UserService) SendImageRequest(req *clientsapi.ImageRequest, serve
 						// Update the last status.
 						lastStatus = update.Response.Status
 
+						// On a successful completion, update the shared image cache so
+						// all ImagesStream subscribers see the refreshed image.
+						if update.Response.Status == clientsapi.ImageResponse_COMPLETE && len(update.Response.Data) > 0 {
+							service.deviceManager.UpdateImageCache(req.DeviceId, req.ServiceId, req.AttributeId, update.Response.Data, "image/jpeg")
+						}
+
 						// Push the update out to the user.
 						err := server.Send(&clientsapi.ImageResponse{
 							RequestId: requestID,
@@ -962,4 +968,83 @@ func (service *UserService) RemoveUser(ctx context.Context, req *clientsapi.Remo
 	}
 
 	return &clientsapi.RemoveUserResponse{}, nil
+}
+
+func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, server clientsapi.UserService_ImagesStreamServer) error {
+	service.log.Infof("images stream started")
+	defer service.log.Infof("images stream finished")
+
+	sub := service.deviceManager.GetImageCacheUpdates()
+	defer sub.Close()
+
+	isInFilter := func(deviceID string, filter []string) bool {
+		if len(filter) == 0 {
+			return true
+		}
+		for _, id := range filter {
+			if deviceID == id {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Send the full cache snapshot first so the UI has something to show immediately.
+	for img := range service.deviceManager.GetCachedImages() {
+		if !isInFilter(img.DeviceID, req.DeviceIds) {
+			continue
+		}
+		err := server.Send(&clientsapi.ImagesStreamResponse{
+			DeviceId:    img.DeviceID,
+			ServiceId:   img.ServiceID,
+			AttributeId: img.AttributeID,
+			Data:        img.Data,
+			MimeType:    img.MimeType,
+			FetchedAt:   img.FetchedAt.UnixMilli(),
+		})
+		if err != nil {
+			service.log.Errorf("images stream: failed to send snapshot: %s", err)
+			return status.Errorf(codes.Internal, "failed to send image")
+		}
+	}
+
+	// Send an empty response to signal end-of-snapshot.
+	if err := server.Send(&clientsapi.ImagesStreamResponse{}); err != nil {
+		service.log.Errorf("images stream: failed to send snapshot end: %s", err)
+		return status.Errorf(codes.Internal, "failed to send snapshot end")
+	}
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case <-ticker.C:
+			// Keepalive heartbeat — empty response.
+			if err := server.Send(&clientsapi.ImagesStreamResponse{}); err != nil {
+				service.log.Errorf("images stream: failed to send keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case img := <-sub.Sub():
+			if !isInFilter(img.DeviceID, req.DeviceIds) {
+				continue
+			}
+			err := server.Send(&clientsapi.ImagesStreamResponse{
+				DeviceId:    img.DeviceID,
+				ServiceId:   img.ServiceID,
+				AttributeId: img.AttributeID,
+				Data:        img.Data,
+				MimeType:    img.MimeType,
+				FetchedAt:   img.FetchedAt.UnixMilli(),
+			})
+			if err != nil {
+				service.log.Errorf("images stream: failed to send update: %s", err)
+				return status.Errorf(codes.Internal, "failed to send image update")
+			}
+		}
+	}
 }
