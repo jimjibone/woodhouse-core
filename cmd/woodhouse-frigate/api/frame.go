@@ -20,7 +20,11 @@ func SaveJSON(filename string, data []byte) {
 	var tmp interface{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
-		panic(err)
+		// Write payload without unmarshal.
+		err = os.WriteFile(filename, data, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 	payload, err := json.MarshalIndent(tmp, "", "    ")
 	if err != nil {
