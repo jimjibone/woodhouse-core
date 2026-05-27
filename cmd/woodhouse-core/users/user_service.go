@@ -700,7 +700,7 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 	}
 }
 
-func (service *UserService) SendImageRequest(req *clientsapi.ImageRequest, server clientsapi.UserService_SendImageRequestServer) error {
+func (service *UserService) SendImageRequest(req *clientsapi.UserImageRequest, server clientsapi.UserService_SendImageRequestServer) error {
 	if req.DeviceId == "" {
 		return status.Error(codes.InvalidArgument, "device_id required")
 	}
@@ -717,15 +717,21 @@ func (service *UserService) SendImageRequest(req *clientsapi.ImageRequest, serve
 		return err
 	}
 
-	service.log.Infof("image request %q for %q started: %s", requestID, clientID, req)
+	service.log.Infof("image request %q for %q started", requestID, clientID)
 	defer service.log.Infof("image request %q finished", requestID)
 
-	req.RequestId = requestID
+	// Build a plain ImageRequest for the bridge (no size hint — core resizes).
+	bridgeReq := &clientsapi.ImageRequest{
+		RequestId:   requestID,
+		DeviceId:    req.DeviceId,
+		ServiceId:   req.ServiceId,
+		AttributeId: req.AttributeId,
+	}
 
 	sub := service.deviceManager.GetImageResponses()
 	defer sub.Close()
 
-	service.deviceManager.PushImageRequest(clientID, req)
+	service.deviceManager.PushImageRequest(clientID, bridgeReq)
 
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
@@ -758,10 +764,18 @@ func (service *UserService) SendImageRequest(req *clientsapi.ImageRequest, serve
 						// Update the last status.
 						lastStatus = update.Response.Status
 
-						// On a successful completion, update the shared image cache so
-						// all ImagesStream subscribers see the refreshed image.
+						// On a successful completion, update the shared image cache
+						// with full-res data; resize only for this caller's response.
+						var sendData []byte
 						if update.Response.Status == clientsapi.ImageResponse_COMPLETE && len(update.Response.Data) > 0 {
 							service.deviceManager.UpdateImageCache(req.DeviceId, req.ServiceId, req.AttributeId, update.Response.Data, "image/jpeg")
+							sendData, err = resizeJPEG(update.Response.Data, req.Width, req.Height)
+							if err != nil {
+								service.log.Warnf("image request %q resize err: %s", requestID, err)
+								sendData = update.Response.Data
+							}
+						} else {
+							sendData = update.Response.Data
 						}
 
 						// Push the update out to the user.
@@ -769,7 +783,7 @@ func (service *UserService) SendImageRequest(req *clientsapi.ImageRequest, serve
 							RequestId: requestID,
 							Status:    update.Response.Status,
 							Details:   update.Response.Details,
-							Data:      update.Response.Data,
+							Data:      sendData,
 						})
 						if err != nil {
 							service.log.Warnf("image response %q send err: %s", requestID, err)
@@ -977,6 +991,22 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 	sub := service.deviceManager.GetImageCacheUpdates()
 	defer sub.Close()
 
+	// Build a hint lookup keyed by "deviceID:serviceID:attributeID".
+	type sizeHint struct{ w, h uint32 }
+	hints := make(map[string]sizeHint, len(req.SizeHints))
+	for _, h := range req.SizeHints {
+		key := h.DeviceId + ":" + h.ServiceId + ":" + h.AttributeId
+		hints[key] = sizeHint{h.Width, h.Height}
+	}
+
+	resizeForHint := func(img *core.CachedImage) ([]byte, error) {
+		key := img.DeviceID + ":" + img.ServiceID + ":" + img.AttributeID
+		if hint, ok := hints[key]; ok {
+			return resizeJPEG(img.Data, hint.w, hint.h)
+		}
+		return img.Data, nil
+	}
+
 	isInFilter := func(deviceID string, filter []string) bool {
 		if len(filter) == 0 {
 			return true
@@ -994,11 +1024,16 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 		if !isInFilter(img.DeviceID, req.DeviceIds) {
 			continue
 		}
-		err := server.Send(&clientsapi.ImagesStreamResponse{
+		data, err := resizeForHint(img)
+		if err != nil {
+			service.log.Warnf("images stream: resize failed for %q: %s", img.DeviceID, err)
+			data = img.Data
+		}
+		err = server.Send(&clientsapi.ImagesStreamResponse{
 			DeviceId:    img.DeviceID,
 			ServiceId:   img.ServiceID,
 			AttributeId: img.AttributeID,
-			Data:        img.Data,
+			Data:        data,
 			MimeType:    img.MimeType,
 			FetchedAt:   img.FetchedAt.UnixMilli(),
 		})
@@ -1033,11 +1068,16 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 			if !isInFilter(img.DeviceID, req.DeviceIds) {
 				continue
 			}
-			err := server.Send(&clientsapi.ImagesStreamResponse{
+			data, err := resizeForHint(img)
+			if err != nil {
+				service.log.Warnf("images stream: resize failed for %q: %s", img.DeviceID, err)
+				data = img.Data
+			}
+			err = server.Send(&clientsapi.ImagesStreamResponse{
 				DeviceId:    img.DeviceID,
 				ServiceId:   img.ServiceID,
 				AttributeId: img.AttributeID,
-				Data:        img.Data,
+				Data:        data,
 				MimeType:    img.MimeType,
 				FetchedAt:   img.FetchedAt.UnixMilli(),
 			})

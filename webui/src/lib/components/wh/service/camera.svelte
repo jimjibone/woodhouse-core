@@ -14,6 +14,7 @@
 		LampIcon
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { onMount, onDestroy } from 'svelte';
 	import { cn } from '$lib/utils';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
@@ -21,7 +22,7 @@
 	import { toJsonString } from '@bufbuild/protobuf';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { toHeadlineCase } from '$lib/tools/headline-case';
-	import { ImagesStore } from '$lib/stores/images-stream';
+	import { ImagesStore, registerSizeHint, unregisterSizeHint } from '$lib/stores/images-stream';
 
 	let { deviceID, deviceName, showDeviceName = true, service, online, naturalWidth, ...rest }: StandardProps = $props();
 
@@ -44,18 +45,58 @@
 	let imageURL = $derived(cachedImage?.url ?? null);
 	let fetchedAt = $derived(cachedImage?.fetchedAt ?? null);
 
+	// Rendered pixel size of the <img> element, tracked via ResizeObserver.
+	let renderedW = $state(0);
+	let renderedH = $state(0);
+
+	// Unique identity for this component instance in the hint registry.
+	const instanceId = Symbol();
+
+	let imgEl: HTMLDivElement | undefined = $state();
+	let observer: ResizeObserver | undefined;
+
+	onMount(() => {
+		if (!imgEl) return;
+		observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				const { width, height } = entry.contentRect;
+				const w = Math.round(width);
+				const h = Math.round(height);
+				if (w !== renderedW || h !== renderedH) {
+					renderedW = w;
+					renderedH = h;
+					registerSizeHint(deviceID, service.id, imageAttrID, instanceId, w, h);
+				}
+			}
+		});
+		observer.observe(imgEl);
+	});
+
+	onDestroy(() => {
+		observer?.disconnect();
+		unregisterSizeHint(deviceID, service.id, imageAttrID, instanceId);
+	});
+
 	let pending = $state(false);
 	let rawPanelOpen = $state(false);
 
 	// Trigger an immediate image fetch — result arrives via ImagesStore stream.
+	// Pass current rendered size so the response is appropriately scaled.
 	const fetchImage = async () => {
 		if (pending) return;
 		pending = true;
-		await SendImageRequest(deviceID, service.id, imageAttrID, (response) => {
-			if (response.status >= ImageResponse_ImageStatus.TIMEOUT) {
-				toast.error('Image request failed', { description: response.details });
-			}
-		});
+		await SendImageRequest(
+			deviceID,
+			service.id,
+			imageAttrID,
+			(response) => {
+				if (response.status >= ImageResponse_ImageStatus.TIMEOUT) {
+					toast.error('Image request failed', { description: response.details });
+				}
+			},
+			renderedW,
+			renderedH
+		);
 		pending = false;
 	};
 
@@ -79,7 +120,7 @@
 	)}
 >
 	<!-- Image area -->
-	<div class="relative aspect-video w-full bg-black flex items-center justify-center">
+	<div bind:this={imgEl} class="relative aspect-video w-full bg-black flex items-center justify-center">
 		{#if imageURL !== null}
 			<img src={imageURL} alt="Camera feed" class="w-full h-full object-cover" />
 		{:else if pending}

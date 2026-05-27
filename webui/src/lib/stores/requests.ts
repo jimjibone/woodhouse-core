@@ -2,7 +2,6 @@ import {
 	ActionRequestSchema,
 	ActionResponseSchema,
 	ActionResponse_ActionStatus,
-	ImageRequestSchema,
 	ImageResponseSchema,
 	ImageResponse_ImageStatus,
 	type Value,
@@ -32,6 +31,7 @@ import {
 	UpdateGroupResponseSchema,
 	UpdateUserRequestSchema,
 	UpdateUserResponseSchema,
+	UserImageRequestSchema,
 	UserRole,
 	type UpdateUserRequest
 } from '$lib/api/v1/clients/user_service_pb';
@@ -318,12 +318,16 @@ export const SendImageRequest = async (
 	deviceID: string,
 	serviceID: string,
 	attributeID: string,
-	responseHandler: (response: ImageResponse) => void
+	responseHandler: (response: ImageResponse) => void,
+	width = 0,
+	height = 0
 ) => {
-	const request = create(ImageRequestSchema, {
+	const request = create(UserImageRequestSchema, {
 		deviceId: deviceID,
 		serviceId: serviceID,
-		attributeId: attributeID
+		attributeId: attributeID,
+		width,
+		height
 	});
 	const options: CallOptions = {
 		headers: { authorization: getAccessToken() }

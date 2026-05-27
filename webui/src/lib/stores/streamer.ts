@@ -95,6 +95,21 @@ export class Streamer<ServiceT extends DescService> {
 		}
 	}
 
+	/**
+	 * Aborts the current stream and reconnects immediately (no backoff, no stop).
+	 * Use this when the request parameters have changed and the stream must be
+	 * re-established with updated data (e.g. new size hints).
+	 */
+	reconnect = () => {
+		clearTimeout(this.#timeout);
+		this.#stop = false;
+		// Aborting the controller causes #streamFunc to resolve, which triggers
+		// the normal #retry path — but we force backoff to 0 so it reconnects
+		// immediately rather than waiting.
+		this.#backoff = 0;
+		this.#controller.abort();
+	}
+
 	/** Triggers the streamer to stop via the abort handler. */
 	stop = () => {
 		// console.log("streamer "+this.#name+": stopping...");

@@ -41,7 +41,7 @@ func NewFakeCamera(id, name string) *FakeCamera {
 	return dev
 }
 
-// handleImageRequest generates a 320×240 JPEG filled with a random solid colour.
+// handleImageRequest generates a 1920×1080 JPEG filled with a random solid colour.
 func (dev *FakeCamera) handleImageRequest() ([]byte, error) {
 	log.Infof("fake camera: generating image")
 
@@ -49,7 +49,7 @@ func (dev *FakeCamera) handleImageRequest() ([]byte, error) {
 	g := uint8(rand.Intn(256))
 	b := uint8(rand.Intn(256))
 
-	const width, height = 320, 240
+	const width, height = 1920, 1080
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	c := color.RGBA{R: r, G: g, B: b, A: 255}
 	for y := range height {
