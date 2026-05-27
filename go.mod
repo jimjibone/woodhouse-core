@@ -12,7 +12,7 @@ require (
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.1
-	github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac
+	github.com/jimjibone/queue v0.0.0-20251004200840-d3855e27766b
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/schollz/mnemonicode v1.0.1
 	github.com/schollz/pake/v3 v3.0.5

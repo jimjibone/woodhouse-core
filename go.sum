@@ -196,6 +196,8 @@ github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac h1:Vyb1xeKPdJ1MBpeamVzBLj+EKuaFqIc6V2yrRk4IG1s=
 github.com/jimjibone/queue v0.0.0-20221008210640-090010ccdfac/go.mod h1:x9lSdmhC96e5FY2HvbEnFl+4IKhNje2gAIP//7wYcZM=
+github.com/jimjibone/queue v0.0.0-20251004200840-d3855e27766b h1:lrRl76MlYrsW4n+J3HOKxXcEp8IWS4qDwlwydzZxL3Q=
+github.com/jimjibone/queue v0.0.0-20251004200840-d3855e27766b/go.mod h1:x9lSdmhC96e5FY2HvbEnFl+4IKhNje2gAIP//7wYcZM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/jpillora/backoff v1.0.0/go.mod h1:J/6gKK9jxlEcS3zixgDgUAsiuZ7yrSoa/FX5e0EB2j4=
