@@ -60,8 +60,9 @@
 		observer = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
-				const w = Math.round(width);
-				const h = Math.round(height);
+				const dpr = window.devicePixelRatio ?? 1;
+				const w = Math.round(width * dpr);
+				const h = Math.round(height * dpr);
 				if (w !== renderedW || h !== renderedH) {
 					renderedW = w;
 					renderedH = h;
