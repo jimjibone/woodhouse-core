@@ -7,6 +7,7 @@ import (
 type Device interface {
 	ID() string
 	Close()
+	SetNextIP(ip string)
 }
 
 type DeviceGenerator func(hostname, ip string, client *wh.Client) Device

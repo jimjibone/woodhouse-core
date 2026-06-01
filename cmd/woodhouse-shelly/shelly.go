@@ -69,11 +69,17 @@ func shellyStuff(wg *sync.WaitGroup, ctx context.Context, client *wh.Client) err
 
 	discover := func(ip, hostname string) (retry bool) {
 		exists := false
-		if _, found := devices_v1[hostname]; found {
+		if dev, found := devices_v1[hostname]; found {
 			exists = true
+
+			// Update the device in case of IP change.
+			dev.SetNextIP(ip)
 		}
-		if _, found := devices_v2[hostname]; found {
+		if dev, found := devices_v2[hostname]; found {
 			exists = true
+
+			// Update the device in case of IP change.
+			dev.SetNextIP(ip)
 		}
 
 		if !exists {

@@ -26,6 +26,10 @@ func NewRest(ip string) *Rest {
 	}
 }
 
+func (r *Rest) SetIP(ip string) {
+	r.ip = ip
+}
+
 func (r *Rest) GetShelly() (Shelly, error) {
 	req, err := http.NewRequest("GET", "http://"+r.ip+"/shelly", nil)
 	if err != nil {

@@ -31,6 +31,7 @@ type ShellyComms struct {
 	added  bool
 
 	ip     string
+	nextIP string
 	connMu sync.RWMutex
 	conn   *websocket.Conn
 
@@ -65,6 +66,10 @@ func (dev *ShellyComms) Close() {
 
 func (dev *ShellyComms) ID() string {
 	return dev.dev.ID()
+}
+
+func (dev *ShellyComms) SetNextIP(ip string) {
+	dev.nextIP = ip
 }
 
 func (dev *ShellyComms) OnConnected(handler func(config GetConfigResponse, status GetStatusResponse)) {
@@ -120,6 +125,13 @@ func (dev *ShellyComms) run(ctx context.Context) {
 		err := dev.connect()
 		if err != nil {
 			dev.log.Errorf("failed to connect: %s", err)
+
+			// If this failed, try switching to the next IP if there is one.
+			if dev.nextIP != "" && dev.ip != dev.nextIP {
+				dev.log.Infof("switching to new ip: %s", dev.nextIP)
+				dev.ip = dev.nextIP
+				dev.nextIP = ""
+			}
 		} else {
 			// Receive updates and send requests.
 			dev.recv(ctx)

@@ -61,6 +61,10 @@ func (dev *ShellyPlus2PM) Close() {
 	dev.shelly.Close()
 }
 
+func (dev *ShellyPlus2PM) SetNextIP(ip string) {
+	dev.shelly.SetNextIP(ip)
+}
+
 func (dev *ShellyPlus2PM) onConnected(config GetConfigResponse, status GetStatusResponse) {
 	dev.info.Name.Set(config.System.Device.Name)
 	dev.info.Model.Set("Shelly Plus 2PM")

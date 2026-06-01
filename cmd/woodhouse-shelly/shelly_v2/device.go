@@ -8,6 +8,7 @@ import (
 type Device interface {
 	ID() string
 	Close()
+	SetNextIP(ip string)
 }
 
 func Generate(app, hostname, ip, name string, client *wh.Client) Device {

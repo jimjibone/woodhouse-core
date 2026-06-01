@@ -27,6 +27,7 @@ type ShellyDimmer2 struct {
 	rest     *Rest
 	hostname string
 	ip       string
+	nextIP   string
 
 	client *wh.Client
 	added  bool
@@ -94,6 +95,10 @@ func (dev *ShellyDimmer2) ID() string {
 func (dev *ShellyDimmer2) Close() {
 	dev.close()
 	dev.wg.Wait()
+}
+
+func (dev *ShellyDimmer2) SetNextIP(ip string) {
+	dev.nextIP = ip
 }
 
 func (dev *ShellyDimmer2) handleNameAction(val string) {
@@ -187,6 +192,14 @@ func (dev *ShellyDimmer2) updateInfo() error {
 
 	settings, err := dev.rest.GetSettings()
 	if err != nil {
+		// If this failed, try switching to the next IP if there is one.
+		if dev.nextIP != "" && dev.ip != dev.nextIP {
+			dev.log.Infof("switching to new ip: %s", dev.nextIP)
+			dev.ip = dev.nextIP
+			dev.nextIP = ""
+			dev.rest.SetIP(dev.ip)
+		}
+
 		return err
 	}
 
