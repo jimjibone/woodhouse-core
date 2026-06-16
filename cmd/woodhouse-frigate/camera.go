@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"time"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-frigate/api"
-	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/wh/v1"
-	"github.com/jimjibone/woodhouse-4/wh/v1/devices"
-	"github.com/jimjibone/woodhouse-4/wh/v1/devices/services"
+	"github.com/jimjibone/log"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-frigate/api"
+	"github.com/jimjibone/woodhouse-core/wh/v1"
+	"github.com/jimjibone/woodhouse-core/wh/v1/devices"
+	"github.com/jimjibone/woodhouse-core/wh/v1/devices/services"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/shared/stores"
-	"github.com/jimjibone/woodhouse-4/wh/v1"
+	"github.com/jimjibone/log"
+	"github.com/jimjibone/woodhouse-core/shared/stores"
+	"github.com/jimjibone/woodhouse-core/wh/v1"
 	"github.com/urfave/cli/v2"
 )
 

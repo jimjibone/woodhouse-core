@@ -12,10 +12,10 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
-	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/shared/random"
-	"github.com/jimjibone/woodhouse-4/shared/stores"
+	"github.com/jimjibone/log"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
+	"github.com/jimjibone/woodhouse-core/shared/random"
+	"github.com/jimjibone/woodhouse-core/shared/stores"
 	"gopkg.in/yaml.v3"
 )
 

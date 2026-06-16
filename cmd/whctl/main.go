@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
-	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/log"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

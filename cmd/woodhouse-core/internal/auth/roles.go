@@ -3,7 +3,7 @@ package auth
 import (
 	"fmt"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
 )
 
 type Role int

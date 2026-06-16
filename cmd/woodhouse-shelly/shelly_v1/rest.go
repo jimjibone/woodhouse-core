@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/log"
 )
 
 type Rest struct {

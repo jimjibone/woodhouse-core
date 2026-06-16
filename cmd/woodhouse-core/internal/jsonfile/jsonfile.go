@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/jimjibone/woodhouse-4/shared/atomicfile"
+	"github.com/jimjibone/woodhouse-core/shared/atomicfile"
 )
 
 func LoadFile(data interface{}, filename string) error {

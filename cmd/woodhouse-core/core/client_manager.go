@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jimjibone/log"
 	"github.com/jimjibone/queue/v2"
-	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/shared/stores"
+	"github.com/jimjibone/woodhouse-core/shared/stores"
 )
 
 var (

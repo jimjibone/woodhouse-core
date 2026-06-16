@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/grandcat/zeroconf"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-shelly/shelly_v1"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-shelly/shelly_v2"
-	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/wh/v1"
+	"github.com/jimjibone/log"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-shelly/shelly_v1"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-shelly/shelly_v2"
+	"github.com/jimjibone/woodhouse-core/wh/v1"
 )
 
 func shellyStuff(wg *sync.WaitGroup, ctx context.Context, client *wh.Client) error {

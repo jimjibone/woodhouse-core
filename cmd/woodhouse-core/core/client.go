@@ -3,7 +3,7 @@ package core
 import (
 	"time"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
 )
 
 // Client holds metadata and state for a known client.

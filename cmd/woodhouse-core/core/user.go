@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/internal/auth"
-	"github.com/jimjibone/woodhouse-4/shared/random"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
+	"github.com/jimjibone/woodhouse-core/shared/random"
 	"golang.org/x/crypto/argon2"
 )
 

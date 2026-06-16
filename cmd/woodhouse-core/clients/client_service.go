@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
-	"github.com/jimjibone/woodhouse-4/apitools"
-	"github.com/jimjibone/woodhouse-4/cmd/woodhouse-core/core"
-	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/log"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-core/apitools"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

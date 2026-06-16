@@ -1,8 +1,8 @@
 package shelly_v2
 
 import (
-	"github.com/jimjibone/woodhouse-4/log"
-	"github.com/jimjibone/woodhouse-4/wh/v1"
+	"github.com/jimjibone/log"
+	"github.com/jimjibone/woodhouse-core/wh/v1"
 )
 
 type Device interface {

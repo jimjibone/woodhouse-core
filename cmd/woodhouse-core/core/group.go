@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	clientsapi "github.com/jimjibone/woodhouse-4/api/go/v1/clients"
-	"github.com/jimjibone/woodhouse-4/apitools"
-	"github.com/jimjibone/woodhouse-4/log"
+	"github.com/jimjibone/log"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	"github.com/jimjibone/woodhouse-core/apitools"
 	"google.golang.org/protobuf/proto"
 )
 
