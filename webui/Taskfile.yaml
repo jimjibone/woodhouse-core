@@ -9,12 +9,12 @@ tasks:
     run: when_changed
     sources:
       - ./buf.gen.yaml
-      - ../api/v1/*/*.proto
+      - ../api/proto/v1/*/*.proto
     generates:
       - ./src/api/v1/*/*.pb.go
     cmds:
       - mkdir -p ./src/lib/api/v1
-      - npx buf generate ../api/v1
+      - npx buf generate ../api/proto/v1
 
   icons:
     cmds:
