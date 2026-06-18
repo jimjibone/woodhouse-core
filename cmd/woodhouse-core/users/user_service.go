@@ -11,7 +11,6 @@ import (
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-core/shared/random"
-	"github.com/jimjibone/woodhouse-core/wh/v1/devices/services"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -529,7 +528,7 @@ func (service *UserService) AddGroup(ctx context.Context, req *clientsapi.AddGro
 	}
 
 	// Determine the service ID based on the type.
-	serviceID := services.DefaultServiceID(req.GetType())
+	serviceID := apitools.DefaultServiceID(req.GetType())
 	if serviceID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "type not supported")
 	}
