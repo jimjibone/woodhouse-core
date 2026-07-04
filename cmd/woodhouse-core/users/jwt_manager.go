@@ -34,7 +34,7 @@ type JWTManager struct {
 	changed          bool
 	refreshSecret    []byte
 	accessSecret     []byte
-	tokenAllocations map[string]TokenAllocation // kwy: refresh token
+	tokenAllocations map[string]TokenAllocation // kwy: refresh uuid
 }
 
 func NewJWTManager(store stores.Store) (*JWTManager, error) {
@@ -87,9 +87,9 @@ func NewJWTManager(store stores.Store) (*JWTManager, error) {
 			case <-ticker.C:
 				// Clean expired tokens.
 				manager.mu.Lock()
-				for token, alloc := range manager.tokenAllocations {
+				for refreshUUID, alloc := range manager.tokenAllocations {
 					if time.Now().After(alloc.Expires) {
-						delete(manager.tokenAllocations, token)
+						delete(manager.tokenAllocations, refreshUUID)
 						manager.changed = true
 					}
 				}
@@ -331,7 +331,7 @@ func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role) 
 	return td, nil
 }
 
-func (manager *JWTManager) RevokeRefreshToken(refreshUUID string) {
+func (manager *JWTManager) RevokeRefreshUUID(refreshUUID string) {
 	manager.mu.Lock()
 	manager.changed = true
 	delete(manager.tokenAllocations, refreshUUID)

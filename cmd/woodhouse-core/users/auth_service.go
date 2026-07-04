@@ -158,6 +158,8 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to generate tokens: %s", err)
 		}
+		// Rotate: revoke the old refresh token now that a new one is issued.
+		srv.jwt.RevokeRefreshUUID(claims.RefreshUUID)
 	} else {
 		// Generate only the access token.
 		tokens, err = srv.jwt.GenerateAccessToken(user.Username, user.Role)
@@ -223,12 +225,12 @@ func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *AuthService) logoutBase(req *clientsapi.UserLogoutRequest) error {
-	_, err := srv.jwt.VerifyRefreshToken(req.RefreshToken)
+	claims, err := srv.jwt.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		return status.Errorf(codes.Unauthenticated, "%s", err)
 	}
 
-	srv.jwt.RevokeRefreshToken(req.RefreshToken)
+	srv.jwt.RevokeRefreshUUID(claims.RefreshUUID)
 
 	return nil
 }
