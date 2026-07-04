@@ -101,7 +101,7 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				writeGRPCError(w, err)
 			} else {
-				srv.log.Warnf("LoginWeb: token: %+v", tokens)
+				// srv.log.Debugf("LoginWeb: token: %+v", tokens) // Only enable this for local dev debug.
 				http.SetCookie(w, newTokenCookie(tokens.RefreshToken, tokens.RefreshExpires))
 				resp := &clientsapi.UserLoginResponse{
 					AccessToken: tokens.AccessToken,

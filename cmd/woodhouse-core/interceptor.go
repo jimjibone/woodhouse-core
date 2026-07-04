@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jimjibone/log"
-	"github.com/jimjibone/woodhouse-core/apitools"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
@@ -42,7 +41,7 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if apitools.RequiresAuth(info.FullMethod) {
+		if auth.RequiresAuth(info.FullMethod) {
 			clientID, ctx2, err := interceptor.authorize(ctx, info.FullMethod)
 			if err != nil {
 				interceptor.log.Warnf("--> unary %s: %q not authorized: %s", info.FullMethod, clientID, err)
@@ -67,7 +66,7 @@ func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
 	) error {
-		if apitools.RequiresAuth(info.FullMethod) {
+		if auth.RequiresAuth(info.FullMethod) {
 			clientID, ctx2, err := interceptor.authorize(stream.Context(), info.FullMethod)
 			if err != nil {
 				interceptor.log.Warnf("--> stream %s: %q not authorized: %s", info.FullMethod, clientID, err)
