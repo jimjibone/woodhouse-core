@@ -12,8 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"devDependencies": {
-		"@bufbuild/buf": "^1.55.1",
-		"@bufbuild/protoc-gen-es": "^2.5.2",
+		"@bufbuild/buf": "^1.71.0",
+		"@bufbuild/protoc-gen-es": "^2.12.1",
 		"@internationalized/date": "^3.8.2",
 		"@lucide/svelte": "^0.544.0",
 		"@sveltejs/adapter-static": "^3.0.8",
@@ -39,7 +39,7 @@
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.5.2",
 		"@connectrpc/connect": "^2.0.2",
-		"@connectrpc/connect-web": "^2.0.2",
+		"@connectrpc/connect-web": "^2.1.2",
 		"@types/chroma-js": "^3.1.1",
 		"chroma-js": "^3.1.2",
 		"fuse.js": "^7.1.0",
