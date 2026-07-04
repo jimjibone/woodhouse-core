@@ -234,7 +234,10 @@ func main() {
 				mux.HandleFunc("/api/login", userAuthService.LoginWeb)
 				mux.HandleFunc("/api/refresh", userAuthService.RefreshWeb)
 				mux.HandleFunc("/api/logout", userAuthService.LogoutWeb)
-				mux.Handle("/api/", http.StripPrefix("/api/", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+				// Note that we don't strip the last `/` from the api path as
+				// this is required to remain a valid gRPC method call (all must
+				// start with `/`).
+				mux.Handle("/api/", http.StripPrefix("/api", http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 					if wrappedServer.IsGrpcWebRequest(req) || wrappedServer.IsAcceptableGrpcCorsRequest(req) {
 						wrappedServer.ServeHTTP(res, req)
 						return
