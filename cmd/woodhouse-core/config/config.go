@@ -1,10 +1,14 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type CoreConfig struct {
-	Changed bool         `yaml:"-"`
-	Server  ServerConfig `yaml:"server"`
+	Changed      bool         `yaml:"-"`
+	InstanceName string       `yaml:"instance-name"`
+	Server       ServerConfig `yaml:"server"`
 }
 
 type ServerConfig struct {
@@ -22,7 +26,16 @@ var defaultConfig = CoreConfig{
 }
 
 // Returns an error if the config is not valid.
-func (c CoreConfig) Verify() error {
+func (c *CoreConfig) Verify() error {
+	// Default the instance name to the system hostname if not set.
+	if c.InstanceName == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return fmt.Errorf("instance-name not set and failed to get hostname: %w", err)
+		}
+		c.InstanceName = hostname
+		c.Changed = true
+	}
 	if err := c.Server.Verify(); err != nil {
 		return err
 	}

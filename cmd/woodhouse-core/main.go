@@ -167,7 +167,7 @@ func main() {
 			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, clientJwtManager)
 
 			// Broadcast our existence.
-			broadcaster, err := discovery.NewBroadcaster("woodhouse-core", apiLis.Addr())
+			broadcaster, err := discovery.NewBroadcaster(config.LoadedConfig.InstanceName, apiLis.Addr())
 			if err != nil {
 				return fmt.Errorf("failed to create broadcaster: %w", err)
 			}
