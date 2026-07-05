@@ -80,7 +80,7 @@ export async function doLogin(username: string, password: string): Promise<Refre
     })
     // codes:
     //  500: Internal server error (vite serve could not proxy request)
-    //  400: Bad request (incorrect username/password)
+    //  401: Unauthorized (incorrect username/password)
     if (response.ok) {
         try {
             const data = await response.json();

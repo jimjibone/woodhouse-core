@@ -57,7 +57,7 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest) (*TokenDetail
 	}
 
 	if user == nil || !user.IsCorrectPassword(in.Password) {
-		return nil, status.Errorf(codes.NotFound, "incorrect username/password")
+		return nil, status.Errorf(codes.Unauthenticated, "incorrect username/password")
 	}
 
 	tokens, err := srv.jwt.GenerateTokens(user.Username, user.Role)
@@ -142,7 +142,7 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 	// Get the user, if they actually exist.
 	user := srv.users.Find(claims.Username)
 	if user == nil {
-		return nil, status.Errorf(codes.NotFound, "user not found")
+		return nil, status.Errorf(codes.Unauthenticated, "user not found")
 	}
 
 	// How many days has the refresh token got left before expiry?
