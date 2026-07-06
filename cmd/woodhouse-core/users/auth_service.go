@@ -65,11 +65,6 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest) (*TokenDetail
 		return nil, status.Errorf(codes.Internal, "cannot generate access token")
 	}
 
-	// err = srv.users.AddUserToken(user.Username, tokens.RefreshUUID, tokens.RefreshExpires)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "cannot store access token: %s", err)
-	// }
-
 	return tokens, nil
 }
 
@@ -93,6 +88,7 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "failed to read body", http.StatusUnprocessableEntity)
+			return
 		}
 		if err := protojson.Unmarshal(body, req); err != nil {
 			http.Error(w, "invalid json", http.StatusUnprocessableEntity)
@@ -109,9 +105,11 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 				body, err := protojson.Marshal(resp)
 				if err != nil {
 					http.Error(w, "failed to marshal response", http.StatusInternalServerError)
+					return
 				}
 				if _, err := w.Write(body); err != nil {
 					http.Error(w, "failed to write response", http.StatusInternalServerError)
+					return
 				}
 			}
 		}
@@ -129,15 +127,6 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "refresh token is invalid: %s", err)
 	}
-
-	// Verify the token.
-	// valid, err := srv.users.HasUserToken(claims.Username, claims.RefreshUUID)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Unauthenticated, "refresh token revoked: %s", err)
-	// }
-	// if !valid {
-	// 	return nil, status.Errorf(codes.Unauthenticated, "refresh token revoked")
-	// }
 
 	// Get the user, if they actually exist.
 	user := srv.users.Find(claims.Username)
@@ -193,11 +182,13 @@ func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 	handlePost(w, r, func(token string, w http.ResponseWriter, r *http.Request) {
 		if token == "" {
 			http.Error(w, "token not provided", http.StatusUnauthorized)
+			return
 		} else {
 			req := &clientsapi.UserRefreshRequest{}
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "failed to read body", http.StatusUnprocessableEntity)
+				return
 			}
 			if err := protojson.Unmarshal(body, req); err != nil {
 				http.Error(w, "invalid json", http.StatusUnprocessableEntity)
@@ -214,9 +205,11 @@ func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 					body, err := protojson.Marshal(resp)
 					if err != nil {
 						http.Error(w, "failed to marshal response", http.StatusInternalServerError)
+						return
 					}
 					if _, err := w.Write(body); err != nil {
 						http.Error(w, "failed to write response", http.StatusInternalServerError)
+						return
 					}
 				}
 			}
@@ -247,11 +240,13 @@ func (srv *AuthService) LogoutWeb(w http.ResponseWriter, r *http.Request) {
 	handlePost(w, r, func(token string, w http.ResponseWriter, r *http.Request) {
 		if token == "" {
 			http.Error(w, "token not provided", http.StatusUnauthorized)
+			return
 		} else {
 			req := &clientsapi.UserLogoutRequest{}
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, "failed to read body", http.StatusUnprocessableEntity)
+				return
 			}
 			if err := protojson.Unmarshal(body, req); err != nil {
 				http.Error(w, "invalid json", http.StatusUnprocessableEntity)
@@ -266,9 +261,11 @@ func (srv *AuthService) LogoutWeb(w http.ResponseWriter, r *http.Request) {
 					body, err := protojson.Marshal(resp)
 					if err != nil {
 						http.Error(w, "failed to marshal response", http.StatusInternalServerError)
+						return
 					}
 					if _, err := w.Write(body); err != nil {
 						http.Error(w, "failed to write response", http.StatusInternalServerError)
+						return
 					}
 				}
 			}
