@@ -11,6 +11,7 @@ import (
 
 	"github.com/jimjibone/log"
 	"github.com/jimjibone/queue/v2"
+	"github.com/jimjibone/woodhouse-core/shared/random"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
 )
 
@@ -18,7 +19,13 @@ var (
 	ErrClientNotFound      = errors.New("client not found")
 	ErrClientAlreadyExists = errors.New("client already exists")
 	ErrPairingNotFound     = errors.New("pairing request not found")
+	ErrPairingInProgress   = errors.New("a pairing request is already in progress for this client")
+	ErrTooManyPairings     = errors.New("too many pending pairing requests")
 )
+
+// maxPendingPairings caps the number of concurrent in-flight pairing requests
+// to bound resource use and SAS guessing.
+const maxPendingPairings = 32
 
 type ClientUpdate struct {
 	Updated *Client
@@ -27,7 +34,16 @@ type ClientUpdate struct {
 
 type PairingUpdate struct {
 	Updated *PairingRequest
-	Removed *string
+	Removed *string // request_id of a removed pairing request
+}
+
+// pendingPairing tracks an in-flight pairing request and the channel used to
+// signal the waiting AuthService.Pair goroutine when the user confirms or
+// denies it.
+type pendingPairing struct {
+	req      *PairingRequest
+	result   chan bool // buffered(1): true=confirmed, false=denied
+	resolved bool
 }
 
 type ClientManager struct {
@@ -41,7 +57,7 @@ type ClientManager struct {
 
 	mu              sync.RWMutex
 	clients         map[string]*Client
-	pairingRequests map[string]*PairingRequest
+	pairingRequests map[string]*pendingPairing // key = request_id
 
 	changed bool
 
@@ -60,7 +76,7 @@ func NewClientManager(store stores.Store) (*ClientManager, error) {
 		close:              close,
 		store:              store,
 		clients:            make(map[string]*Client),
-		pairingRequests:    make(map[string]*PairingRequest),
+		pairingRequests:    make(map[string]*pendingPairing),
 		clientPublisher:    queue.NewPub[ClientUpdate](),
 		clientListenerAdd:  make(chan *queue.Sub[ClientUpdate], 1),
 		pairingPublisher:   queue.NewPub[PairingUpdate](),
@@ -215,78 +231,110 @@ func (manager *ClientManager) SetClientPaired(id string, paired bool) error {
 	return nil
 }
 
-// AddPairingRequest adds a new pending pairing request. Note that this does not
-// continue the pairing handshake in AuthService.Pair, so the request will not
-// be automatically approved or finalised.
-func (manager *ClientManager) AddPairingRequest(req *PairingRequest) error {
+// AddPairingRequest registers a new pending pairing request, assigning it a
+// unique request id, and returns that id together with a channel that receives
+// the user's decision (true=confirmed, false=denied). It rejects a second
+// concurrent, unresolved attempt for the same client id (so an attacker cannot
+// clobber a legitimate request) and caps the number of concurrent attempts.
+func (manager *ClientManager) AddPairingRequest(req *PairingRequest) (string, <-chan bool, error) {
 	if req == nil || req.ClientID == "" {
-		return fmt.Errorf("client id not set")
+		return "", nil, fmt.Errorf("client id not set")
 	}
+
+	requestID, err := random.GenerateRandomString(16)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate request id: %w", err)
+	}
+
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
+
+	if len(manager.pairingRequests) >= maxPendingPairings {
+		return "", nil, ErrTooManyPairings
+	}
+	for _, p := range manager.pairingRequests {
+		if p.req.ClientID == req.ClientID && !p.resolved {
+			return "", nil, ErrPairingInProgress
+		}
+	}
 
 	if req.RequestedAt.IsZero() {
 		req.RequestedAt = time.Now()
 	}
+	req.RequestID = requestID
+	req.Confirmed = false
+	req.SAS = ""
 
-	manager.pairingRequests[req.ClientID] = req.Clone()
-	manager.pairingPublisher.Pub(PairingUpdate{Updated: req.Clone()})
+	pending := &pendingPairing{
+		req:    req.Clone(),
+		result: make(chan bool, 1),
+	}
+	manager.pairingRequests[requestID] = pending
+	manager.pairingPublisher.Pub(PairingUpdate{Updated: pending.req.Clone()})
 
-	return nil
+	return requestID, pending.result, nil
 }
 
-// RemovePairingRequest removes a pending pairing request for the given client
-// ID.
-func (manager *ClientManager) RemovePairingRequest(clientID string) error {
+// RemovePairingRequest removes a pending pairing request by request id. If the
+// request has not yet been resolved it is signalled as denied, unblocking the
+// waiting AuthService.Pair goroutine. Safe to call for cleanup after a request
+// has already been confirmed or denied.
+func (manager *ClientManager) RemovePairingRequest(requestID string) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
-	if _, found := manager.pairingRequests[clientID]; !found {
-		return ErrPairingNotFound
-	}
-
-	delete(manager.pairingRequests, clientID)
-
-	manager.pairingPublisher.Pub(PairingUpdate{Removed: &clientID})
-
-	return nil
-}
-
-// FindPairingRequest returns a pending pairing request for the given client ID,
-// or nil if not found. Note that this returns a copy of the request, so
-// modifying the returned request will not affect the stored request.
-func (manager *ClientManager) FindPairingRequest(clientID string) *PairingRequest {
-	manager.mu.RLock()
-	defer manager.mu.RUnlock()
-
-	req, found := manager.pairingRequests[clientID]
-	if !found {
-		return nil
-	}
-	return req.Clone()
-}
-
-// ApprovePairingRequest approves a pending pairing request by setting the
-// pairing code. Note that this only continues the pairing handshake in
-// AuthService.Pair.
-func (manager *ClientManager) ApprovePairingRequest(clientID string, code string) error {
-	if clientID == "" {
-		return fmt.Errorf("client id not set")
-	}
-	if code == "" {
-		return fmt.Errorf("pairing code not set")
-	}
-
-	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
-	req, found := manager.pairingRequests[clientID]
+	pending, found := manager.pairingRequests[requestID]
 	if !found {
 		return ErrPairingNotFound
 	}
 
-	req.Code = code
-	manager.pairingPublisher.Pub(PairingUpdate{Updated: req.Clone()})
+	if !pending.resolved {
+		pending.resolved = true
+		pending.result <- false
+	}
+	delete(manager.pairingRequests, requestID)
+	manager.pairingPublisher.Pub(PairingUpdate{Removed: &requestID})
+
+	return nil
+}
+
+// SetPairingSAS records the computed SAS on a pending request and publishes the
+// update so the web UI can display it for the user to compare.
+func (manager *ClientManager) SetPairingSAS(requestID, sas string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	pending, found := manager.pairingRequests[requestID]
+	if !found {
+		return ErrPairingNotFound
+	}
+	pending.req.SAS = sas
+	manager.pairingPublisher.Pub(PairingUpdate{Updated: pending.req.Clone()})
+
+	return nil
+}
+
+// ConfirmPairingRequest marks a pending request as confirmed by the user and
+// signals the waiting AuthService.Pair goroutine to release the credentials.
+func (manager *ClientManager) ConfirmPairingRequest(requestID string) error {
+	if requestID == "" {
+		return fmt.Errorf("request id not set")
+	}
+
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	pending, found := manager.pairingRequests[requestID]
+	if !found {
+		return ErrPairingNotFound
+	}
+	if pending.resolved {
+		return ErrPairingNotFound
+	}
+
+	pending.resolved = true
+	pending.req.Confirmed = true
+	pending.result <- true
 
 	return nil
 }
@@ -362,7 +410,7 @@ func (manager *ClientManager) load() error {
 	}
 
 	manager.clients = config.Clients
-	manager.pairingRequests = make(map[string]*PairingRequest)
+	manager.pairingRequests = make(map[string]*pendingPairing)
 
 	return nil
 }
@@ -441,8 +489,8 @@ func (manager *ClientManager) run(ctx context.Context) {
 		case lis := <-manager.pairingListenerAdd:
 			manager.mu.RLock()
 			requests := make([]*PairingRequest, 0, len(manager.pairingRequests))
-			for _, req := range manager.pairingRequests {
-				requests = append(requests, req.Clone())
+			for _, p := range manager.pairingRequests {
+				requests = append(requests, p.req.Clone())
 			}
 			manager.mu.RUnlock()
 

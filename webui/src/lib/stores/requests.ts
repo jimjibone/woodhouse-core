@@ -195,10 +195,10 @@ export const UpdateUser = async (request: UpdateUserRequest): Promise<null | Con
 	return null;
 };
 
-export const ApprovePairing = async (clientID: string, pairingCode: string): Promise<null | ConnectError> => {
+export const ApprovePairing = async (clientID: string, requestID: string): Promise<null | ConnectError> => {
 	const request = create(ApprovePairingRequestSchema, {
 		clientId: clientID,
-		pairingCode: pairingCode.trim()
+		requestId: requestID
 	});
 	const options: CallOptions = {
 		headers: { authorization: getAccessToken() }
@@ -216,9 +216,10 @@ export const ApprovePairing = async (clientID: string, pairingCode: string): Pro
 	return null;
 };
 
-export const DenyPairing = async (clientID: string): Promise<null | ConnectError> => {
+export const DenyPairing = async (clientID: string, requestID: string): Promise<null | ConnectError> => {
 	const request = create(DenyPairingRequestSchema, {
-		clientId: clientID
+		clientId: clientID,
+		requestId: requestID
 	});
 	const options: CallOptions = {
 		headers: { authorization: getAccessToken() }

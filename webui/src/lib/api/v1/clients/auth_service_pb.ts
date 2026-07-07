@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/auth_service.proto.
  */
 export const file_clients_auth_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL2F1dGhfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIi4KC1BhaXJSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIo0BCgxQYWlyUmVzcG9uc2USOwoFc3RhdGUYASABKA4yLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGFpclJlc3BvbnNlLlN0YXRlEgwKBGRhdGEYAiABKAwiMgoFU3RhdGUSDQoJVW5kZWZpbmVkEAASCwoHUGVuZGluZxABEg0KCUhhbmRzaGFrZRACIicKDlJlZnJlc2hSZXF1ZXN0EhUKDXJlZnJlc2hfdG9rZW4YASABKAkiPgoPUmVmcmVzaFJlc3BvbnNlEhUKDXJlZnJlc2hfdG9rZW4YASABKAkSFAoMYWNjZXNzX3Rva2VuGAIgASgJIiYKDUxvZ291dFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCSIQCg5Mb2dvdXRSZXNwb25zZSINCgtQaW5nUmVxdWVzdCIOCgxQaW5nUmVzcG9uc2Uy/AIKC0F1dGhTZXJ2aWNlElkKBFBhaXISJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGFpclJlcXVlc3QaJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGFpclJlc3BvbnNlKAEwARJeCgdSZWZyZXNoEigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlZnJlc2hSZXF1ZXN0Gikud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlZnJlc2hSZXNwb25zZRJbCgZMb2dvdXQSJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuTG9nb3V0UmVxdWVzdBooLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Mb2dvdXRSZXNwb25zZRJVCgRQaW5nEiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBpbmdSZXF1ZXN0GiYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBpbmdSZXNwb25zZUI9WjtnaXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtYXBpL2dvL3YxL2NsaWVudHM7Y2xpZW50c2FwaWIGcHJvdG8z");
+  fileDesc("ChpjbGllbnRzL2F1dGhfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIlkKC1BhaXJSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCRIVCg1jbGllbnRfcHVia2V5GAMgASgMEhQKDGNsaWVudF9ub25jZRgEIAEoDEoECAIQA1IEZGF0YSLrAQoMUGFpclJlc3BvbnNlEjsKBXN0YXRlGAEgASgOMiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJSZXNwb25zZS5TdGF0ZRIMCgRkYXRhGAIgASgMEhUKDXNlcnZlcl9wdWJrZXkYAyABKAwSEgoKY29tbWl0bWVudBgEIAEoDBIUCgxzZXJ2ZXJfbm9uY2UYBSABKAwiTwoFU3RhdGUSDQoJVW5kZWZpbmVkEAASCwoHUGVuZGluZxABEg8KC0tleUV4Y2hhbmdlEAISCgoGUmV2ZWFsEAMSDQoJQ29uZmlybWVkEAQiJwoOUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCSI+Cg9SZWZyZXNoUmVzcG9uc2USFQoNcmVmcmVzaF90b2tlbhgBIAEoCRIUCgxhY2Nlc3NfdG9rZW4YAiABKAkiJgoNTG9nb3V0UmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIhAKDkxvZ291dFJlc3BvbnNlIg0KC1BpbmdSZXF1ZXN0Ig4KDFBpbmdSZXNwb25zZTL8AgoLQXV0aFNlcnZpY2USWQoEUGFpchIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyUmVxdWVzdBomLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyUmVzcG9uc2UoATABEl4KB1JlZnJlc2gSKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVmcmVzaFJlcXVlc3QaKS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVmcmVzaFJlc3BvbnNlElsKBkxvZ291dBInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Mb2dvdXRSZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkxvZ291dFJlc3BvbnNlElUKBFBpbmcSJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGluZ1JlcXVlc3QaJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGluZ1Jlc3BvbnNlQj1aO2dpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS1hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
 
 /**
  * @generated from message woodhouse.api.v1.clients.PairRequest
@@ -24,9 +24,18 @@ export type PairRequest = Message<"woodhouse.api.v1.clients.PairRequest"> & {
   clientId: string;
 
   /**
-   * @generated from field: bytes data = 2;
+   * Ephemeral X25519 public key PKa (first message).
+   *
+   * @generated from field: bytes client_pubkey = 3;
    */
-  data: Uint8Array;
+  clientPubkey: Uint8Array;
+
+  /**
+   * 32-byte SAS nonce Na.
+   *
+   * @generated from field: bytes client_nonce = 4;
+   */
+  clientNonce: Uint8Array;
 };
 
 /**
@@ -46,9 +55,32 @@ export type PairResponse = Message<"woodhouse.api.v1.clients.PairResponse"> & {
   state: PairResponse_State;
 
   /**
+   * Encrypted cert / refresh-token payloads.
+   *
    * @generated from field: bytes data = 2;
    */
   data: Uint8Array;
+
+  /**
+   * Ephemeral X25519 public key PKb (KeyExchange).
+   *
+   * @generated from field: bytes server_pubkey = 3;
+   */
+  serverPubkey: Uint8Array;
+
+  /**
+   * SHA-256 commitment to server_nonce (KeyExchange).
+   *
+   * @generated from field: bytes commitment = 4;
+   */
+  commitment: Uint8Array;
+
+  /**
+   * 32-byte SAS nonce Nb, revealed (Reveal).
+   *
+   * @generated from field: bytes server_nonce = 5;
+   */
+  serverNonce: Uint8Array;
 };
 
 /**
@@ -68,14 +100,32 @@ export enum PairResponse_State {
   Undefined = 0,
 
   /**
+   * Keepalive while awaiting the user's confirm/deny.
+   *
    * @generated from enum value: Pending = 1;
    */
   Pending = 1,
 
   /**
-   * @generated from enum value: Handshake = 2;
+   * Carries server_pubkey and commitment.
+   *
+   * @generated from enum value: KeyExchange = 2;
    */
-  Handshake = 2,
+  KeyExchange = 2,
+
+  /**
+   * Carries server_nonce.
+   *
+   * @generated from enum value: Reveal = 3;
+   */
+  Reveal = 3,
+
+  /**
+   * Carries the first encrypted payload (the cert).
+   *
+   * @generated from enum value: Confirmed = 4;
+   */
+  Confirmed = 4,
 }
 
 /**
@@ -184,31 +234,29 @@ export const PingResponseSchema: GenMessage<PingResponse> = /*@__PURE__*/
  */
 export const AuthService: GenService<{
   /**
-   * Pair with (login to) the woodhouse core server. Note that this RPC can
-   * wait in the pending state for a long time, until a user approves/denies
-   * the pairing request. The bi-directional stream is normally used in
-   * 'insecure' mode (i.e. use 'insecure skip verify' TLS option) and follows
-   * this pattern:
-   * 1. The client starts the bi-directional stream by sending its client_id.
-   * 2. The server will send back the 'Pending' state every second until a
-   *    user has either accepted or denied the pairing request.
-   * 3. If the user accepts the pairing request, the server will send the
-   *    first PAKE handshake blob.
-   * 4. The client should read the handshake into their PAKE object and send
-   *    back the second PAKE handshake blob.
-   * 5. Server and client should now have the session key. The server tests
-   *    this by sending some random data to client after encrypting with
-   *    AES-256.
-   * 6. The client should then decrypt the random bytes, reverse the order,
-   *    encrypt using its session key and send it back to the server.
-   * 7. If the server is happy it will send its own certificate file in PEM
-   *    format which the client should save and use to verify future
-   *    connections.
-   * 8. The server will then generate a new refresh token (JWT) and send it to
-   *    the client. The client should save this and use it to obtain new
-   *    tokens using the `Refresh` RPC.
-   * 9. Server and client should now both finish the RPC. The client should
-   *    now call `Refresh` to obtain an access token which...
+   * Pair with (login to) the woodhouse core server. The bi-directional stream
+   * is normally used in 'insecure' mode (i.e. use 'insecure skip verify' TLS
+   * option); the channel is authenticated by a commitment-based Short
+   * Authentication String (SAS) that the user compares on both the client CLI
+   * and the server web UI. The pattern is:
+   * 1. The client starts the stream by sending its client_id and an ephemeral
+   *    X25519 client_pubkey (PKa).
+   * 2. The server replies with KeyExchange, carrying its ephemeral X25519
+   *    server_pubkey (PKb) and a commitment to its 32-byte nonce Nb:
+   *    commitment = SHA256(len‖PKb ‖ len‖PKa ‖ len‖client_id ‖ len‖Nb).
+   * 3. The client sends its own 32-byte nonce Na (client_nonce).
+   * 4. The server replies with Reveal, carrying server_nonce = Nb.
+   * 5. The client verifies the commitment, then both sides compute the shared
+   *    ECDH secret and derive, via HKDF with distinct info labels:
+   *      - an 8-digit SAS (displayed on both ends for the user to compare);
+   *      - a 32-byte AES-256 session key.
+   * 6. The server stores the SAS on the pairing request (shown in the web UI)
+   *    and sends periodic Pending keepalives while awaiting the user.
+   * 7. The user compares the two 8-digit codes and clicks Confirm (or Deny).
+   * 8. On confirm the server sends Confirmed with data = Encrypt(cert), then a
+   *    further message with data = Encrypt(refresh token), each AES-256-GCM
+   *    encrypted under the session key. On deny/timeout it returns
+   *    PermissionDenied and sends nothing.
    *
    * @generated from rpc woodhouse.api.v1.clients.AuthService.Pair
    */

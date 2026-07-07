@@ -47,42 +47,49 @@
 
 	const secondsToDate = (seconds: bigint) => new Date(Number(seconds) * 1000);
 
-	const setPending = (clientId: string, pending: boolean) => {
-		pendingPairing = { ...pendingPairing, [clientId]: pending };
+	const setPending = (requestId: string, pending: boolean) => {
+		pendingPairing = { ...pendingPairing, [requestId]: pending };
 	};
 
 	const setClientPending = (clientId: string, pending: boolean) => {
 		pendingClientAction = { ...pendingClientAction, [clientId]: pending };
 	};
 
+	// Group the 8-digit SAS as "1234 5678" for easier comparison by eye.
+	const formatSas = (sas: string) => (sas.length === 8 ? `${sas.slice(0, 4)} ${sas.slice(4)}` : sas);
+
 	const handleApprove = async (req: PairingRequest) => {
+		if (!req.sas) {
+			return;
+		}
 		const label = req.name || req.clientId;
-		const enteredCode = prompt(`Approve pairing for ${label}\n\nEnter the pairing code shown on the client:`);
-
-		if (enteredCode === null) {
+		// Force a deliberate comparison rather than a bare one-click confirm: the
+		// admin must actively acknowledge the codes match before we release the
+		// credentials.
+		const matches = confirm(
+			`Pair "${label}"?\n\n` +
+				`Confirm this code is EXACTLY the same as the one shown on the device:\n\n` +
+				`        ${formatSas(req.sas)}\n\n` +
+				`Only approve if they match. If they differ, cancel and deny the request.`
+		);
+		if (!matches) {
 			return;
 		}
 
-		const pairingCode = enteredCode.trim();
-		if (!pairingCode) {
-			alert('Pairing code is required to approve this request.');
-			return;
-		}
-
-		setPending(req.clientId, true);
+		setPending(req.requestId, true);
 		try {
-			await ApprovePairing(req.clientId, pairingCode);
+			await ApprovePairing(req.clientId, req.requestId);
 		} finally {
-			setPending(req.clientId, false);
+			setPending(req.requestId, false);
 		}
 	};
 
 	const handleDeny = async (req: PairingRequest) => {
-		setPending(req.clientId, true);
+		setPending(req.requestId, true);
 		try {
-			await DenyPairing(req.clientId);
+			await DenyPairing(req.clientId, req.requestId);
 		} finally {
-			setPending(req.clientId, false);
+			setPending(req.requestId, false);
 		}
 	};
 
@@ -120,7 +127,7 @@
 			<p class="text-sm text-muted-foreground">No pairing requests.</p>
 		{:else}
 			<div class="grid gap-3">
-				{#each pairingRequests as req (req.clientId)}
+				{#each pairingRequests as req (req.requestId)}
 					<div class="rounded-xl border bg-card/50 p-4 shadow-sm grid gap-3">
 						<div class="grid gap-1">
 							<div class="flex items-center justify-between">
@@ -138,14 +145,29 @@
 							</div>
 						</div>
 
+						<div class="rounded-lg border bg-muted/40 p-3 text-center">
+							{#if req.sas}
+								<div class="text-xs text-muted-foreground">Verify this code matches the device</div>
+								<div class="mt-1 font-mono text-2xl font-semibold tracking-[0.3em]">
+									{formatSas(req.sas)}
+								</div>
+							{:else}
+								<div class="text-sm text-muted-foreground">Waiting for the device to present a code…</div>
+							{/if}
+						</div>
+
 						<div class="flex gap-2">
-							<Button class="cursor-pointer" disabled={pendingPairing[req.clientId]} onclick={() => handleApprove(req)}>
-								Approve
+							<Button
+								class="cursor-pointer"
+								disabled={!req.sas || pendingPairing[req.requestId]}
+								onclick={() => handleApprove(req)}
+							>
+								Codes match — Confirm
 							</Button>
 							<Button
 								class="cursor-pointer"
 								variant="outline"
-								disabled={pendingPairing[req.clientId]}
+								disabled={pendingPairing[req.requestId]}
 								onclick={() => handleDeny(req)}
 							>
 								Deny

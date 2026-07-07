@@ -2,7 +2,7 @@ package clients
 
 import (
 	"context"
-	"slices"
+	"errors"
 	"time"
 
 	"github.com/jimjibone/log"
@@ -10,11 +10,14 @@ import (
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/shared/cert"
 	"github.com/jimjibone/woodhouse-core/shared/crypt"
-	"github.com/jimjibone/woodhouse-core/shared/random"
-	"github.com/schollz/pake/v3"
+	"github.com/jimjibone/woodhouse-core/shared/sas"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// pairingDecisionTimeout bounds how long the server waits for the user to
+// confirm or deny a pairing request before aborting.
+const pairingDecisionTimeout = 3 * time.Minute
 
 type AuthService struct {
 	clientsapi.UnimplementedAuthServiceServer
@@ -34,7 +37,11 @@ func NewAuthService(cm *cert.CertManager, ba *JWTManager, clientManager *core.Cl
 }
 
 func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
-	// 1. Get the client ID from the client.
+	if as.clientManager == nil {
+		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	// 1. Receive the client's id and ephemeral public key (PKa).
 	req, err := server.Recv()
 	if err != nil {
 		as.log.Warnf("pairing client failed to receive client id: %s", err)
@@ -43,198 +50,174 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	if req.ClientId == "" {
 		return status.Errorf(codes.InvalidArgument, "client_id must be set")
 	}
-
 	clientID := req.ClientId
 	as.log.Infof("pairing client %q started", clientID)
 
-	pairingRequest := &core.PairingRequest{
-		ClientID: clientID,
-	}
-
-	if as.clientManager != nil {
-		err := as.clientManager.AddPairingRequest(pairingRequest)
-		if err != nil {
-			as.log.Warnf("pairing client %q failed to add pairing request: %s", clientID, err)
-			return status.Errorf(codes.Internal, "failed to add pairing request")
-		}
-		defer func() {
-			_ = as.clientManager.RemovePairingRequest(clientID)
-		}()
-	}
-
-	// 2. Send the pairing state to the client until the user has accepted the
-	// pairing request.
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	pending := true
-	pairingCode := ""
-	for pending {
-		select {
-		case <-server.Context().Done():
-			return status.Errorf(codes.Canceled, "context canceled")
-
-		case <-ticker.C:
-			if as.clientManager == nil {
-				pending = false
-				continue
-			}
-
-			pairingReq := as.clientManager.FindPairingRequest(clientID)
-			if pairingReq == nil {
-				as.log.Infof("pairing client %q denied", clientID)
-				return status.Errorf(codes.PermissionDenied, "pairing denied")
-			}
-			if pairingReq.Code != "" {
-				pairingCode = pairingReq.Code
-				pending = false
-				continue
-			}
-
-			// as.log.Debugf("pairing client %q pending...", clientID)
-			err = server.Send(&clientsapi.PairResponse{
-				State: clientsapi.PairResponse_Pending,
-			})
-			if err != nil {
-				code := status.Code(err)
-				switch code {
-				case codes.Unavailable:
-					as.log.Infof("pairing client %q went offline", clientID)
-					return status.Errorf(code, "client offline")
-
-				default:
-					as.log.Warnf("pairing client %q error when sending pending: %s", clientID, err)
-					return status.Errorf(code, "failed to send pending")
-				}
-			}
-		}
-	}
-
-	if as.clientManager != nil && pairingCode == "" {
-		as.log.Warnf("pairing client %q not approved with a pairing code", clientID)
-		return status.Errorf(codes.FailedPrecondition, "pairing not approved")
-	}
-
-	// Start the PAKE handshake using the key provided by the user.
-	as.log.Debugf("pairing client %q initialising pake", clientID)
-	pakep, err := pake.InitCurve([]byte(pairingCode), 0, "p521")
+	pka := req.ClientPubkey
+	clientPub, err := sas.ParsePublicKey(pka)
 	if err != nil {
-		as.log.Warnf("pairing client %q failed to init pake: %s", clientID, err)
-		return status.Errorf(codes.Internal, "failed to init pake: %s", err)
+		as.log.Warnf("pairing client %q sent an invalid public key: %s", clientID, err)
+		return status.Errorf(codes.InvalidArgument, "invalid client public key")
 	}
 
-	// 3. Send the first PAKE handshake blob to the client.
-	as.log.Debugf("pairing client %q sending first handshake blob", clientID)
+	// Register the pending request, obtaining its id and the channel that
+	// delivers the user's confirm/deny decision.
+	pairingRequest := &core.PairingRequest{ClientID: clientID}
+	requestID, decision, err := as.clientManager.AddPairingRequest(pairingRequest)
+	if err != nil {
+		if errors.Is(err, core.ErrPairingInProgress) {
+			as.log.Infof("pairing client %q rejected: already in progress", clientID)
+			return status.Errorf(codes.AlreadyExists, "a pairing request is already in progress")
+		}
+		if errors.Is(err, core.ErrTooManyPairings) {
+			return status.Errorf(codes.ResourceExhausted, "too many pending pairing requests")
+		}
+		as.log.Warnf("pairing client %q failed to add pairing request: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to add pairing request")
+	}
+	defer func() { _ = as.clientManager.RemovePairingRequest(requestID) }()
+
+	// 2. Generate our ephemeral key (PKb) and nonce (Nb), and commit to Nb
+	// before we learn the client's nonce.
+	serverPriv, err := sas.GenerateKey()
+	if err != nil {
+		as.log.Warnf("pairing client %q failed to generate key: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to generate key")
+	}
+	pkb := serverPriv.PublicKey().Bytes()
+	nb, err := sas.Nonce()
+	if err != nil {
+		as.log.Warnf("pairing client %q failed to generate nonce: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to generate nonce")
+	}
+
 	err = server.Send(&clientsapi.PairResponse{
-		State: clientsapi.PairResponse_Handshake,
-		Data:  pakep.Bytes(),
+		State:        clientsapi.PairResponse_KeyExchange,
+		ServerPubkey: pkb,
+		Commitment:   sas.Commit(pkb, pka, clientID, nb),
 	})
 	if err != nil {
-		as.log.Warnf("pairing client %q error when sending handshake start: %s", clientID, err)
-		return status.Errorf(codes.Internal, "failed to send handshake")
+		as.log.Warnf("pairing client %q error when sending key exchange: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to send key exchange")
 	}
 
-	// 4. Receive the second handshake blob from the client.
-	as.log.Debugf("pairing client %q waiting for second handshake blob", clientID)
+	// 3. Receive the client's nonce (Na).
 	req, err = server.Recv()
 	if err != nil {
-		as.log.Warnf("pairing client %q failed to receive handshake: %s", clientID, err)
-		return status.Errorf(codes.Internal, "failed to receive handshake")
+		as.log.Warnf("pairing client %q failed to receive nonce: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to receive nonce")
 	}
-	as.log.Debugf("pairing client %q received second handshake blob", clientID)
-	err = pakep.Update(req.Data)
-	if err != nil {
-		as.log.Warnf("pairing client %q failed to update handshake: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to update handshake")
+	na := req.ClientNonce
+	if len(na) != sas.NonceSize {
+		return status.Errorf(codes.InvalidArgument, "invalid client nonce")
 	}
 
-	// 5. We should now have the session key. Let's confirm this by sending a
-	// test (an encrypted blob of random bytes).
-	key, err := pakep.SessionKey()
-	if err != nil {
-		as.log.Warnf("pairing client %q failed to get session key: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to prepare test")
-	}
-	as.log.Debugf("pairing client %q generated key: [%d] %x", clientID, len(key), key)
-	test, err := random.GenerateRandomString(128)
-	if err != nil {
-		as.log.Warnf("pairing client %q failed to generate test: %s", clientID, err)
-		return status.Errorf(codes.Internal, "failed to generate test")
-	}
-	encrypted, err := crypt.Encrypt([]byte(test), key)
-	if err != nil {
-		as.log.Warnf("pairing client %q failed to encrypt test: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to encrypt test")
-	}
-	as.log.Debugf("pairing client %q sending test", clientID)
+	// 4. Reveal our nonce (Nb) so the client can verify the commitment.
 	err = server.Send(&clientsapi.PairResponse{
-		Data: encrypted,
+		State:       clientsapi.PairResponse_Reveal,
+		ServerNonce: nb,
 	})
 	if err != nil {
-		as.log.Warnf("pairing client %q failed to send test: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to send test")
+		as.log.Warnf("pairing client %q error when sending reveal: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to send reveal")
 	}
 
-	// 6. Receive the test back.
-	as.log.Debugf("pairing client %q waiting for test reply", clientID)
-	req, err = server.Recv()
+	// 5. Derive the SAS (compared by the user) and the AES-256 session key.
+	sasCode, key, err := sas.Derive(serverPriv, clientPub, pka, pkb, clientID, na, nb)
 	if err != nil {
-		as.log.Warnf("pairing client %q failed to receive test: %s", clientID, err)
-		return status.Errorf(codes.Internal, "failed to receive test")
-	}
-	decrypted, err := crypt.Decrypt(req.Data, key)
-	if err != nil {
-		as.log.Warnf("pairing client %q failed to decrypt test: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to decrypt test")
-	}
-	slices.Reverse(decrypted)
-	decryptedTest := string(decrypted)
-	as.log.Debugf("pairing client %q test reply was valid", clientID)
-	if test != decryptedTest {
-		as.log.Warnf("pairing client %q received invalid test response", clientID)
-		return status.Errorf(codes.PermissionDenied, "incorrect test response")
+		as.log.Warnf("pairing client %q failed to derive sas: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to derive sas")
 	}
 
-	// 7. Send the server's certificate.
-	encrypted, err = crypt.Encrypt(as.cm.CertPEM(), key)
+	// 6. Publish the SAS so the web UI shows it, then wait for the user.
+	if err := as.clientManager.SetPairingSAS(requestID, sasCode); err != nil {
+		as.log.Warnf("pairing client %q failed to publish sas: %s", clientID, err)
+		return status.Errorf(codes.Internal, "failed to publish sas")
+	}
+	as.log.Infof("pairing client %q awaiting user confirmation", clientID)
+
+	// 7. Block until the user confirms or denies, sending keepalives meanwhile.
+	confirmed, err := as.awaitDecision(server, clientID, decision)
+	if err != nil {
+		return err
+	}
+	if !confirmed {
+		as.log.Infof("pairing client %q denied", clientID)
+		return status.Errorf(codes.PermissionDenied, "pairing denied")
+	}
+
+	// 8. Send the server certificate, encrypted under the session key.
+	encrypted, err := crypt.Encrypt(as.cm.CertPEM(), key)
 	if err != nil {
 		as.log.Warnf("pairing client %q failed to encrypt cert: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to encrypt cert")
+		return status.Errorf(codes.Internal, "failed to encrypt cert")
 	}
-	as.log.Debugf("pairing client %q sending cert", clientID)
 	err = server.Send(&clientsapi.PairResponse{
-		Data: encrypted,
+		State: clientsapi.PairResponse_Confirmed,
+		Data:  encrypted,
 	})
 	if err != nil {
 		as.log.Warnf("pairing client %q error when sending cert: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send cert")
 	}
 
-	// 8. Generate refresh auth token for the client and send it.
+	// 9. Generate and send the refresh token, encrypted under the session key.
 	tokens, err := as.jwt.GenerateTokens(clientID)
 	if err != nil {
 		as.log.Warnf("pairing client %q failed to generate token: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to generate token")
+		return status.Errorf(codes.Internal, "failed to generate token")
 	}
 	encrypted, err = crypt.Encrypt([]byte(tokens.RefreshToken), key)
 	if err != nil {
 		as.log.Warnf("pairing client %q failed to encrypt token: %s", clientID, err)
-		return status.Errorf(codes.PermissionDenied, "failed to encrypt token")
+		return status.Errorf(codes.Internal, "failed to encrypt token")
 	}
-	as.log.Debugf("pairing client %q sending token", clientID)
-	err = server.Send(&clientsapi.PairResponse{
-		Data: encrypted,
-	})
+	err = server.Send(&clientsapi.PairResponse{Data: encrypted})
 	if err != nil {
 		as.log.Warnf("pairing client %q error when sending token: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to send token")
 	}
 
-	if as.clientManager != nil {
-		as.clientManager.FinalisePairingRequest(pairingRequest)
-	}
-
+	as.clientManager.FinalisePairingRequest(pairingRequest)
 	as.log.Infof("pairing client %q finished", clientID)
 	return nil
+}
+
+// awaitDecision blocks until the user confirms (true) or denies (false) the
+// pairing request, the client disconnects, or the decision times out. It sends
+// periodic Pending keepalives so the stream and any intermediaries stay alive
+// and a dead client is detected while waiting.
+func (as *AuthService) awaitDecision(server clientsapi.AuthService_PairServer, clientID string, decision <-chan bool) (bool, error) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	timeout := time.NewTimer(pairingDecisionTimeout)
+	defer timeout.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return false, status.Errorf(codes.Canceled, "context canceled")
+
+		case ok := <-decision:
+			return ok, nil
+
+		case <-timeout.C:
+			as.log.Infof("pairing client %q timed out awaiting confirmation", clientID)
+			return false, status.Errorf(codes.DeadlineExceeded, "pairing timed out")
+
+		case <-ticker.C:
+			err := server.Send(&clientsapi.PairResponse{State: clientsapi.PairResponse_Pending})
+			if err != nil {
+				code := status.Code(err)
+				if code == codes.Unavailable {
+					as.log.Infof("pairing client %q went offline", clientID)
+					return false, status.Errorf(code, "client offline")
+				}
+				as.log.Warnf("pairing client %q error when sending pending: %s", clientID, err)
+				return false, status.Errorf(code, "failed to send pending")
+			}
+		}
+	}
 }
 
 func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshRequest) (*clientsapi.RefreshResponse, error) {

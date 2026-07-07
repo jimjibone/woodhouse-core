@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/client.proto.
  */
 export const file_clients_client: GenFile = /*@__PURE__*/
-  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIo8BCgZDbGllbnQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIPCgd2ZXJzaW9uGAQgASgJEg4KBnBhaXJlZBgFIAEoCBIOCgZvbmxpbmUYBiABKAgSEgoKZmlyc3Rfc2VlbhgHIAEoBBIRCglsYXN0X3NlZW4YCCABKAQiXAoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEQj1aO2dpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS1hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
+  fileDesc("ChRjbGllbnRzL2NsaWVudC5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIo8BCgZDbGllbnQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIPCgd2ZXJzaW9uGAQgASgJEg4KBnBhaXJlZBgFIAEoCBIOCgZvbmxpbmUYBiABKAgSEgoKZmlyc3Rfc2VlbhgHIAEoBBIRCglsYXN0X3NlZW4YCCABKAQifQoOUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFAoMcmVxdWVzdGVkX2F0GAQgASgEEhIKCnJlcXVlc3RfaWQYBSABKAkSCwoDc2FzGAYgASgJQj1aO2dpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS1hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
 
 /**
  * @generated from message woodhouse.api.v1.clients.Client
@@ -93,6 +93,20 @@ export type PairingRequest = Message<"woodhouse.api.v1.clients.PairingRequest"> 
    * @generated from field: uint64 requested_at = 4;
    */
   requestedAt: bigint;
+
+  /**
+   * Server-generated unique id for this pairing attempt.
+   *
+   * @generated from field: string request_id = 5;
+   */
+  requestId: string;
+
+  /**
+   * 8-digit SAS to compare against the client CLI (empty until known).
+   *
+   * @generated from field: string sas = 6;
+   */
+  sas: string;
 };
 
 /**

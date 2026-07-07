@@ -52,13 +52,17 @@ func (client *Client) Pb() *clientsapi.Client {
 	}
 }
 
-// PairingRequest represents a pending client-initiated pairing request.
+// PairingRequest represents a pending client-initiated pairing request. It is
+// held in memory only (never persisted) - in particular the SAS is a
+// short-lived shared authentication value and must not be written to disk.
 type PairingRequest struct {
+	RequestID   string    `json:"request_id"`
 	ClientID    string    `json:"client_id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Version     string    `json:"version"`
-	Code        string    `json:"code"`
+	SAS         string    `json:"sas"`
+	Confirmed   bool      `json:"confirmed"`
 	RequestedAt time.Time `json:"requested_at"`
 }
 
@@ -67,11 +71,13 @@ func (req *PairingRequest) Clone() *PairingRequest {
 		return nil
 	}
 	return &PairingRequest{
+		RequestID:   req.RequestID,
 		ClientID:    req.ClientID,
 		Name:        req.Name,
 		Description: req.Description,
 		Version:     req.Version,
-		Code:        req.Code,
+		SAS:         req.SAS,
+		Confirmed:   req.Confirmed,
 		RequestedAt: req.RequestedAt,
 	}
 }
@@ -82,9 +88,11 @@ func (req *PairingRequest) Pb() *clientsapi.PairingRequest {
 	}
 
 	return &clientsapi.PairingRequest{
+		RequestId:   req.RequestID,
 		ClientId:    req.ClientID,
 		Name:        req.Name,
 		Description: req.Description,
+		Sas:         req.SAS,
 		RequestedAt: uint64(req.RequestedAt.Unix()),
 	}
 }
