@@ -56,14 +56,14 @@ func (client *Client) Pb() *clientsapi.Client {
 // held in memory only (never persisted) - in particular the SAS is a
 // short-lived shared authentication value and must not be written to disk.
 type PairingRequest struct {
-	RequestID   string    `json:"request_id"`
-	ClientID    string    `json:"client_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Version     string    `json:"version"`
-	SAS         string    `json:"sas"`
-	Confirmed   bool      `json:"confirmed"`
-	RequestedAt time.Time `json:"requested_at"`
+	RequestID   string
+	ClientID    string
+	Name        string
+	Description string
+	Version     string
+	SAS         string
+	Confirmed   bool
+	RequestedAt time.Time
 }
 
 func (req *PairingRequest) Clone() *PairingRequest {
