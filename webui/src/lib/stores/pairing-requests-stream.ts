@@ -1,8 +1,9 @@
 import { type Subscriber, writable } from 'svelte/store';
 import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
-import { create } from '@bufbuild/protobuf';
+import { create, toJsonString } from '@bufbuild/protobuf';
 import {
 	PairingRequestsStreamRequestSchema,
+	PairingRequestsStreamResponseSchema,
 	UserService,
 	type PairingRequestsStreamResponse
 } from '$lib/api/v1/clients/user_service_pb';
@@ -58,42 +59,6 @@ const sortRequests = (requests: PairingRequest[]) => {
 	});
 };
 
-const handleResponse = (response: PairingRequestsStreamResponse) => {
-	update((prev: PairingRequestsStoreType) => {
-		if (response.pairingRequest !== undefined) {
-			let found = false;
-			for (let i = 0; i < prev.requests.length; i++) {
-				if (prev.requests[i].clientId === response.pairingRequest?.clientId) {
-					found = true;
-					prev.requests[i] = updateRequest(prev.requests[i], response.pairingRequest);
-					break;
-				}
-			}
-			if (!found) {
-				prev.requests = [...prev.requests, response.pairingRequest];
-			}
-			prev.requests = sortRequests(prev.requests);
-			prev.connected = true;
-			return prev;
-		}
-
-		if (response.pairingRemoved !== '') {
-			for (let i = 0; i < prev.requests.length; i++) {
-				if (prev.requests[i].clientId === response.pairingRemoved) {
-					prev.requests.splice(i, 1);
-					break;
-				}
-			}
-			prev.connected = true;
-			return prev;
-		}
-
-		// Keepalive
-		prev.connected = true;
-		return prev;
-	});
-};
-
 const streamPairingRequests = async (
 	client: Client<typeof UserService>,
 	abortSignal: AbortSignal,
@@ -106,10 +71,66 @@ const streamPairingRequests = async (
 			signal: abortSignal,
 			headers: { authorization: getAccessToken() }
 		};
+		let gotInitialSet = false; // Indicates that we've received the initial set of pairing requests from the server.
+		let retainIDs: string[] = []; // Lists the request IDs that we should retain from the previous connection.
+
 		for await (const response of client.pairingRequestsStream(request, options)) {
 			heartbeat();
 			didConnect = true;
-			handleResponse(response);
+
+			update((prev: PairingRequestsStoreType) => {
+				console.log('pairing requests stream response: ', toJsonString(PairingRequestsStreamResponseSchema, response));
+
+				if (response.pairingRequest !== undefined) {
+					let found = false;
+					for (let i = 0; i < prev.requests.length; i++) {
+						if (prev.requests[i].requestId === response.pairingRequest?.requestId) {
+							found = true;
+							prev.requests[i] = updateRequest(prev.requests[i], response.pairingRequest);
+							break;
+						}
+					}
+					if (!found) {
+						prev.requests = [...prev.requests, response.pairingRequest];
+					}
+					prev.requests = sortRequests(prev.requests);
+					prev.connected = true;
+
+					// If we're still receiving the initial set then store this
+					// ID for device retention later.
+					if (!gotInitialSet) {
+						console.log('pairing requests stream: retaining request ID: ', response.pairingRequest.requestId);
+						retainIDs = [...retainIDs, response.pairingRequest.requestId];
+					}
+
+					return prev;
+				}
+
+				if (response.pairingRemoved !== '') {
+					for (let i = 0; i < prev.requests.length; i++) {
+						if (prev.requests[i].requestId === response.pairingRemoved) {
+							prev.requests.splice(i, 1);
+							break;
+						}
+					}
+					prev.connected = true;
+					return prev;
+				}
+
+				// An empty message indicates the end of the initial batch of
+				// requests after we connect (as well as heartbeats). Use this to
+				// tidy up requests that were removed while we were not connected.
+				if (!gotInitialSet) {
+					gotInitialSet = true;
+					console.log('pairing requests stream: initial set complete, retaining IDs: ', retainIDs);
+					prev.requests = prev.requests.filter((request) => retainIDs.includes(request.requestId));
+					retainIDs = []; // No longer needed.
+				}
+
+				// Keepalive
+				prev.connected = true;
+				return prev;
+			});
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {

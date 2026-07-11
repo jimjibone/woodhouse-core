@@ -197,14 +197,14 @@ func (service *UserService) DenyPairing(ctx context.Context, req *clientsapi.Den
 	if claims.Role != auth.AdminRole {
 		return nil, status.Errorf(codes.PermissionDenied, "not allowed to deny pairing")
 	}
-	if req.GetClientId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "client_id not defined")
+	if req.GetRequestId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "request_id not defined")
 	}
 	if service.clientManager == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "client manager not configured")
 	}
 
-	if err := service.clientManager.RemovePairingRequest(req.GetClientId()); err != nil {
+	if err := service.clientManager.RemovePairingRequest(req.GetRequestId()); err != nil {
 		if err == core.ErrPairingNotFound {
 			return nil, status.Errorf(codes.NotFound, "pairing request not found")
 		}

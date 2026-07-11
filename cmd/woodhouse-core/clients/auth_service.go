@@ -62,7 +62,12 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 
 	// Register the pending request, obtaining its id and the channel that
 	// delivers the user's confirm/deny decision.
-	pairingRequest := &core.PairingRequest{ClientID: clientID}
+	pairingRequest := &core.PairingRequest{
+		ClientID:    clientID,
+		Name:        req.ClientName,
+		Description: req.ClientDescription,
+		Version:     req.ClientVersion,
+	}
 	requestID, decision, err := as.clientManager.AddPairingRequest(pairingRequest)
 	if err != nil {
 		if errors.Is(err, core.ErrPairingInProgress) {

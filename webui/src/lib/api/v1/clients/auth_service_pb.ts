@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/auth_service.proto.
  */
 export const file_clients_auth_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL2F1dGhfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIlkKC1BhaXJSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoCRIVCg1jbGllbnRfcHVia2V5GAMgASgMEhQKDGNsaWVudF9ub25jZRgEIAEoDEoECAIQA1IEZGF0YSLrAQoMUGFpclJlc3BvbnNlEjsKBXN0YXRlGAEgASgOMiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJSZXNwb25zZS5TdGF0ZRIMCgRkYXRhGAIgASgMEhUKDXNlcnZlcl9wdWJrZXkYAyABKAwSEgoKY29tbWl0bWVudBgEIAEoDBIUCgxzZXJ2ZXJfbm9uY2UYBSABKAwiTwoFU3RhdGUSDQoJVW5kZWZpbmVkEAASCwoHUGVuZGluZxABEg8KC0tleUV4Y2hhbmdlEAISCgoGUmV2ZWFsEAMSDQoJQ29uZmlybWVkEAQiJwoOUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCSI+Cg9SZWZyZXNoUmVzcG9uc2USFQoNcmVmcmVzaF90b2tlbhgBIAEoCRIUCgxhY2Nlc3NfdG9rZW4YAiABKAkiJgoNTG9nb3V0UmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIhAKDkxvZ291dFJlc3BvbnNlIg0KC1BpbmdSZXF1ZXN0Ig4KDFBpbmdSZXNwb25zZTL8AgoLQXV0aFNlcnZpY2USWQoEUGFpchIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyUmVxdWVzdBomLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyUmVzcG9uc2UoATABEl4KB1JlZnJlc2gSKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVmcmVzaFJlcXVlc3QaKS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVmcmVzaFJlc3BvbnNlElsKBkxvZ291dBInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Mb2dvdXRSZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkxvZ291dFJlc3BvbnNlElUKBFBpbmcSJS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGluZ1JlcXVlc3QaJi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGluZ1Jlc3BvbnNlQj1aO2dpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS1hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
+  fileDesc("ChpjbGllbnRzL2F1dGhfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIqIBCgtQYWlyUmVxdWVzdBIRCgljbGllbnRfaWQYASABKAkSEwoLY2xpZW50X25hbWUYAyABKAkSGgoSY2xpZW50X2Rlc2NyaXB0aW9uGAQgASgJEhYKDmNsaWVudF92ZXJzaW9uGAUgASgJEhUKDWNsaWVudF9wdWJrZXkYBiABKAwSFAoMY2xpZW50X25vbmNlGAcgASgMSgQIAhADUgRkYXRhIusBCgxQYWlyUmVzcG9uc2USOwoFc3RhdGUYASABKA4yLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGFpclJlc3BvbnNlLlN0YXRlEgwKBGRhdGEYAiABKAwSFQoNc2VydmVyX3B1YmtleRgDIAEoDBISCgpjb21taXRtZW50GAQgASgMEhQKDHNlcnZlcl9ub25jZRgFIAEoDCJPCgVTdGF0ZRINCglVbmRlZmluZWQQABILCgdQZW5kaW5nEAESDwoLS2V5RXhjaGFuZ2UQAhIKCgZSZXZlYWwQAxINCglDb25maXJtZWQQBCInCg5SZWZyZXNoUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIj4KD1JlZnJlc2hSZXNwb25zZRIVCg1yZWZyZXNoX3Rva2VuGAEgASgJEhQKDGFjY2Vzc190b2tlbhgCIAEoCSImCg1Mb2dvdXRSZXF1ZXN0EhUKDXJlZnJlc2hfdG9rZW4YASABKAkiEAoOTG9nb3V0UmVzcG9uc2UiDQoLUGluZ1JlcXVlc3QiDgoMUGluZ1Jlc3BvbnNlMvwCCgtBdXRoU2VydmljZRJZCgRQYWlyEiUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJSZXF1ZXN0GiYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJSZXNwb25zZSgBMAESXgoHUmVmcmVzaBIoLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZWZyZXNoUmVxdWVzdBopLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZWZyZXNoUmVzcG9uc2USWwoGTG9nb3V0Eicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkxvZ291dFJlcXVlc3QaKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuTG9nb3V0UmVzcG9uc2USVQoEUGluZxIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QaW5nUmVxdWVzdBomLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QaW5nUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9qaW1qaWJvbmUvd29vZGhvdXNlLWFwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw");
 
 /**
  * @generated from message woodhouse.api.v1.clients.PairRequest
@@ -24,16 +24,37 @@ export type PairRequest = Message<"woodhouse.api.v1.clients.PairRequest"> & {
   clientId: string;
 
   /**
+   * Only needed in the first message.
+   *
+   * @generated from field: string client_name = 3;
+   */
+  clientName: string;
+
+  /**
+   * Only needed in the first message.
+   *
+   * @generated from field: string client_description = 4;
+   */
+  clientDescription: string;
+
+  /**
+   * Only needed in the first message.
+   *
+   * @generated from field: string client_version = 5;
+   */
+  clientVersion: string;
+
+  /**
    * Ephemeral X25519 public key PKa (first message).
    *
-   * @generated from field: bytes client_pubkey = 3;
+   * @generated from field: bytes client_pubkey = 6;
    */
   clientPubkey: Uint8Array;
 
   /**
    * 32-byte SAS nonce Na.
    *
-   * @generated from field: bytes client_nonce = 4;
+   * @generated from field: bytes client_nonce = 7;
    */
   clientNonce: Uint8Array;
 };
