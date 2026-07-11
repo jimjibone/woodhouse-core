@@ -47,12 +47,12 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 				interceptor.log.Warnf("--> unary %s: %q not authorized: %s", info.FullMethod, clientID, err)
 				return nil, err
 			}
-			interceptor.log.Infof("--> unary %s: %q authorized", info.FullMethod, clientID)
+			interceptor.log.Debugf("--> unary %s: %q authorized", info.FullMethod, clientID)
 			return handler(ctx2, req)
 		}
 
 		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
-			interceptor.log.Infof("--> unary %s: no auth required", info.FullMethod)
+			interceptor.log.Debugf("--> unary %s: no auth required", info.FullMethod)
 		}
 		return handler(ctx, req)
 	}
@@ -72,12 +72,12 @@ func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
 				interceptor.log.Warnf("--> stream %s: %q not authorized: %s", info.FullMethod, clientID, err)
 				return err
 			}
-			interceptor.log.Infof("--> stream %s: %q authorized", info.FullMethod, clientID)
+			interceptor.log.Debugf("--> stream %s: %q authorized", info.FullMethod, clientID)
 			return handler(srv, newWrappedStream(stream, ctx2))
 		}
 
 		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
-			interceptor.log.Infof("--> stream %s: no auth required", info.FullMethod)
+			interceptor.log.Debugf("--> stream %s: no auth required", info.FullMethod)
 		}
 		return handler(srv, stream)
 	}

@@ -302,8 +302,8 @@ func (service *ClientService) ImageStream(server clientsapi.ClientService_ImageS
 }
 
 func (service *ClientService) DeviceStream(server clientsapi.ClientService_DeviceStreamServer) error {
-	service.log.Infof("device stream started")
-	defer service.log.Infof("device stream finished")
+	service.log.Debugf("device stream started")
+	defer service.log.Debugf("device stream finished")
 
 	sub := service.deviceManager.GetDeviceUpdates()
 	defer sub.Close()

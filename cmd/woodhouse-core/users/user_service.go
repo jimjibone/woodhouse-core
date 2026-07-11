@@ -74,8 +74,8 @@ func (service *UserService) ClientsStream(req *clientsapi.ClientsStreamRequest, 
 		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
 	}
 
-	service.log.Infof("clients stream started")
-	defer service.log.Infof("clients stream finished")
+	service.log.Debugf("clients stream started")
+	defer service.log.Debugf("clients stream finished")
 
 	sub := service.clientManager.GetClientListener()
 	defer sub.Close()
@@ -126,8 +126,8 @@ func (service *UserService) PairingRequestsStream(req *clientsapi.PairingRequest
 		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
 	}
 
-	service.log.Infof("pairing requests stream started")
-	defer service.log.Infof("pairing requests stream finished")
+	service.log.Debugf("pairing requests stream started")
+	defer service.log.Debugf("pairing requests stream finished")
 
 	sub := service.clientManager.GetPairingListener()
 	defer sub.Close()
@@ -287,8 +287,8 @@ func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server
 }
 
 func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, server clientsapi.UserService_DevicesStreamServer) error {
-	service.log.Infof("devices stream started")
-	defer service.log.Infof("devices stream finished")
+	service.log.Debugf("devices stream started")
+	defer service.log.Debugf("devices stream finished")
 
 	sub := service.deviceManager.GetDeviceUpdates()
 	defer sub.Close()
@@ -408,8 +408,8 @@ func (service *UserService) RemoveDevice(ctx context.Context, req *clientsapi.Re
 }
 
 func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamRequest, server clientsapi.UserService_FavoritesStreamServer) error {
-	service.log.Infof("favorites stream started")
-	defer service.log.Infof("favorites stream finished")
+	service.log.Debugf("favorites stream started")
+	defer service.log.Debugf("favorites stream finished")
 
 	lis := service.favoritesManager.GetListener()
 	defer lis.Close()
@@ -470,8 +470,8 @@ func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.
 }
 
 func (service *UserService) GroupsStream(req *clientsapi.GroupsStreamRequest, server clientsapi.UserService_GroupsStreamServer) error {
-	service.log.Infof("group stream started")
-	defer service.log.Infof("group stream finished")
+	service.log.Debugf("group stream started")
+	defer service.log.Debugf("group stream finished")
 
 	lis := service.groupManager.GetListener()
 	defer lis.Close()
@@ -815,8 +815,8 @@ func (service *UserService) UsersStream(req *clientsapi.UsersStreamRequest, serv
 		return status.Errorf(codes.PermissionDenied, "no claims in request")
 	}
 
-	service.log.Infof("users stream started")
-	defer service.log.Infof("users stream finished")
+	service.log.Debugf("users stream started")
+	defer service.log.Debugf("users stream finished")
 
 	lis := service.userManager.GetListener()
 	defer lis.Close()
@@ -981,8 +981,8 @@ func (service *UserService) RemoveUser(ctx context.Context, req *clientsapi.Remo
 }
 
 func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, server clientsapi.UserService_ImagesStreamServer) error {
-	service.log.Infof("images stream started")
-	defer service.log.Infof("images stream finished")
+	service.log.Debugf("images stream started")
+	defer service.log.Debugf("images stream finished")
 
 	sub := service.deviceManager.GetImageCacheUpdates()
 	defer sub.Close()
