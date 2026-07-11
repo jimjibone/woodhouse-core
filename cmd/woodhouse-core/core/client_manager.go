@@ -91,6 +91,11 @@ func NewClientManager(store stores.Store) (*ClientManager, error) {
 		return nil, fmt.Errorf("failed to save state: %s", err)
 	}
 
+	// Set all clients as offline.
+	for _, client := range manager.clients {
+		client.Online = false
+	}
+
 	manager.wg.Add(1)
 	go manager.run(ctx)
 
