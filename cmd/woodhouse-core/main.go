@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/fs"
@@ -247,9 +248,13 @@ func main() {
 
 				httpServer := &http.Server{
 					Handler: mux,
+					TLSConfig: &tls.Config{
+						Certificates: []tls.Certificate{*certManager.Cert()},
+						MinVersion:   tls.VersionTLS12,
+					},
 				}
-				log.Infof("web server ready at http://%s", webLis.Addr())
-				if err := httpServer.Serve(webLis); err != nil {
+				log.Infof("web server ready at https://%s", webLis.Addr())
+				if err := httpServer.ServeTLS(webLis, "", ""); err != nil {
 					webServerErr <- fmt.Errorf("web server: %w", err)
 				}
 			}()

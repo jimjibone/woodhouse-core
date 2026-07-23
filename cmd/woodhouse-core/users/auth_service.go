@@ -291,15 +291,19 @@ func handlePost(w http.ResponseWriter, r *http.Request, handler func(token strin
 }
 
 func newTokenCookie(refreshToken string, expires time.Time) *http.Cookie {
-	return &http.Cookie{
+	c := &http.Cookie{
 		Name:     "token",
 		Value:    refreshToken,
-		Path:     "/",   // cookie can be used by any path under woodhouse
-		HttpOnly: true,  // i.e. not for use in javascript
-		Secure:   false, // require HTTPS
-		SameSite: http.SameSiteLaxMode,
+		Path:     "/",  // cookie can be used by any path under woodhouse
+		HttpOnly: true, // i.e. not for use in javascript
+		Secure:   true, // require HTTPS
+		SameSite: http.SameSiteStrictMode,
 		Expires:  expires,
 	}
+	if refreshToken == "" {
+		c.MaxAge = -1
+	}
+	return c
 }
 
 func writeGRPCError(w http.ResponseWriter, err error) {

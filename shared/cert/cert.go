@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"net"
 	"os"
 	"time"
 )
@@ -88,11 +89,21 @@ func EncodePrivKey(privKey *rsa.PrivateKey) ([]byte, error) {
 	return f.Bytes(), nil
 }
 
+// GenerateSelfSignedCert generates a new self-signed leaf certificate.
+//
+// The generated leaf cert is byte-exact pinned by paired bridge clients and
+// the iOS app, so an existing cert must never be regenerated. The SANs set
+// here (extra DNS names/IPs) only apply to newly generated certs.
 func GenerateSelfSignedCert(privKey *rsa.PrivateKey) ([]byte, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
 		return nil, err
+	}
+
+	dnsNames := []string{"woodhouse", "localhost"}
+	if hostname, err := os.Hostname(); err == nil && hostname != "" {
+		dnsNames = append(dnsNames, hostname, hostname+".local")
 	}
 
 	// Set up our server certificate.
@@ -101,7 +112,8 @@ func GenerateSelfSignedCert(privKey *rsa.PrivateKey) ([]byte, error) {
 		Subject: pkix.Name{
 			Organization: []string{"woodhouse"},
 		},
-		DNSNames:              []string{"woodhouse"},
+		DNSNames:              dnsNames,
+		IPAddresses:           []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1000, 0, 0),
 		KeyUsage:              x509.KeyUsageDigitalSignature,

@@ -4,5 +4,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-	server: { proxy: { '/api': 'http://localhost:4080' } }
+	server: {
+		proxy: {
+			'/api': {
+				target: 'https://localhost:4080',
+				secure: false // woodhouse-core serves a self-signed cert
+			}
+		}
+	}
 });
