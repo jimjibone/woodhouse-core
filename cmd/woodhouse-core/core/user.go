@@ -15,6 +15,10 @@ const (
 	saltSize        = 64
 )
 
+// dummySalt is a fixed salt used only by DummyPasswordCheck, never for a
+// real user's password.
+var dummySalt = [saltSize]byte{}
+
 type User struct {
 	Username       string    `json:"user"`
 	Fullname       string    `json:"name"`
@@ -68,10 +72,20 @@ func (user *User) IsCorrectPassword(password string) bool {
 	return bytes.Equal(hash, user.HashedPassword)
 }
 
+// DummyPasswordCheck runs argon2.IDKey with the same cost parameters as
+// IsCorrectPassword, over a fixed dummy salt, and discards the result.
+// Callers should invoke this on the "user not found" path of a login so
+// that request timing costs the same whether or not the submitted
+// username exists, closing the username-enumeration timing oracle.
+func DummyPasswordCheck(password string) {
+	_ = argon2.IDKey([]byte(password), dummySalt[:], 1, 64*1024, 4, 64)
+}
+
 func (user *User) Clone() *User {
 	return &User{
 		Username:       user.Username,
 		Fullname:       user.Fullname,
+		ResetPassword:  user.ResetPassword,
 		HashedPassword: user.HashedPassword,
 		PasswordSalt:   user.PasswordSalt,
 		Role:           user.Role,

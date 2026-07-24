@@ -14,6 +14,7 @@ require (
 	github.com/urfave/cli/v2 v2.16.3
 	golang.org/x/crypto v0.48.0
 	golang.org/x/image v0.41.0
+	golang.org/x/time v0.15.0
 	google.golang.org/grpc v1.81.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.2
 	google.golang.org/protobuf v1.36.11

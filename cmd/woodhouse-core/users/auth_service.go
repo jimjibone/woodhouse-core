@@ -4,12 +4,14 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/jimjibone/log"
 	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -17,21 +19,42 @@ import (
 
 type AuthService struct {
 	clientsapi.UnimplementedUserAuthServiceServer
-	log   *log.Context
-	users *core.UserManager
-	jwt   *JWTManager
+	log    *log.Context
+	users  *core.UserManager
+	jwt    *JWTManager
+	limits *limits.Login
 }
 
-func NewAuthService(users *core.UserManager, jwt *JWTManager) *AuthService {
+func NewAuthService(users *core.UserManager, jwt *JWTManager, lim *limits.Login) *AuthService {
 	srv := &AuthService{
-		log:   log.NewContext(log.DefaultLogger, "users-auth", log.DebugLevel),
-		users: users,
-		jwt:   jwt,
+		log:    log.NewContext(log.DefaultLogger, "users-auth", log.DebugLevel),
+		users:  users,
+		jwt:    jwt,
+		limits: lim,
 	}
 	return srv
 }
 
-func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest) (*TokenDetails, error) {
+func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest, src netip.Addr) (*TokenDetails, error) {
+	// Gate on the source IP's rate budget before doing anything else,
+	// including the first-admin bootstrap below (SECURITY-REVIEW H-2).
+	if ok, rejections := srv.limits.AllowIP(src); !ok {
+		if rejections == 1 || rejections%100 == 0 {
+			srv.log.Warnf("login rate limit exceeded from %s (%d consecutive rejections)", src, rejections)
+		} else {
+			srv.log.Debugf("login rate limit exceeded from %s (%d consecutive rejections)", src, rejections)
+		}
+		return nil, status.Errorf(codes.ResourceExhausted, "too many login attempts, try again later")
+	}
+
+	// Gate on the account's progressive backoff, also before Find, so a
+	// 429 here reveals nothing about credential validity.
+	if wait := srv.limits.AccountRetryIn(in.Username); wait > 0 {
+		wait = wait.Round(time.Second)
+		srv.log.Warnf("account backoff in effect for %q, try again in %s", in.Username, wait)
+		return nil, status.Errorf(codes.ResourceExhausted, "too many failed attempts, try again in %s", wait)
+	}
+
 	user := srv.users.Find(in.Username)
 
 	// Special case if there are no admins and this user does not already
@@ -56,9 +79,20 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest) (*TokenDetail
 		user = srv.users.Find(in.Username)
 	}
 
-	if user == nil || !user.IsCorrectPassword(in.Password) {
+	if user == nil {
+		// Burn the same argon2 cost as a real check so response timing
+		// doesn't reveal whether the username exists.
+		core.DummyPasswordCheck(in.Password)
+		srv.limits.RecordFailure(src, in.Username)
+		srv.log.Warnf("failed login for unknown user %q from %s", in.Username, src)
 		return nil, status.Errorf(codes.Unauthenticated, "incorrect username/password")
 	}
+	if !user.IsCorrectPassword(in.Password) {
+		srv.limits.RecordFailure(src, in.Username)
+		srv.log.Warnf("failed login for user %q from %s", in.Username, src)
+		return nil, status.Errorf(codes.Unauthenticated, "incorrect username/password")
+	}
+	srv.limits.RecordSuccess(in.Username)
 
 	tokens, err := srv.jwt.GenerateTokens(user.Username, user.Role)
 	if err != nil {
@@ -69,7 +103,7 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest) (*TokenDetail
 }
 
 func (srv *AuthService) Login(ctx context.Context, req *clientsapi.UserLoginRequest) (*clientsapi.UserLoginResponse, error) {
-	tokens, err := srv.loginBase(req)
+	tokens, err := srv.loginBase(req, peerAddr(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +127,7 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 		if err := protojson.Unmarshal(body, req); err != nil {
 			http.Error(w, "invalid json", http.StatusUnprocessableEntity)
 		} else {
-			tokens, err := srv.loginBase(req)
+			tokens, err := srv.loginBase(req, requestAddr(r))
 			if err != nil {
 				writeGRPCError(w, err)
 			} else {
@@ -165,6 +199,10 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 }
 
 func (srv *AuthService) Refresh(ctx context.Context, req *clientsapi.UserRefreshRequest) (*clientsapi.UserRefreshResponse, error) {
+	if ok, _ := srv.limits.AllowIP(peerAddr(ctx)); !ok {
+		return nil, status.Errorf(codes.ResourceExhausted, "too many requests, try again later")
+	}
+
 	tokens, err := srv.refreshBase(req)
 	if err != nil {
 		return nil, err
@@ -180,6 +218,10 @@ func (srv *AuthService) Refresh(ctx context.Context, req *clientsapi.UserRefresh
 
 func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 	handlePost(w, r, func(token string, w http.ResponseWriter, r *http.Request) {
+		if ok, _ := srv.limits.AllowIP(requestAddr(r)); !ok {
+			writeGRPCError(w, status.Errorf(codes.ResourceExhausted, "too many requests, try again later"))
+			return
+		}
 		if token == "" {
 			http.Error(w, "token not provided", http.StatusUnauthorized)
 			return
@@ -229,6 +271,10 @@ func (srv *AuthService) logoutBase(req *clientsapi.UserLogoutRequest) error {
 }
 
 func (srv *AuthService) Logout(ctx context.Context, req *clientsapi.UserLogoutRequest) (*clientsapi.UserLogoutResponse, error) {
+	if ok, _ := srv.limits.AllowIP(peerAddr(ctx)); !ok {
+		return nil, status.Errorf(codes.ResourceExhausted, "too many requests, try again later")
+	}
+
 	if err := srv.logoutBase(req); err != nil {
 		return nil, err
 	}
@@ -238,6 +284,10 @@ func (srv *AuthService) Logout(ctx context.Context, req *clientsapi.UserLogoutRe
 
 func (srv *AuthService) LogoutWeb(w http.ResponseWriter, r *http.Request) {
 	handlePost(w, r, func(token string, w http.ResponseWriter, r *http.Request) {
+		if ok, _ := srv.limits.AllowIP(requestAddr(r)); !ok {
+			writeGRPCError(w, status.Errorf(codes.ResourceExhausted, "too many requests, try again later"))
+			return
+		}
 		if token == "" {
 			http.Error(w, "token not provided", http.StatusUnauthorized)
 			return
@@ -320,6 +370,8 @@ func writeGRPCError(w http.ResponseWriter, err error) {
 		code = http.StatusBadRequest
 	case codes.FailedPrecondition:
 		code = http.StatusPreconditionFailed
+	case codes.ResourceExhausted:
+		code = http.StatusTooManyRequests
 	default:
 		code = http.StatusTeapot
 	}

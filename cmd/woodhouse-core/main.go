@@ -19,6 +19,7 @@ import (
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-core/discovery"
@@ -161,7 +162,8 @@ func main() {
 				return fmt.Errorf("failed to create user jwt manager: %s", err)
 			}
 			defer userJwtManager.Close()
-			userAuthService := users.NewAuthService(userManager, userJwtManager)
+			loginLimits := limits.NewLogin(limits.Config{})
+			userAuthService := users.NewAuthService(userManager, userJwtManager, loginLimits)
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
