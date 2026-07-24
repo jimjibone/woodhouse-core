@@ -213,8 +213,9 @@ type RefreshTokenClaims struct {
 
 type AccessTokenClaims struct {
 	jwt.RegisteredClaims
-	AccessUUID string `json:"access_uuid"`
-	ClientID   string `json:"client_id"`
+	AccessUUID  string `json:"access_uuid"`
+	ClientID    string `json:"client_id"`
+	RefreshUUID string `json:"refresh_uuid"`
 	// Perms      []perms.Perm `json:"perms"`
 }
 
@@ -239,8 +240,9 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(td.AccessExpires),
 		},
-		AccessUUID: td.AccessUUID,
-		ClientID:   id,
+		AccessUUID:  td.AccessUUID,
+		ClientID:    id,
+		RefreshUUID: td.RefreshUUID,
 		// Perms:      perms,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -276,7 +278,7 @@ func (manager *JWTManager) GenerateTokens(id string) (*TokenDetails, error) {
 	return td, nil
 }
 
-func (manager *JWTManager) GenerateAccessToken(id string) (string, error) {
+func (manager *JWTManager) GenerateAccessToken(id, refreshUUID string) (string, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate UUID: %v", err)
@@ -290,8 +292,9 @@ func (manager *JWTManager) GenerateAccessToken(id string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpires),
 		},
-		AccessUUID: accessUUID,
-		ClientID:   id,
+		AccessUUID:  accessUUID,
+		ClientID:    id,
+		RefreshUUID: refreshUUID,
 		// Perms:      perms,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -381,12 +384,23 @@ func (manager *JWTManager) VerifyAccessToken(accessToken string) (*AccessTokenCl
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("invalid access token %q: %w", accessToken, err)
+		return nil, fmt.Errorf("invalid access token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*AccessTokenClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid access token claims")
+	}
+
+	// Bind the access token to its refresh allocation so that revoking the
+	// refresh token (e.g. logout, rotation, client revocation) kills any
+	// outstanding access tokens immediately, rather than waiting for their
+	// own expiry.
+	manager.mu.RLock()
+	allocation, found := manager.tokenAllocations[claims.RefreshUUID]
+	manager.mu.RUnlock()
+	if !found || allocation.ClientID != claims.ClientID {
+		return nil, fmt.Errorf("access token revoked")
 	}
 
 	return claims, nil

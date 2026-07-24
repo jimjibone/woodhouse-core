@@ -13,6 +13,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jimjibone/log"
+	"github.com/jimjibone/queue/v2"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-core/shared/random"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
@@ -34,7 +35,8 @@ type JWTManager struct {
 	changed          bool
 	refreshSecret    []byte
 	accessSecret     []byte
-	tokenAllocations map[string]TokenAllocation // kwy: refresh uuid
+	tokenAllocations map[string]TokenAllocation // key: refresh uuid
+	revocations      *queue.Pub[string]         // refresh uuid
 }
 
 func NewJWTManager(store stores.Store) (*JWTManager, error) {
@@ -44,6 +46,7 @@ func NewJWTManager(store stores.Store) (*JWTManager, error) {
 		store:            store,
 		close:            close,
 		tokenAllocations: make(map[string]TokenAllocation),
+		revocations:      queue.NewPub[string](),
 	}
 
 	// Load the previous config.
@@ -230,9 +233,10 @@ type RefreshTokenClaims struct {
 
 type AccessTokenClaims struct {
 	jwt.RegisteredClaims
-	AccessUUID string    `json:"access_uuid"`
-	Username   string    `json:"username"`
-	Role       auth.Role `json:"role"`
+	AccessUUID  string    `json:"access_uuid"`
+	Username    string    `json:"username"`
+	Role        auth.Role `json:"role"`
+	RefreshUUID string    `json:"refresh_uuid"`
 }
 
 func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*TokenDetails, error) {
@@ -259,9 +263,10 @@ func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*Tok
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(td.AccessExpires),
 		},
-		AccessUUID: td.AccessUUID,
-		Username:   username,
-		Role:       role,
+		AccessUUID:  td.AccessUUID,
+		Username:    username,
+		Role:        role,
+		RefreshUUID: td.RefreshUUID,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString(manager.accessSecret)
@@ -296,7 +301,7 @@ func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*Tok
 	return td, nil
 }
 
-func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role, refreshUUID string) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -310,9 +315,10 @@ func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role) 
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpires),
 		},
-		AccessUUID: accessUUID,
-		Username:   username,
-		Role:       role,
+		AccessUUID:  accessUUID,
+		Username:    username,
+		Role:        role,
+		RefreshUUID: refreshUUID,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	accessToken, err := at.SignedString(manager.accessSecret)
@@ -336,6 +342,17 @@ func (manager *JWTManager) RevokeRefreshUUID(refreshUUID string) {
 	manager.changed = true
 	delete(manager.tokenAllocations, refreshUUID)
 	manager.mu.Unlock()
+
+	// Notify any active streams that this refresh UUID (and any access
+	// tokens bound to it) has been revoked.
+	manager.revocations.Pub(refreshUUID)
+}
+
+// SubscribeRevocations returns a subscription that receives refresh UUIDs
+// whenever their tokens are revoked via RevokeRefreshUUID. Call Close on
+// the returned Sub when done.
+func (manager *JWTManager) SubscribeRevocations() *queue.Sub[string] {
+	return manager.revocations.NewSub()
 }
 
 func (manager *JWTManager) VerifyRefreshToken(refreshToken string) (*RefreshTokenClaims, error) {
@@ -392,6 +409,16 @@ func (manager *JWTManager) VerifyAccessToken(accessToken string) (*AccessTokenCl
 	claims, ok := token.Claims.(*AccessTokenClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid access token claims")
+	}
+
+	// Bind the access token to its refresh allocation so that revoking the
+	// refresh token (e.g. logout, rotation) kills any outstanding access
+	// tokens immediately, rather than waiting for their own expiry.
+	manager.mu.RLock()
+	allocation, found := manager.tokenAllocations[claims.RefreshUUID]
+	manager.mu.RUnlock()
+	if !found || allocation.Username != claims.Username {
+		return nil, fmt.Errorf("access token revoked")
 	}
 
 	return claims, nil

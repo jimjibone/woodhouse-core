@@ -246,6 +246,65 @@ func TestLoginWeb_DrainedIPBucketReturns429(t *testing.T) {
 	}
 }
 
+func TestLogin_AccessTokenRevokedOnLogout(t *testing.T) {
+	srv, userManager, _ := newTestAuthService(t, limits.Config{})
+	seedAdmin(t, userManager, "admin", "adminpass1")
+	ctx := ctxWithIP("10.0.0.6")
+
+	res, err := srv.Login(ctx, &clientsapi.UserLoginRequest{Username: "admin", Password: "adminpass1"})
+	if err != nil {
+		t.Fatalf("login: unexpected error: %s", err)
+	}
+
+	if _, err := srv.jwt.VerifyAccessToken(res.AccessToken); err != nil {
+		t.Fatalf("VerifyAccessToken before logout: unexpected error: %s", err)
+	}
+
+	if _, err := srv.Logout(ctx, &clientsapi.UserLogoutRequest{RefreshToken: res.RefreshToken}); err != nil {
+		t.Fatalf("logout: unexpected error: %s", err)
+	}
+
+	if _, err := srv.jwt.VerifyAccessToken(res.AccessToken); err == nil {
+		t.Fatalf("VerifyAccessToken after logout: expected error, got nil")
+	}
+}
+
+func TestRefresh_NonRotationAccessTokenCarriesOriginalRefreshUUID(t *testing.T) {
+	srv, userManager, _ := newTestAuthService(t, limits.Config{})
+	seedAdmin(t, userManager, "admin", "adminpass1")
+	ctx := ctxWithIP("10.0.0.7")
+
+	loginRes, err := srv.Login(ctx, &clientsapi.UserLoginRequest{Username: "admin", Password: "adminpass1"})
+	if err != nil {
+		t.Fatalf("login: unexpected error: %s", err)
+	}
+
+	origRefreshClaims, err := srv.jwt.VerifyRefreshToken(loginRes.RefreshToken)
+	if err != nil {
+		t.Fatalf("VerifyRefreshToken: unexpected error: %s", err)
+	}
+
+	// The freshly-issued refresh token has almost its whole lifetime left,
+	// so this refresh should take the non-rotation branch: same refresh
+	// token returned, and a new access token bound to it.
+	refreshRes, err := srv.Refresh(ctx, &clientsapi.UserRefreshRequest{RefreshToken: loginRes.RefreshToken})
+	if err != nil {
+		t.Fatalf("refresh: unexpected error: %s", err)
+	}
+	if refreshRes.RefreshToken != loginRes.RefreshToken {
+		t.Fatalf("expected non-rotation refresh to reuse the same refresh token")
+	}
+
+	accessClaims, err := srv.jwt.VerifyAccessToken(refreshRes.AccessToken)
+	if err != nil {
+		t.Fatalf("VerifyAccessToken on refreshed access token: unexpected error: %s", err)
+	}
+	if accessClaims.RefreshUUID != origRefreshClaims.RefreshUUID {
+		t.Fatalf("expected refreshed access token to carry original refresh uuid %q, got %q",
+			origRefreshClaims.RefreshUUID, accessClaims.RefreshUUID)
+	}
+}
+
 func TestRefreshWeb_DrainedIPBucketReturns429NotTeapot(t *testing.T) {
 	srv, _, _ := newTestAuthService(t, limits.Config{LoginBurst: 1, LoginPerMin: 60})
 

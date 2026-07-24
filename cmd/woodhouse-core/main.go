@@ -167,7 +167,7 @@ func main() {
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, clientJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, clientJwtManager, userJwtManager)
 
 			// Broadcast our existence.
 			broadcaster, err := discovery.NewBroadcaster(config.LoadedConfig.InstanceName, apiLis.Addr())
@@ -178,7 +178,7 @@ func main() {
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
-			authInterceptor := NewAuthInterceptor(clientJwtManager, userJwtManager, clientManager)
+			authInterceptor := NewAuthInterceptor(clientJwtManager, userJwtManager, clientManager, userManager)
 			server := grpc.NewServer(
 				grpc.Creds(creds),
 				grpc.UnaryInterceptor(authInterceptor.Unary()),

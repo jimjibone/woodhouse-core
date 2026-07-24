@@ -20,14 +20,16 @@ type AuthInterceptor struct {
 	clients       *clients.JWTManager
 	users         *users.JWTManager
 	clientManager *core.ClientManager
+	userManager   *core.UserManager
 }
 
-func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager, clientManager *core.ClientManager) *AuthInterceptor {
+func NewAuthInterceptor(clients *clients.JWTManager, users *users.JWTManager, clientManager *core.ClientManager, userManager *core.UserManager) *AuthInterceptor {
 	interceptor := &AuthInterceptor{
 		log:           log.NewContext(log.DefaultLogger, "auth-interceptor", log.DebugLevel),
 		clients:       clients,
 		users:         users,
 		clientManager: clientManager,
+		userManager:   userManager,
 	}
 
 	return interceptor
@@ -122,6 +124,10 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 			return "", nil, status.Errorf(codes.Unauthenticated, "client access token is invalid: %v", err)
 		}
 
+		if interceptor.userManager.Find(claims.Username) == nil {
+			return claims.Username, nil, status.Error(codes.Unauthenticated, "user no longer exists")
+		}
+
 		if auth.IsUserAuthorised(method, claims.Role) {
 			return claims.Username, context.WithValue(ctx, "claims", claims), nil
 		}
@@ -134,6 +140,11 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 	claims, err := interceptor.clients.VerifyAccessToken(accessToken)
 	if err != nil {
 		return "", nil, status.Errorf(codes.Unauthenticated, "client access token is invalid: %v", err)
+	}
+
+	c := interceptor.clientManager.FindClient(claims.ClientID)
+	if c == nil || !c.Paired {
+		return claims.ClientID, nil, status.Error(codes.Unauthenticated, "client not paired")
 	}
 
 	return claims.ClientID, context.WithValue(ctx, "claims", claims), nil

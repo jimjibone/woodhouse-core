@@ -24,9 +24,10 @@ type UserService struct {
 	userManager      *core.UserManager
 	clientManager    *core.ClientManager
 	clientJwt        *clients.JWTManager
+	userJwt          *JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, userManager *core.UserManager, clientManager *core.ClientManager, clientJwt *clients.JWTManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, userManager *core.UserManager, clientManager *core.ClientManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
 	service := &UserService{
 		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:    deviceManager,
@@ -35,6 +36,7 @@ func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.Fa
 		userManager:      userManager,
 		clientManager:    clientManager,
 		clientJwt:        clientJwt,
+		userJwt:          userJwt,
 	}
 	return service
 }
@@ -77,6 +79,9 @@ func (service *UserService) ClientsStream(req *clientsapi.ClientsStreamRequest, 
 	service.log.Debugf("clients stream started")
 	defer service.log.Debugf("clients stream finished")
 
+	revocations := service.userJwt.SubscribeRevocations()
+	defer revocations.Close()
+
 	sub := service.clientManager.GetClientListener()
 	defer sub.Close()
 
@@ -87,6 +92,11 @@ func (service *UserService) ClientsStream(req *clientsapi.ClientsStreamRequest, 
 		select {
 		case <-server.Context().Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case revoked := <-revocations.Sub():
+			if revoked == claims.RefreshUUID {
+				return status.Error(codes.Unauthenticated, "session revoked")
+			}
 
 		case <-ticker.C:
 			err := server.Send(&clientsapi.ClientsStreamResponse{})
@@ -129,6 +139,9 @@ func (service *UserService) PairingRequestsStream(req *clientsapi.PairingRequest
 	service.log.Debugf("pairing requests stream started")
 	defer service.log.Debugf("pairing requests stream finished")
 
+	revocations := service.userJwt.SubscribeRevocations()
+	defer revocations.Close()
+
 	sub := service.clientManager.GetPairingListener()
 	defer sub.Close()
 
@@ -139,6 +152,11 @@ func (service *UserService) PairingRequestsStream(req *clientsapi.PairingRequest
 		select {
 		case <-server.Context().Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case revoked := <-revocations.Sub():
+			if revoked == claims.RefreshUUID {
+				return status.Error(codes.Unauthenticated, "session revoked")
+			}
 
 		case <-ticker.C:
 			err := server.Send(&clientsapi.PairingRequestsStreamResponse{})
@@ -287,8 +305,16 @@ func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server
 }
 
 func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, server clientsapi.UserService_DevicesStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
 	service.log.Debugf("devices stream started")
 	defer service.log.Debugf("devices stream finished")
+
+	revocations := service.userJwt.SubscribeRevocations()
+	defer revocations.Close()
 
 	sub := service.deviceManager.GetDeviceUpdates()
 	defer sub.Close()
@@ -333,6 +359,11 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 		select {
 		case <-server.Context().Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case revoked := <-revocations.Sub():
+			if revoked == claims.RefreshUUID {
+				return status.Error(codes.Unauthenticated, "session revoked")
+			}
 
 		case <-ticker.C:
 			// Send an empty Device message as a keepalive for the client.
@@ -408,8 +439,16 @@ func (service *UserService) RemoveDevice(ctx context.Context, req *clientsapi.Re
 }
 
 func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamRequest, server clientsapi.UserService_FavoritesStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
 	service.log.Debugf("favorites stream started")
 	defer service.log.Debugf("favorites stream finished")
+
+	revocations := service.userJwt.SubscribeRevocations()
+	defer revocations.Close()
 
 	lis := service.favoritesManager.GetListener()
 	defer lis.Close()
@@ -421,6 +460,11 @@ func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamReque
 		select {
 		case <-server.Context().Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case revoked := <-revocations.Sub():
+			if revoked == claims.RefreshUUID {
+				return status.Error(codes.Unauthenticated, "session revoked")
+			}
 
 		case <-ticker.C:
 			// Send an empty Device message as a keepalive for the client.
@@ -470,8 +514,16 @@ func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.
 }
 
 func (service *UserService) GroupsStream(req *clientsapi.GroupsStreamRequest, server clientsapi.UserService_GroupsStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
 	service.log.Debugf("group stream started")
 	defer service.log.Debugf("group stream finished")
+
+	revocations := service.userJwt.SubscribeRevocations()
+	defer revocations.Close()
 
 	lis := service.groupManager.GetListener()
 	defer lis.Close()
@@ -483,6 +535,11 @@ func (service *UserService) GroupsStream(req *clientsapi.GroupsStreamRequest, se
 		select {
 		case <-server.Context().Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case revoked := <-revocations.Sub():
+			if revoked == claims.RefreshUUID {
+				return status.Error(codes.Unauthenticated, "session revoked")
+			}
 
 		case <-ticker.C:
 			// Send an empty message as a keepalive for the client.

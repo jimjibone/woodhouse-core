@@ -247,9 +247,13 @@ func (as *AuthService) Refresh(ctx context.Context, req *clientsapi.RefreshReque
 		}
 		refreshToken = tokens.RefreshToken
 		accessToken = tokens.AccessToken
+		// Rotate: revoke the old refresh allocation now that a new one
+		// has been issued, so any access tokens still bound to it die
+		// immediately instead of lingering until their own expiry.
+		as.jwt.RevokeToken(claims.RefreshUUID)
 	} else {
 		// Generate only the access token.
-		token, err := as.jwt.GenerateAccessToken(claims.ClientID)
+		token, err := as.jwt.GenerateAccessToken(claims.ClientID, claims.RefreshUUID)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to generate access token: %s", err)
 		}

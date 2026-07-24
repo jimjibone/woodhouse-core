@@ -185,7 +185,7 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 		srv.jwt.RevokeRefreshUUID(claims.RefreshUUID)
 	} else {
 		// Generate only the access token.
-		tokens, err = srv.jwt.GenerateAccessToken(user.Username, user.Role)
+		tokens, err = srv.jwt.GenerateAccessToken(user.Username, user.Role, claims.RefreshUUID)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to generate access token: %s", err)
 		}
