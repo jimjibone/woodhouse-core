@@ -31,15 +31,43 @@ type fsStore struct {
 	path string
 }
 
+// NewFSStore opens (creating if necessary) the filesystem-backed store at
+// path. This directory holds secret material (the TLS private key, JWT
+// signing secrets, password hashes, etc.), so its permissions are
+// deliberately kept tight (0700 dir / 0600 files) and are re-tightened on
+// every startup in case they were ever loosened (e.g. by an older build, a
+// backup/restore, or manual tampering).
 func NewFSStore(path string) Store {
 	// Get the absolute path to the chosen directory (allows for environment
 	// vars and `~`).
 	path = paths.AbsPathify(path)
 
 	// Create the filesystem directory.
-	err := os.MkdirAll(path, 0750)
+	err := os.MkdirAll(path, 0700)
 	if err != nil {
 		log.Fatalf("failed to create fs store: %s", err)
+	}
+
+	// MkdirAll doesn't change the mode of a directory that already exists, so
+	// explicitly tighten it in case it was created with looser permissions
+	// previously.
+	if err := os.Chmod(path, 0700); err != nil {
+		log.Fatalf("failed to tighten fs store directory permissions: %s", err)
+	}
+
+	// Tighten the permissions of any existing files in the store too. These
+	// are all the process's own files, so a failure here is a real problem.
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		log.Fatalf("failed to read fs store directory: %s", err)
+	}
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() {
+			continue
+		}
+		if err := os.Chmod(filepath.Join(path, entry.Name()), 0600); err != nil {
+			log.Fatalf("failed to tighten fs store file permissions: %s", err)
+		}
 	}
 
 	return &fsStore{path}
@@ -47,7 +75,7 @@ func NewFSStore(path string) Store {
 
 func (store *fsStore) Set(key string, value []byte) error {
 	// Use atomic file writes to prevent partially written files on error.
-	return atomicfile.WriteFile(filepath.Join(store.path, key), 0640, bytes.NewReader(value))
+	return atomicfile.WriteFile(filepath.Join(store.path, key), 0600, bytes.NewReader(value))
 }
 
 func (store *fsStore) Has(key string) bool {

@@ -14,25 +14,6 @@ import (
 	"time"
 )
 
-func LoadPrivKey(filename string) (*rsa.PrivateKey, error) {
-	priv, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
-	}
-
-	privPEM, _ := pem.Decode(priv)
-	if privPEM.Type != "RSA PRIVATE KEY" {
-		return nil, fmt.Errorf("not an RSA private key")
-	}
-
-	privKey, err := x509.ParsePKCS1PrivateKey(privPEM.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse RSA private key: %w", err)
-	}
-
-	return privKey, nil
-}
-
 func DecodePrivKey(priv []byte) (*rsa.PrivateKey, error) {
 	privPEM, _ := pem.Decode(priv)
 	if privPEM.Type != "RSA PRIVATE KEY" {
@@ -54,25 +35,6 @@ func GeneratePrivKey() (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 	return privKey, nil
-}
-
-func SavePrivKey(privKey *rsa.PrivateKey, filename string) error {
-	// Open/create the file.
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	// Encode the private key.
-	err = pem.Encode(f, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privKey),
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func EncodePrivKey(privKey *rsa.PrivateKey) ([]byte, error) {
@@ -127,25 +89,6 @@ func GenerateSelfSignedCert(privKey *rsa.PrivateKey) ([]byte, error) {
 	}
 
 	return cert, nil
-}
-
-func SaveCert(cert []byte, filename string) error {
-	// Open/create the file.
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	// Encode the private key.
-	err = pem.Encode(f, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: cert,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func EncodeCert(cert []byte) ([]byte, error) {

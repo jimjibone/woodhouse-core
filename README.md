@@ -98,6 +98,13 @@ task run-core -- --debug
 On first start the core writes a default config file (`woodhouse.yaml`) and a
 data directory (`woodhouse.db`) into the working directory.
 
+`woodhouse.db` holds the server's TLS private key, JWT signing secrets, and
+user password hashes, so treat it (and any backups of it) as secret material.
+It is created `0700` with `0600` files, and permissions are re-tightened on
+every startup. Bridges' `--store` directories hold similarly sensitive data -
+that bridge's refresh token and pinned server certificate - and deserve the
+same care.
+
 ### Configuration
 
 Configuration is a small YAML file. The defaults are:
