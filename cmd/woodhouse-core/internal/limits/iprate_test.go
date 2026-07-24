@@ -46,14 +46,14 @@ func TestIPRate_BurstThenRefill(t *testing.T) {
 	}
 }
 
-func TestIPRate_PenalizeDrainsTokens(t *testing.T) {
+func TestIPRate_PenaliseDrainsTokens(t *testing.T) {
 	clock := newFakeClock()
 	r := NewIPRate(IPRateConfig{PerMin: 60, Burst: 5, Penalty: 3, Now: clock.Now})
 	ip := mustAddr(t, "10.0.1.2")
 
-	// Penalize once, burning 3 of the 5 tokens; 2 attempts should still
+	// Penalise once, burning 3 of the 5 tokens; 2 attempts should still
 	// succeed, the 3rd should be denied.
-	r.Penalize(ip)
+	r.Penalise(ip)
 
 	ok, _ := r.Allow(ip)
 	if !ok {

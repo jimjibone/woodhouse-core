@@ -22,7 +22,7 @@ func ctxWithIP(ip string) context.Context {
 
 // Note: this only exercises Ping's rate gating directly. A full bidi Pair
 // stream test is not included here; Pair's gating logic (pairLimits.Allow /
-// Penalize) is covered indirectly by the internal/limits tests, and the
+// Penalise) is covered indirectly by the internal/limits tests, and the
 // per-source pending-pairing cap it calls into is covered by
 // core/client_manager_test.go.
 func TestPing_RateLimited(t *testing.T) {
