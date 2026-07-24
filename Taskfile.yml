@@ -32,6 +32,11 @@ tasks:
     cmds:
       - cp dot-env .env
 
+  test:
+    desc: Run the Go tests
+    cmds:
+      - go test ./... {{.CLI_ARGS}}
+
   build-core:
     desc: Build woodhouse-core
     cmds:
