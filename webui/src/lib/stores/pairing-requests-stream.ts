@@ -10,7 +10,6 @@ import {
 import type { PairingRequest } from '$lib/api/v1/clients/client_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
-import { getAccessToken } from '$lib/stores/auth-store';
 
 export type PairingRequestsStoreType = {
 	connected: boolean;
@@ -68,8 +67,7 @@ const streamPairingRequests = async (
 	const request = create(PairingRequestsStreamRequestSchema, {});
 	try {
 		const options: CallOptions = {
-			signal: abortSignal,
-			headers: { authorization: getAccessToken() }
+			signal: abortSignal
 		};
 		let gotInitialSet = false; // Indicates that we've received the initial set of pairing requests from the server.
 		let retainIDs: string[] = []; // Lists the request IDs that we should retain from the previous connection.
@@ -134,7 +132,7 @@ const streamPairingRequests = async (
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled && err.code !== Code.Unauthenticated) {
 				console.error('streamPairingRequests: error stream: (' + err.code + ') ' + err.message);
 			}
 		}

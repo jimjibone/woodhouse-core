@@ -5,7 +5,6 @@ import { FavoritesStreamResponseSchema, UserService } from '$lib/api/v1/clients/
 import { type DeviceService, FavoritesStreamRequestSchema } from '$lib/api/v1/clients/user_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
-import { getAccessToken } from '$lib/stores/auth-store';
 
 export type FavoritesStoreType = {
 	connected: boolean;
@@ -68,8 +67,7 @@ const streamFavorites = async (
 	try {
 		// console.log("streamFavorites: starting stream");
 		const options: CallOptions = {
-			signal: abortSignal,
-			headers: { authorization: getAccessToken() }
+			signal: abortSignal
 		};
 		let gotInitialSet = false;
 		let retainKeys: string[] = [];
@@ -166,7 +164,7 @@ const streamFavorites = async (
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled && err.code !== Code.Unauthenticated) {
 				console.error('streamFavorites: error stream: (' + err.code + ') ' + err.message);
 			}
 		}

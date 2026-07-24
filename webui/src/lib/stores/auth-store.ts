@@ -129,7 +129,29 @@ export async function doLogout() {
     }
 }
 
-export async function doRefresh() {
+// Clears the access token and marks the user as logged out. Used when the
+// server tells us the session is truly gone (e.g. a 401/403 from
+// /api/refresh, or an Unauthenticated RPC that a token refresh couldn't fix).
+export function sessionExpired() {
+    setAccessToken("");
+    loggedInValue.set(false);
+}
+
+// doRefresh is single-flight: if a refresh is already in progress, concurrent
+// callers (the 60s timer, the auth interceptor, +layout.ts) all await the
+// same underlying request instead of firing duplicate refreshes.
+let refreshInFlight: Promise<boolean> | null = null;
+
+export function doRefresh(): Promise<boolean> {
+    if (refreshInFlight === null) {
+        refreshInFlight = performRefresh().finally(() => {
+            refreshInFlight = null;
+        });
+    }
+    return refreshInFlight;
+}
+
+async function performRefresh(): Promise<boolean> {
     const response = await fetch("/api/refresh", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
@@ -137,7 +159,8 @@ export async function doRefresh() {
     })
     // codes:
     //  500: Internal server error (yarn serve could not proxy request)
-    //  401: Unauthorized (token not provided)
+    //  401: Unauthorized (token not provided, or session revoked)
+    let success = false;
     if (response.ok) {
         try {
             const data = await response.json();
@@ -146,6 +169,7 @@ export async function doRefresh() {
             loggedInValue.set(accessToken != "");
             // doneFirstAttemptValue.set(true);
             refreshResultValue.set({ errorCode: 0, errorMsg: "" });
+            success = true;
         } catch (error: any) {
             console.error("doRefresh failed to parse json:", error);
             // doneFirstAttemptValue.set(false);
@@ -159,11 +183,21 @@ export async function doRefresh() {
         } else {
             noAdminsRegisteredValue.set(false);
         }
+        if (response.status === 401 || response.status === 403) {
+            // The session has been revoked (logout elsewhere, unpair, admin
+            // revocation) - there's nothing left to retry, so log the user out.
+            sessionExpired();
+        }
+        // For network errors / 5xx we deliberately leave the token and
+        // loggedIn state alone: a server blip must not bounce the user to
+        // login, the timer or a later call will retry.
         // doneFirstAttemptValue.set(false);
         refreshResultValue.set({ errorCode: response.status, errorMsg: msg });
     }
 
     doneFirstAttemptValue.set(true);
+
+    return success;
 }
 
 export const AuthStore = {

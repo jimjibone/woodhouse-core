@@ -5,7 +5,6 @@ import { ClientsStreamRequestSchema, UserService } from '$lib/api/v1/clients/use
 import { type Client as ClientModel } from '$lib/api/v1/clients/client_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
-import { getAccessToken } from '$lib/stores/auth-store';
 
 export type ClientsStoreType = {
 	clientsConnected: boolean;
@@ -49,8 +48,7 @@ const streamClients = async (
 	const request = create(ClientsStreamRequestSchema, {});
 	try {
 		const options: CallOptions = {
-			signal: abortSignal,
-			headers: { authorization: getAccessToken() }
+			signal: abortSignal
 		};
 		for await (const response of client.clientsStream(request, options)) {
 			heartbeat();
@@ -94,7 +92,7 @@ const streamClients = async (
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled && err.code !== Code.Unauthenticated) {
 				console.error('streamClients: error stream: (' + err.code + ') ' + err.message);
 			}
 		}

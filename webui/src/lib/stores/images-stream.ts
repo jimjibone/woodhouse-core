@@ -4,7 +4,6 @@ import { create } from '@bufbuild/protobuf';
 import { ImagesStreamRequestSchema, ImageSizeHintSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
-import { getAccessToken } from '$lib/stores/auth-store';
 
 export type CachedImage = {
 	deviceId: string;
@@ -150,8 +149,7 @@ const streamImages = async (
 
 	try {
 		const options: CallOptions = {
-			signal: abortSignal,
-			headers: { authorization: getAccessToken() }
+			signal: abortSignal
 		};
 
 		let gotSnapshot = false;
@@ -217,7 +215,7 @@ const streamImages = async (
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled && err.code !== Code.Unauthenticated) {
 				console.error('streamImages: error (' + err.code + ') ' + err.message);
 			}
 		}

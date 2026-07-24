@@ -5,7 +5,6 @@ import { GroupsStreamRequestSchema, UserService } from '$lib/api/v1/clients/user
 import type { Group } from '$lib/api/v1/clients/group_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
-import { getAccessToken } from '$lib/stores/auth-store';
 
 export type GroupsStoreType = {
 	connected: boolean;
@@ -47,8 +46,7 @@ const streamGroups = async (
 	const request = create(GroupsStreamRequestSchema, {});
 	try {
 		const options: CallOptions = {
-			signal: abortSignal,
-			headers: { authorization: getAccessToken() }
+			signal: abortSignal
 		};
 		let gotInitialSet = false;
 		let retainIDs: string[] = [];
@@ -138,7 +136,7 @@ const streamGroups = async (
 		}
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			if (err.code !== Code.Unknown && err.code !== Code.Canceled) {
+			if (err.code !== Code.Unknown && err.code !== Code.Canceled && err.code !== Code.Unauthenticated) {
 				console.error('streamGroups: error stream: (' + err.code + ') ' + err.message);
 				const msg = err.rawMessage || err.message;
 				update((prev: GroupsStoreType) => {

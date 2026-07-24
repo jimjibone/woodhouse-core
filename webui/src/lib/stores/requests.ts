@@ -37,9 +37,8 @@ import {
 } from '$lib/api/v1/clients/user_service_pb';
 import { type GroupMember } from '$lib/api/v1/clients/group_pb';
 import { UserServiceClient } from './user-service-client';
-import { ConnectError, type CallOptions } from '@connectrpc/connect';
+import { ConnectError } from '@connectrpc/connect';
 import { create, toJsonString } from '@bufbuild/protobuf';
-import { getAccessToken } from '$lib/stores/auth-store';
 
 export const SendActionRequest = async (
 	deviceID: string,
@@ -52,12 +51,9 @@ export const SendActionRequest = async (
 		serviceId: serviceID,
 		values: vals
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending action: ' + toJsonString(ActionRequestSchema, request));
 	try {
-		for await (const response of UserServiceClient.sendAction(request, options)) {
+		for await (const response of UserServiceClient.sendAction(request)) {
 			console.log('received action: ' + toJsonString(ActionResponseSchema, response));
 			responseHandler(response);
 		}
@@ -76,12 +72,9 @@ export const SendRemoveDeviceRequest = async (deviceID: string): Promise<null | 
 	const request = create(RemoveDeviceRequestSchema, {
 		deviceId: deviceID
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending remove device request: ' + toJsonString(RemoveDeviceRequestSchema, request));
 	try {
-		await UserServiceClient.removeDevice(request, options);
+		await UserServiceClient.removeDevice(request);
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error sending remove device request: ' + err.message);
@@ -97,12 +90,9 @@ export const SendFavoriteRequest = async (deviceID: string, serviceID: string, f
 			deviceId: deviceID,
 			serviceId: serviceID
 		});
-		const options: CallOptions = {
-			headers: { authorization: getAccessToken() }
-		};
 		console.log('sending add favorite request: ' + toJsonString(AddFavoriteRequestSchema, request));
 		try {
-			await UserServiceClient.addFavorite(request, options);
+			await UserServiceClient.addFavorite(request);
 		} catch (err) {
 			if (err instanceof ConnectError) {
 				console.error('error sending add favorite request: ' + err.message);
@@ -113,12 +103,9 @@ export const SendFavoriteRequest = async (deviceID: string, serviceID: string, f
 			deviceId: deviceID,
 			serviceId: serviceID
 		});
-		const options: CallOptions = {
-			headers: { authorization: getAccessToken() }
-		};
 		console.log('sending remove favorite request: ' + toJsonString(RemoveFavoriteRequestSchema, request));
 		try {
-			await UserServiceClient.removeFavorite(request, options);
+			await UserServiceClient.removeFavorite(request);
 		} catch (err) {
 			if (err instanceof ConnectError) {
 				console.error('error sending remove favorite request: ' + err.message);
@@ -144,12 +131,9 @@ export const AddUser = async (
 		fullname: fullname,
 		role: role
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending add user: ' + toJsonString(AddUserRequestSchema, redacted));
 	try {
-		const response = await UserServiceClient.addUser(request, options);
+		const response = await UserServiceClient.addUser(request);
 		console.log('received add user: ' + toJsonString(AddUserResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -179,12 +163,9 @@ export const UpdateUserRole = async (username: string, role: UserRole): Promise<
 };
 
 export const UpdateUser = async (request: UpdateUserRequest): Promise<null | ConnectError> => {
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending update user: ' + toJsonString(UpdateUserRequestSchema, request));
 	try {
-		const response = await UserServiceClient.updateUser(request, options);
+		const response = await UserServiceClient.updateUser(request);
 		console.log('received update user: ' + toJsonString(UpdateUserResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -200,12 +181,9 @@ export const ApprovePairing = async (clientID: string, requestID: string): Promi
 		clientId: clientID,
 		requestId: requestID
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending approve pairing: ' + toJsonString(ApprovePairingRequestSchema, request));
 	try {
-		const response = await UserServiceClient.approvePairing(request, options);
+		const response = await UserServiceClient.approvePairing(request);
 		console.log('received approve pairing: ' + toJsonString(ApprovePairingResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -221,12 +199,9 @@ export const DenyPairing = async (clientID: string, requestID: string): Promise<
 		clientId: clientID,
 		requestId: requestID
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending deny pairing: ' + toJsonString(DenyPairingRequestSchema, request));
 	try {
-		const response = await UserServiceClient.denyPairing(request, options);
+		const response = await UserServiceClient.denyPairing(request);
 		console.log('received deny pairing: ' + toJsonString(DenyPairingResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -241,12 +216,9 @@ export const UnpairClient = async (clientID: string): Promise<null | ConnectErro
 	const request = create(UnpairClientRequestSchema, {
 		clientId: clientID
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending unpair client: ' + toJsonString(UnpairClientRequestSchema, request));
 	try {
-		const response = await UserServiceClient.unpairClient(request, options);
+		const response = await UserServiceClient.unpairClient(request);
 		console.log('received unpair client: ' + toJsonString(UnpairClientResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -263,12 +235,9 @@ export const AddGroup = async (
 	members: GroupMember[]
 ): Promise<null | ConnectError> => {
 	const request = create(AddGroupRequestSchema, { name, type, members });
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending add group: ' + toJsonString(AddGroupRequestSchema, request));
 	try {
-		const response = await UserServiceClient.addGroup(request, options);
+		const response = await UserServiceClient.addGroup(request);
 		console.log('received add group: ' + toJsonString(AddGroupResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -281,12 +250,9 @@ export const AddGroup = async (
 
 export const UpdateGroup = async (id: string, name?: string, members?: GroupMember[]): Promise<null | ConnectError> => {
 	const request = create(UpdateGroupRequestSchema, { id, name, members: members ?? [] });
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending update group: ' + toJsonString(UpdateGroupRequestSchema, request));
 	try {
-		const response = await UserServiceClient.updateGroup(request, options);
+		const response = await UserServiceClient.updateGroup(request);
 		console.log('received update group: ' + toJsonString(UpdateGroupResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -299,12 +265,9 @@ export const UpdateGroup = async (id: string, name?: string, members?: GroupMemb
 
 export const RemoveGroup = async (id: string): Promise<null | ConnectError> => {
 	const request = create(RemoveGroupRequestSchema, { id });
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending remove group: ' + toJsonString(RemoveGroupRequestSchema, request));
 	try {
-		const response = await UserServiceClient.removeGroup(request, options);
+		const response = await UserServiceClient.removeGroup(request);
 		console.log('received remove group: ' + toJsonString(RemoveGroupResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
@@ -330,12 +293,9 @@ export const SendImageRequest = async (
 		width,
 		height
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending image request: deviceId=' + deviceID + ' serviceId=' + serviceID);
 	try {
-		for await (const response of UserServiceClient.sendImageRequest(request, options)) {
+		for await (const response of UserServiceClient.sendImageRequest(request)) {
 			console.log('received image response: status=' + response.status + ' dataLen=' + response.data.length);
 			responseHandler(response);
 			if (response.status >= ImageResponse_ImageStatus.COMPLETE) {
@@ -358,12 +318,9 @@ export const ForgetClient = async (clientID: string): Promise<null | ConnectErro
 	const request = create(ForgetClientRequestSchema, {
 		clientId: clientID
 	});
-	const options: CallOptions = {
-		headers: { authorization: getAccessToken() }
-	};
 	console.log('sending forget client: ' + toJsonString(ForgetClientRequestSchema, request));
 	try {
-		const response = await UserServiceClient.forgetClient(request, options);
+		const response = await UserServiceClient.forgetClient(request);
 		console.log('received block client: ' + toJsonString(ForgetClientResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
