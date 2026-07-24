@@ -19,6 +19,7 @@ import (
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/users"
@@ -196,6 +197,21 @@ func main() {
 			clientsapi.RegisterClientServiceServer(server, clientService)
 			clientsapi.RegisterUserServiceServer(server, userService)
 			clientsapi.RegisterUserAuthServiceServer(server, userAuthService)
+
+			// Cross-check the authorization policy against what was actually
+			// registered above. Stale entries for removed RPCs are dead data
+			// that reads like a live capability, and a new RPC with no policy
+			// entry fails closed silently — both are startup errors, not
+			// something to discover in a later audit.
+			var registeredMethods []string
+			for name, info := range server.GetServiceInfo() {
+				for _, method := range info.Methods {
+					registeredMethods = append(registeredMethods, "/"+name+"/"+method.Name)
+				}
+			}
+			if err := auth.VerifyPolicyCoverage(registeredMethods); err != nil {
+				return fmt.Errorf("authorization policy: %w", err)
+			}
 
 			// Server reflection lets any peer that completes TLS enumerate the
 			// full service schema, before authenticating. Only useful for

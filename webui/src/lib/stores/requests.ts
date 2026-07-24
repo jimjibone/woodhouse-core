@@ -321,10 +321,10 @@ export const ForgetClient = async (clientID: string): Promise<null | ConnectErro
 	console.log('sending forget client: ' + toJsonString(ForgetClientRequestSchema, request));
 	try {
 		const response = await UserServiceClient.forgetClient(request);
-		console.log('received block client: ' + toJsonString(ForgetClientResponseSchema, response));
+		console.log('received forget client: ' + toJsonString(ForgetClientResponseSchema, response));
 	} catch (err) {
 		if (err instanceof ConnectError) {
-			console.error('error unblock client: ' + err.message);
+			console.error('error forget client: ' + err.message);
 			return err;
 		}
 	}
