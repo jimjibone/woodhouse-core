@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -16,16 +17,23 @@ import (
 )
 
 var (
-	ErrClientNotFound      = errors.New("client not found")
-	ErrClientAlreadyExists = errors.New("client already exists")
-	ErrPairingNotFound     = errors.New("pairing request not found")
-	ErrPairingInProgress   = errors.New("a pairing request is already in progress for this client")
-	ErrTooManyPairings     = errors.New("too many pending pairing requests")
+	ErrClientNotFound            = errors.New("client not found")
+	ErrClientAlreadyExists       = errors.New("client already exists")
+	ErrPairingNotFound           = errors.New("pairing request not found")
+	ErrPairingInProgress         = errors.New("a pairing request is already in progress for this client")
+	ErrTooManyPairings           = errors.New("too many pending pairing requests")
+	ErrTooManyPairingsFromSource = errors.New("too many pending pairing requests from this source")
 )
 
 // maxPendingPairings caps the number of concurrent in-flight pairing requests
 // to bound resource use and SAS guessing.
 const maxPendingPairings = 32
+
+// maxPendingPairingsPerSource caps the number of concurrent in-flight pairing
+// requests from a single source address, so one address can't consume the whole
+// maxPendingPairings pool and starve other pairing attempts. Zero (unknown)
+// addresses all count against the same, shared cap.
+const maxPendingPairingsPerSource = 4
 
 type ClientUpdate struct {
 	Updated *Client
@@ -42,7 +50,8 @@ type PairingUpdate struct {
 // denies it.
 type pendingPairing struct {
 	req      *PairingRequest
-	result   chan bool // buffered(1): true=confirmed, false=denied
+	addr     netip.Addr // source address that requested pairing; zero if unknown
+	result   chan bool  // buffered(1): true=confirmed, false=denied
 	resolved bool
 }
 
@@ -240,8 +249,11 @@ func (manager *ClientManager) SetClientPaired(id string, paired bool) error {
 // unique request id, and returns that id together with a channel that receives
 // the user's decision (true=confirmed, false=denied). It rejects a second
 // concurrent, unresolved attempt for the same client id (so an attacker cannot
-// clobber a legitimate request) and caps the number of concurrent attempts.
-func (manager *ClientManager) AddPairingRequest(req *PairingRequest) (string, <-chan bool, error) {
+// clobber a legitimate request), caps the number of concurrent attempts
+// overall, and caps the number of concurrent attempts from a single source
+// address. addr is the source address of the request (zero if unknown); all
+// zero-addr requests count against one shared cap.
+func (manager *ClientManager) AddPairingRequest(req *PairingRequest, addr netip.Addr) (string, <-chan bool, error) {
 	if req == nil || req.ClientID == "" {
 		return "", nil, fmt.Errorf("client id not set")
 	}
@@ -257,10 +269,17 @@ func (manager *ClientManager) AddPairingRequest(req *PairingRequest) (string, <-
 	if len(manager.pairingRequests) >= maxPendingPairings {
 		return "", nil, ErrTooManyPairings
 	}
+	fromSource := 0
 	for _, p := range manager.pairingRequests {
 		if p.req.ClientID == req.ClientID && !p.resolved {
 			return "", nil, ErrPairingInProgress
 		}
+		if p.addr == addr {
+			fromSource++
+		}
+	}
+	if fromSource >= maxPendingPairingsPerSource {
+		return "", nil, ErrTooManyPairingsFromSource
 	}
 
 	if req.RequestedAt.IsZero() {
@@ -272,6 +291,7 @@ func (manager *ClientManager) AddPairingRequest(req *PairingRequest) (string, <-
 
 	pending := &pendingPairing{
 		req:    req.Clone(),
+		addr:   addr,
 		result: make(chan bool, 1),
 	}
 	manager.pairingRequests[requestID] = pending

@@ -134,7 +134,14 @@ func main() {
 			}
 			defer clientManager.Close()
 
-			clientAuthService := clients.NewAuthService(certManager, clientJwtManager, clientManager)
+			// Pairing is human-paced: the 32-slot pool with 3-min expiry
+			// needs ~11/min sustained to monopolize, so 3/min per source
+			// makes that impossible from one address.
+			pairLimits := limits.NewIPRate(limits.IPRateConfig{PerMin: 3, Burst: 5, Penalty: 3})
+			// wh bridges keepalive-ping every 5s and several can share one
+			// source IP; this supports ~20 bridges per IP with headroom.
+			pingLimits := limits.NewIPRate(limits.IPRateConfig{PerMin: 240, Burst: 60})
+			clientAuthService := clients.NewAuthService(certManager, clientJwtManager, clientManager, pairLimits, pingLimits)
 
 			deviceManager, err := core.NewDeviceManager(store)
 			if err != nil {

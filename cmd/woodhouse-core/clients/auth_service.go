@@ -8,6 +8,7 @@ import (
 	"github.com/jimjibone/log"
 	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"github.com/jimjibone/woodhouse-core/shared/cert"
 	"github.com/jimjibone/woodhouse-core/shared/crypt"
 	"github.com/jimjibone/woodhouse-core/shared/sas"
@@ -25,20 +26,37 @@ type AuthService struct {
 	cm            *cert.CertManager
 	jwt           *JWTManager
 	clientManager *core.ClientManager
+	pairLimits    *limits.IPRate
+	pingLimits    *limits.IPRate
 }
 
-func NewAuthService(cm *cert.CertManager, ba *JWTManager, clientManager *core.ClientManager) *AuthService {
+func NewAuthService(cm *cert.CertManager, ba *JWTManager, clientManager *core.ClientManager, pairLimits, pingLimits *limits.IPRate) *AuthService {
 	return &AuthService{
 		log:           log.NewContext(log.DefaultLogger, "clients-auth", log.DebugLevel),
 		cm:            cm,
 		jwt:           ba,
 		clientManager: clientManager,
+		pairLimits:    pairLimits,
+		pingLimits:    pingLimits,
 	}
 }
 
 func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	if as.clientManager == nil {
 		return status.Errorf(codes.FailedPrecondition, "client manager not configured")
+	}
+
+	// Gate on the source IP's rate budget before doing anything else:
+	// pairing is unauthenticated, so this is the only thing standing
+	// between an attacker and unlimited pairing attempts.
+	addr := limits.PeerAddr(server.Context())
+	if ok, rejections := as.pairLimits.Allow(addr); !ok {
+		if rejections == 1 || rejections%100 == 0 {
+			as.log.Warnf("pairing rate limit exceeded from %s (%d consecutive rejections)", addr, rejections)
+		} else {
+			as.log.Debugf("pairing rate limit exceeded from %s (%d consecutive rejections)", addr, rejections)
+		}
+		return status.Error(codes.ResourceExhausted, "too many pairing attempts")
 	}
 
 	// 1. Receive the client's id and ephemeral public key (PKa).
@@ -48,6 +66,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 		return status.Errorf(codes.Unknown, "failed to receive client id")
 	}
 	if req.ClientId == "" {
+		as.pairLimits.Penalise(addr)
 		return status.Errorf(codes.InvalidArgument, "client_id must be set")
 	}
 	clientID := req.ClientId
@@ -56,6 +75,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 	pka := req.ClientPubkey
 	clientPub, err := sas.ParsePublicKey(pka)
 	if err != nil {
+		as.pairLimits.Penalise(addr)
 		as.log.Warnf("pairing client %q sent an invalid public key: %s", clientID, err)
 		return status.Errorf(codes.InvalidArgument, "invalid client public key")
 	}
@@ -68,7 +88,7 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 		Description: req.ClientDescription,
 		Version:     req.ClientVersion,
 	}
-	requestID, decision, err := as.clientManager.AddPairingRequest(pairingRequest)
+	requestID, decision, err := as.clientManager.AddPairingRequest(pairingRequest, addr)
 	if err != nil {
 		if errors.Is(err, core.ErrPairingInProgress) {
 			as.log.Infof("pairing client %q rejected: already in progress", clientID)
@@ -76,6 +96,10 @@ func (as *AuthService) Pair(server clientsapi.AuthService_PairServer) error {
 		}
 		if errors.Is(err, core.ErrTooManyPairings) {
 			return status.Errorf(codes.ResourceExhausted, "too many pending pairing requests")
+		}
+		if errors.Is(err, core.ErrTooManyPairingsFromSource) {
+			as.log.Infof("pairing client %q rejected: too many pending pairing requests from %s", clientID, addr)
+			return status.Errorf(codes.ResourceExhausted, "too many pending pairing requests from this source")
 		}
 		as.log.Warnf("pairing client %q failed to add pairing request: %s", clientID, err)
 		return status.Errorf(codes.Internal, "failed to add pairing request")
@@ -281,5 +305,14 @@ func (as *AuthService) Logout(ctx context.Context, req *clientsapi.LogoutRequest
 }
 
 func (as *AuthService) Ping(ctx context.Context, req *clientsapi.PingRequest) (*clientsapi.PingResponse, error) {
+	addr := limits.PeerAddr(ctx)
+	if ok, rejections := as.pingLimits.Allow(addr); !ok {
+		if rejections == 1 || rejections%100 == 0 {
+			as.log.Warnf("ping rate limit exceeded from %s (%d consecutive rejections)", addr, rejections)
+		} else {
+			as.log.Debugf("ping rate limit exceeded from %s (%d consecutive rejections)", addr, rejections)
+		}
+		return nil, status.Error(codes.ResourceExhausted, "too many pings")
+	}
 	return &clientsapi.PingResponse{}, nil
 }

@@ -1,4 +1,4 @@
-package users
+package limits
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-// peerAddr extracts the source IP of a gRPC call from its context, for
-// use as a login-limits bucket key. It covers both native gRPC and
+// PeerAddr extracts the source IP of a gRPC call from its context, for
+// use as a rate-limits bucket key. It covers both native gRPC and
 // grpc-web, since grpcweb.WrapServer forwards to grpc.Server.ServeHTTP,
 // which populates the peer from the underlying http.Request.RemoteAddr.
 //
@@ -21,7 +21,7 @@ import (
 // No proxy headers (X-Forwarded-For etc.) are consulted: they're
 // trivially spoofable by any client that can reach this endpoint
 // directly, which is the only way to reach it today.
-func peerAddr(ctx context.Context) netip.Addr {
+func PeerAddr(ctx context.Context) netip.Addr {
 	p, ok := peer.FromContext(ctx)
 	if !ok || p.Addr == nil {
 		return netip.Addr{}
@@ -48,10 +48,10 @@ func peerAddr(ctx context.Context) netip.Addr {
 	return addr.Unmap()
 }
 
-// requestAddr extracts the source IP of an HTTP request, for use as a
-// login-limits bucket key. See peerAddr's doc comment for the zero-Addr
+// RequestAddr extracts the source IP of an HTTP request, for use as a
+// rate-limits bucket key. See PeerAddr's doc comment for the zero-Addr
 // and proxy-header caveats, which apply here too.
-func requestAddr(r *http.Request) netip.Addr {
+func RequestAddr(r *http.Request) netip.Addr {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return netip.Addr{}

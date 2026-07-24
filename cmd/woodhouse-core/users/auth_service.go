@@ -103,7 +103,7 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest, src netip.Add
 }
 
 func (srv *AuthService) Login(ctx context.Context, req *clientsapi.UserLoginRequest) (*clientsapi.UserLoginResponse, error) {
-	tokens, err := srv.loginBase(req, peerAddr(ctx))
+	tokens, err := srv.loginBase(req, limits.PeerAddr(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {
 		if err := protojson.Unmarshal(body, req); err != nil {
 			http.Error(w, "invalid json", http.StatusUnprocessableEntity)
 		} else {
-			tokens, err := srv.loginBase(req, requestAddr(r))
+			tokens, err := srv.loginBase(req, limits.RequestAddr(r))
 			if err != nil {
 				writeGRPCError(w, err)
 			} else {
@@ -199,7 +199,7 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 }
 
 func (srv *AuthService) Refresh(ctx context.Context, req *clientsapi.UserRefreshRequest) (*clientsapi.UserRefreshResponse, error) {
-	if ok, _ := srv.limits.AllowIP(peerAddr(ctx)); !ok {
+	if ok, _ := srv.limits.AllowIP(limits.PeerAddr(ctx)); !ok {
 		return nil, status.Errorf(codes.ResourceExhausted, "too many requests, try again later")
 	}
 
@@ -218,7 +218,7 @@ func (srv *AuthService) Refresh(ctx context.Context, req *clientsapi.UserRefresh
 
 func (srv *AuthService) RefreshWeb(w http.ResponseWriter, r *http.Request) {
 	handlePost(w, r, func(token string, w http.ResponseWriter, r *http.Request) {
-		if ok, _ := srv.limits.AllowIP(requestAddr(r)); !ok {
+		if ok, _ := srv.limits.AllowIP(limits.RequestAddr(r)); !ok {
 			writeGRPCError(w, status.Errorf(codes.ResourceExhausted, "too many requests, try again later"))
 			return
 		}
@@ -271,7 +271,7 @@ func (srv *AuthService) logoutBase(req *clientsapi.UserLogoutRequest) error {
 }
 
 func (srv *AuthService) Logout(ctx context.Context, req *clientsapi.UserLogoutRequest) (*clientsapi.UserLogoutResponse, error) {
-	if ok, _ := srv.limits.AllowIP(peerAddr(ctx)); !ok {
+	if ok, _ := srv.limits.AllowIP(limits.PeerAddr(ctx)); !ok {
 		return nil, status.Errorf(codes.ResourceExhausted, "too many requests, try again later")
 	}
 
@@ -284,7 +284,7 @@ func (srv *AuthService) Logout(ctx context.Context, req *clientsapi.UserLogoutRe
 
 func (srv *AuthService) LogoutWeb(w http.ResponseWriter, r *http.Request) {
 	handlePost(w, r, func(token string, w http.ResponseWriter, r *http.Request) {
-		if ok, _ := srv.limits.AllowIP(requestAddr(r)); !ok {
+		if ok, _ := srv.limits.AllowIP(limits.RequestAddr(r)); !ok {
 			writeGRPCError(w, status.Errorf(codes.ResourceExhausted, "too many requests, try again later"))
 			return
 		}
