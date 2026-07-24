@@ -30,7 +30,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -197,7 +196,12 @@ func main() {
 			clientsapi.RegisterClientServiceServer(server, clientService)
 			clientsapi.RegisterUserServiceServer(server, userService)
 			clientsapi.RegisterUserAuthServiceServer(server, userAuthService)
-			reflection.Register(server)
+
+			// Server reflection lets any peer that completes TLS enumerate the
+			// full service schema, before authenticating. Only useful for
+			// debugging tools.
+			// log.Warnf("gRPC server reflection enabled: the API schema is readable by any peer that completes TLS")
+			// reflection.Register(server)
 
 			// Run the gRPC server.
 			serverErr := make(chan error, 1)
