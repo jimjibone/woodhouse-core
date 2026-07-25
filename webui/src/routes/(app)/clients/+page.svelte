@@ -68,7 +68,7 @@
 		// credentials.
 		const matches = confirm(
 			`Pair "${label}"?\n\n` +
-				`Confirm this code is EXACTLY the same as the one shown on the device:\n\n` +
+				`Confirm this code is EXACTLY the same as the one shown on the client:\n\n` +
 				`        ${formatSas(req.sas)}\n\n` +
 				`Only approve if they match. If they differ, cancel and deny the request.`
 		);
@@ -147,12 +147,12 @@
 
 						<div class="rounded-lg border bg-muted/40 p-3 text-center">
 							{#if req.sas}
-								<div class="text-xs text-muted-foreground">Verify this code matches the device</div>
+								<div class="text-xs text-muted-foreground">Verify this code matches the client</div>
 								<div class="mt-1 font-mono text-2xl font-semibold tracking-[0.3em]">
 									{formatSas(req.sas)}
 								</div>
 							{:else}
-								<div class="text-sm text-muted-foreground">Waiting for the device to present a code…</div>
+								<div class="text-sm text-muted-foreground">Waiting for the client to present a code…</div>
 							{/if}
 						</div>
 
