@@ -73,6 +73,13 @@ tasks:
     cmds:
       - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
 
+  run-core-full:
+    desc: Run woodhouse-core
+    deps:
+      - build-core-full
+    cmds:
+      - cd {{.BUILD_DIR}} && ./woodhouse-core{{exeExt}} {{.CLI_ARGS}}
+
   # build-frigate:
   #   cmds:
   #     - go build -o {{.BUILD_DIR}}/woodhouse-frigate{{exeExt}} ./cmd/woodhouse-frigate
