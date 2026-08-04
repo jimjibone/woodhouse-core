@@ -33,6 +33,8 @@ import {
 	UpdateUserResponseSchema,
 	UserImageRequestSchema,
 	UserRole,
+	GetSettingsRequestSchema,
+	UpdateSettingsRequestSchema,
 	type UpdateUserRequest
 } from '$lib/api/v1/clients/user_service_pb';
 import { type GroupMember } from '$lib/api/v1/clients/group_pb';
@@ -329,4 +331,50 @@ export const ForgetClient = async (clientID: string): Promise<null | ConnectErro
 		}
 	}
 	return null;
+};
+
+export type ServerSettings = {
+	instanceName: string;
+	showInstanceName: boolean;
+};
+
+const settingsFrom = (settings: { instanceName?: string; showInstanceName?: boolean } | undefined): ServerSettings => ({
+	instanceName: settings?.instanceName ?? '',
+	showInstanceName: settings?.showInstanceName ?? false
+});
+
+export const GetSettings = async (): Promise<ServerSettings | ConnectError> => {
+	const request = create(GetSettingsRequestSchema, {});
+	console.log('sending get settings: ' + toJsonString(GetSettingsRequestSchema, request));
+	try {
+		const response = await UserServiceClient.getSettings(request);
+		return settingsFrom(response.settings);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error get settings: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
+};
+
+// Only the fields present in update are changed. Returns the settings as
+// stored, which may differ from what was asked for because the server trims
+// the instance name.
+export const UpdateSettings = async (update: {
+	instanceName?: string;
+	showInstanceName?: boolean;
+}): Promise<ServerSettings | ConnectError> => {
+	const request = create(UpdateSettingsRequestSchema, update);
+	console.log('sending update settings: ' + toJsonString(UpdateSettingsRequestSchema, request));
+	try {
+		const response = await UserServiceClient.updateSettings(request);
+		return settingsFrom(response.settings);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error update settings: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
 };

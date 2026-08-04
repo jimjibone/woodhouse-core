@@ -11,8 +11,9 @@
 		ref = $bindable(null),
 		collapsible = "icon",
 		dashboards = [],
+		title = "Woodhouse",
 		...restProps
-	}: ComponentProps<typeof Sidebar.Root> & { dashboards: Dashboards } = $props();
+	}: ComponentProps<typeof Sidebar.Root> & { dashboards: Dashboards; title?: string } = $props();
 
 	const user = {
 		name: "shadcn",
@@ -59,7 +60,7 @@
 							<div class="flex aspect-square size-8 items-center justify-center rounded-lg [[data-collapsed=true]_&]:bg-sidebar-primary [[data-collapsed=true]_&]:text-sidebar-primary-foreground transition-[background-color,color] duration-200 ease-linear">
 								<WoodhouseIcon class="size-5" />
 							</div>
-							<span class="text-lg">Woodhouse</span>
+							<span class="truncate text-lg" title={title}>{title}</span>
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>

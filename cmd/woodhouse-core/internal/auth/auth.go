@@ -52,6 +52,8 @@ var roleMap = map[string][]Role{
 	"/woodhouse.api.v1.clients.UserService/UpdateUser":            {AdminRole, UserRole},
 	"/woodhouse.api.v1.clients.UserService/RemoveUser":            {AdminRole},
 	"/woodhouse.api.v1.clients.UserService/ImagesStream":          {AdminRole, UserRole},
+	"/woodhouse.api.v1.clients.UserService/GetSettings":           {AdminRole, UserRole},
+	"/woodhouse.api.v1.clients.UserService/UpdateSettings":        {AdminRole},
 }
 
 func IsUserAuthorised(method string, role Role) bool {

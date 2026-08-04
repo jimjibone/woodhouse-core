@@ -110,6 +110,8 @@ same care.
 Configuration is a small YAML file. The defaults are:
 
 ```yaml
+instance-name: hostname # name advertised on the local network; defaults to the system hostname
+show-instance-name: false # show the instance name in the admin interface instead of "Woodhouse"
 server:
     api-addr: localhost:4000 # gRPC API for bridges, reactors and clients
     web-addr: localhost:4080 # admin web interface
@@ -117,6 +119,17 @@ server:
 
 Point the server at a different config file with `--config`, or via the
 `WOODHOUSE_CONFIG` environment variable.
+
+`instance-name` is what clients see when they discover this server on your
+network, so it is also editable from the admin web interface under **Settings**.
+Changing it there saves the config file and re-announces the server immediately,
+without a restart. The server addresses are only read at startup, so they remain
+file-only.
+
+The admin interface calls itself "Woodhouse" by default. If you run more than
+one server and want to tell them apart at a glance, turn on
+`show-instance-name` (also under **Settings**) and the sidebar and browser tab
+will show the instance name instead.
 
 ### First run
 

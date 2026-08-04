@@ -113,3 +113,36 @@ func TestRequiresAuth(t *testing.T) {
 		}
 	}
 }
+
+func TestSettingsAuthorisation(t *testing.T) {
+	const (
+		get    = "/woodhouse.api.v1.clients.UserService/GetSettings"
+		update = "/woodhouse.api.v1.clients.UserService/UpdateSettings"
+	)
+
+	// Reading the instance name is what names the server in the UI, so every
+	// signed-in role needs it. Changing it is an admin action.
+	for _, test := range []struct {
+		method string
+		role   Role
+		want   bool
+	}{
+		{get, AdminRole, true},
+		{get, UserRole, true},
+		{get, NoAuthRole, false},
+		{update, AdminRole, true},
+		{update, UserRole, false},
+		{update, NoAuthRole, false},
+	} {
+		if got := IsUserAuthorised(test.method, test.role); got != test.want {
+			t.Errorf("IsUserAuthorised(%q, %s) = %v, want %v", test.method, test.role, got, test.want)
+		}
+	}
+
+	// Neither is reachable without a token.
+	for _, method := range []string{get, update} {
+		if !RequiresAuth(method) {
+			t.Errorf("%q should require auth", method)
+		}
+	}
+}

@@ -71,6 +71,7 @@ func main() {
 
 			// Load the config.
 			configPath := paths.AbsPathify(args.String("config"))
+			config.SetPath(configPath)
 			if _, err := os.Stat(configPath); !os.IsNotExist(err) {
 				log.Infof("loading config from %s", configPath)
 				err := yamlfile.LoadFile(&config.LoadedConfig, configPath)
@@ -79,23 +80,28 @@ func main() {
 				}
 			} else {
 				log.Infof("using default config")
-				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
-				if err != nil {
-					return fmt.Errorf("failed to save config: %w", err)
-				}
+				// Written below, after Verify has filled in the defaults it
+				// derives. Saving here would persist an empty instance-name.
+				config.LoadedConfig.Changed = true
 			}
 			if err := config.LoadedConfig.Verify(); err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
+			if config.LoadedConfig.Changed {
+				log.Infof("saving config to %s", configPath)
+				if err := config.Save(); err != nil {
+					return fmt.Errorf("failed to save config: %w", err)
+				}
+			}
+			log.Infof("instance name is %q", config.InstanceName())
 			return nil
 		},
 		After: func(args *cli.Context) error {
-			// Save the config if it has changed.
-			configPath := paths.AbsPathify(args.String("config"))
+			// Save the config if it has changed. Runtime changes save
+			// themselves as they happen, so this is only a backstop.
 			if config.LoadedConfig.Changed {
-				log.Infof("saving config to %s", configPath)
-				err := yamlfile.SaveFile(config.LoadedConfig, configPath)
-				if err != nil {
+				log.Infof("saving config to %s", config.Path())
+				if err := config.Save(); err != nil {
 					return fmt.Errorf("failed to save config: %w", err)
 				}
 			}
@@ -172,16 +178,20 @@ func main() {
 			loginLimits := limits.NewLogin(limits.Config{})
 			userAuthService := users.NewAuthService(userManager, userJwtManager, loginLimits)
 
-			// Create services.
-			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, clientJwtManager, userJwtManager)
-
-			// Broadcast our existence.
-			broadcaster, err := discovery.NewBroadcaster(config.LoadedConfig.InstanceName, apiLis.Addr())
+			// Broadcast our existence. This is created before the services
+			// because the settings manager renames the advertisement live when
+			// a user changes the instance name.
+			broadcaster, err := discovery.NewBroadcaster(config.InstanceName(), apiLis.Addr())
 			if err != nil {
 				return fmt.Errorf("failed to create broadcaster: %w", err)
 			}
 			defer broadcaster.Shutdown()
+
+			settingsManager := core.NewSettingsManager(broadcaster)
+
+			// Create services.
+			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())

@@ -8,6 +8,7 @@ import (
 	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
 	"github.com/jimjibone/woodhouse-core/apitools"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-core/shared/random"
@@ -23,11 +24,12 @@ type UserService struct {
 	groupManager     *core.GroupManager
 	userManager      *core.UserManager
 	clientManager    *core.ClientManager
+	settingsManager  *core.SettingsManager
 	clientJwt        *clients.JWTManager
 	userJwt          *JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, userManager *core.UserManager, clientManager *core.ClientManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, userManager *core.UserManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
 	service := &UserService{
 		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:    deviceManager,
@@ -35,6 +37,7 @@ func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.Fa
 		groupManager:     groupManager,
 		userManager:      userManager,
 		clientManager:    clientManager,
+		settingsManager:  settingsManager,
 		clientJwt:        clientJwt,
 		userJwt:          userJwt,
 	}
@@ -1140,4 +1143,58 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 			}
 		}
 	}
+}
+
+func (service *UserService) GetSettings(ctx context.Context, req *clientsapi.GetSettingsRequest) (*clientsapi.GetSettingsResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if service.settingsManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "settings manager not configured")
+	}
+
+	return &clientsapi.GetSettingsResponse{
+		Settings: &clientsapi.Settings{
+			InstanceName:     service.settingsManager.InstanceName(),
+			ShowInstanceName: service.settingsManager.ShowInstanceName(),
+		},
+	}, nil
+}
+
+func (service *UserService) UpdateSettings(ctx context.Context, req *clientsapi.UpdateSettingsRequest) (*clientsapi.UpdateSettingsResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to update settings")
+	}
+	if service.settingsManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "settings manager not configured")
+	}
+
+	if req.InstanceName != nil {
+		// Reject an unusable name before touching anything, so the caller gets
+		// InvalidArgument rather than a failure part way through applying it.
+		if _, err := config.ValidateInstanceName(req.GetInstanceName()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+		}
+		if _, err := service.settingsManager.SetInstanceName(req.GetInstanceName()); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to set instance name: %s", err)
+		}
+	}
+
+	if req.ShowInstanceName != nil {
+		if err := service.settingsManager.SetShowInstanceName(req.GetShowInstanceName()); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to set show instance name: %s", err)
+		}
+	}
+
+	return &clientsapi.UpdateSettingsResponse{
+		Settings: &clientsapi.Settings{
+			InstanceName:     service.settingsManager.InstanceName(),
+			ShowInstanceName: service.settingsManager.ShowInstanceName(),
+		},
+	}, nil
 }

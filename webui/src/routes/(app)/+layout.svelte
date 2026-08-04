@@ -1,18 +1,39 @@
 <script lang="ts">
-	import { HeartIcon, LampIcon, UsersIcon, ChevronsLeftRightEllipsisIcon, LayersIcon } from '@lucide/svelte';
+	import {
+		HeartIcon,
+		LampIcon,
+		UsersIcon,
+		ChevronsLeftRightEllipsisIcon,
+		LayersIcon,
+		SettingsIcon
+	} from '@lucide/svelte';
 	import AppSidebar, { type Dashboards } from '$lib/components/app-sidebar.svelte';
 	import AppMobilebar from '$lib/components/app-mobilebar.svelte';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
 	import { Separator } from '$lib/components/ui/separator';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { page } from '$app/state';
-	import { loggedIn } from '$lib/stores/auth-store';
+	import { loggedIn, userData } from '$lib/stores/auth-store';
 	import { goto } from '$app/navigation';
 	import { createConnectionContext } from '$lib/stores/connection-status.svelte';
+	import { settings, loadSettings, displayName } from '$lib/stores/settings-store';
 
 	let { children } = $props();
 
-	const dashboards: Dashboards = [
+	// What the interface calls this server feeds the sidebar and the tab title,
+	// so load it as soon as we have a session rather than only on /settings.
+	$effect(() => {
+		if ($loggedIn) {
+			loadSettings();
+		}
+	});
+
+	// "Woodhouse" unless an admin has opted into showing the instance name.
+	const title = $derived(displayName($settings));
+
+	// Settings is admin-only. The server is the enforcement point; hiding the
+	// entry just keeps a page a user cannot act on out of their way.
+	const dashboards: Dashboards = $derived([
 		{
 			name: 'Favorites',
 			url: '/favorites',
@@ -37,8 +58,17 @@
 			name: 'Groups',
 			url: '/groups',
 			icon: LayersIcon
-		}
-	];
+		},
+		...($userData.role === 'admin'
+			? [
+					{
+						name: 'Settings',
+						url: '/settings',
+						icon: SettingsIcon
+					}
+				]
+			: [])
+	]);
 
 	let activeDashboard: string = $derived.by(() => {
 		return dashboards.find((item) => item.url === page.url.pathname)?.name ?? 'Unknown';
@@ -85,8 +115,12 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{activeDashboard} · {title}</title>
+</svelte:head>
+
 <Sidebar.Provider>
-	<AppSidebar {dashboards} />
+	<AppSidebar {dashboards} {title} />
 	<Sidebar.Inset>
 		<header
 			class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear"
