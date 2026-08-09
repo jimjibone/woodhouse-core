@@ -162,11 +162,7 @@
 				<Field.Set>
 					<Field.Label for="role-group-{id}">Role</Field.Label>
 					<Field.Description>Select the role for this user.</Field.Description>
-					<RadioGroup.Root
-						value={roleToString(user.role)}
-						onValueChange={(v) => console.log('v:', v)}
-						name="role-group-{id}"
-					>
+					<RadioGroup.Root value={roleToString(user.role)} name="role-group-{id}">
 						<Field.Label>
 							<Field.Field orientation="horizontal" class="cursor-pointer">
 								<Field.Content>

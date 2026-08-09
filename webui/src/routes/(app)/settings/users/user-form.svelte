@@ -58,6 +58,14 @@
 			updateError = 'missing fields';
 		}
 	}
+
+	// Enter in a text field would otherwise implicitly submit the form, creating
+	// the user from a half-filled dialog. Creating has to go through the Create
+	// button (Enter while it's focused still works - that's a click, not an
+	// implicit submit).
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') event.preventDefault();
+	}
 </script>
 
 <form onsubmit={handleSubmit}>
@@ -68,17 +76,37 @@
 		<Field.Group>
 			<Field.Field>
 				<Field.Label for="username-{id}">Username</Field.Label>
-				<Input name="username-{id}" type="text" placeholder="crashoverride" autocomplete="off" required />
+				<Input
+					name="username-{id}"
+					type="text"
+					placeholder="crashoverride"
+					autocomplete="off"
+					required
+					onkeydown={handleKeydown}
+				/>
 				<Field.Description>A unique username. This cannot be changed.</Field.Description>
 			</Field.Field>
 			<Field.Field>
 				<Field.Label for="fullname-{id}">Full name</Field.Label>
-				<Input name="fullname-{id}" type="text" placeholder="Dade Murphy" autocomplete="off" required />
+				<Input
+					name="fullname-{id}"
+					type="text"
+					placeholder="Dade Murphy"
+					autocomplete="off"
+					onkeydown={handleKeydown}
+				/>
 				<Field.Description>This appears in the user interface.</Field.Description>
 			</Field.Field>
 			<Field.Field>
 				<Field.Label for="initial-password-{id}">Initial password</Field.Label>
-				<Input name="initial-password-{id}" type="password" placeholder="********" autocomplete="off" required />
+				<Input
+					name="initial-password-{id}"
+					type="password"
+					placeholder="********"
+					autocomplete="off"
+					required
+					onkeydown={handleKeydown}
+				/>
 				<Field.Description
 					>A temporary password which the user will be prompted to change on first login.</Field.Description
 				>
