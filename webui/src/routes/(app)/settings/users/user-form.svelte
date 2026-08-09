@@ -42,10 +42,10 @@
 		const role = data.get(`role-group-${id}`);
 		const initialPassword = data.get(`initial-password-${id}`);
 
-		if (username && fullname && role && initialPassword) {
+		if (username && role && initialPassword) {
 			const res = await AddUser(
 				username.toString(),
-				fullname.toString(),
+				fullname?.toString().trim() ?? '',
 				roleFromString(role.toString()),
 				initialPassword.toString()
 			);

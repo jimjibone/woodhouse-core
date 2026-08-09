@@ -939,9 +939,6 @@ func (service *UserService) AddUser(ctx context.Context, req *clientsapi.AddUser
 	if req.Username == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username not defined")
 	}
-	if req.Fullname == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "fullname not defined")
-	}
 	if req.Role != clientsapi.UserRole_USER_ROLE_ADMIN && req.Role != clientsapi.UserRole_USER_ROLE_USER {
 		return nil, status.Errorf(codes.InvalidArgument, "role not defined")
 	}
