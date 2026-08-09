@@ -61,6 +61,13 @@
 			return section ? [{ name: 'Settings', url: '/settings' }, { name: section.name }] : [{ name: 'Settings' }];
 		}
 
+		// /profile is reached from the nav-user menu, not the dashboards array
+		// (it's for any logged-in user, not just a sidebar destination), so it
+		// needs its own case rather than falling through to "Unknown".
+		if (isPathActive(path, '/profile')) {
+			return [{ name: 'Profile' }];
+		}
+
 		const dashboard = dashboards.find((item) => isPathActive(path, item.url));
 		return [{ name: dashboard?.name ?? 'Unknown' }];
 	});
