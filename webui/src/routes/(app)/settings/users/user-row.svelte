@@ -52,8 +52,14 @@
 
 		let saved = false;
 
-		if (fullname && fullname !== user.fullname) {
-			const err = await UpdateUserFullname(user.username, fullname.toString());
+		// Clearing the name is legitimate - the UI falls back to the username when
+		// fullname is empty - so an empty field is a real edit, not a skip. Only a
+		// missing field (null) means "nothing to save here". Same as the profile
+		// form.
+		const newFullname = fullname === null ? null : fullname.toString().trim();
+
+		if (newFullname !== null && newFullname !== user.fullname) {
+			const err = await UpdateUserFullname(user.username, newFullname);
 			if (err) updateError = err;
 			else saved = true;
 		}
@@ -72,9 +78,28 @@
 		// caught up. Same trick as the profile form. Failures are swallowed on
 		// purpose: the save already succeeded and the timer will catch up anyway,
 		// so a network blip must not surface as a save error.
+		//
+		// Deliberately keyed off `saved` rather than "no error": if one field
+		// saved and the other failed, the token's claims still changed and the
+		// sidebar still needs refreshing. Doing it before the close below also
+		// means the sidebar is already correct by the time the dialog goes away.
 		if (saved && user.username === $userData.username) {
 			await doRefresh().catch(() => {});
 		}
+
+		// Dismiss on success - closing is this dialog's only success feedback. A
+		// failure keeps it open so the error stays visible next to the fields.
+		if (!updateError) {
+			dialogOpen = false;
+		}
+	}
+
+	// Enter in a text field would otherwise implicitly submit the form, which
+	// saves and closes the dialog out from under someone who was only editing.
+	// Saving has to go through the Save button (Enter while it's focused still
+	// works - that's a click, not an implicit submit).
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') event.preventDefault();
 	}
 </script>
 
@@ -121,7 +146,14 @@
 				</Field.Field>
 				<Field.Field>
 					<Field.Label for="fullname-{id}">Full name</Field.Label>
-					<Input name="fullname-{id}" type="text" placeholder="Dade Murphy" autocomplete="off" value={user.fullname} />
+					<Input
+						name="fullname-{id}"
+						type="text"
+						placeholder="Dade Murphy"
+						autocomplete="off"
+						value={user.fullname}
+						onkeydown={handleKeydown}
+					/>
 					<Field.Description>This appears in the user interface.</Field.Description>
 				</Field.Field>
 			</Field.Group>
