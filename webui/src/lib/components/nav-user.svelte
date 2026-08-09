@@ -13,10 +13,10 @@
 	import { isPathActive } from '$lib/nav';
 	import { page } from '$app/state';
 
-	let { user }: { user: { username: string; fullname: string } } = $props();
 	const sidebar = useSidebar();
 
-	const initials = makeAcronym(user.fullname, user.username);
+	const initials = $derived(makeAcronym($userData.fullname, $userData.username));
+	const displayName = $derived($userData.fullname || $userData.username);
 </script>
 
 <Sidebar.Menu>
@@ -34,7 +34,7 @@
 							<Avatar.Fallback class="rounded-lg">{initials}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{$userData.username}</span>
+							<span class="truncate font-medium">{displayName}</span>
 							<span class="truncate text-xs">{$userData.role}</span>
 						</div>
 						<ChevronsUpDownIcon class="ml-auto size-4" />
@@ -53,7 +53,7 @@
 							<Avatar.Fallback class="rounded-lg">{initials}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{$userData.username}</span>
+							<span class="truncate font-medium">{displayName}</span>
 							<span class="truncate text-xs">{$userData.role}</span>
 						</div>
 					</div>

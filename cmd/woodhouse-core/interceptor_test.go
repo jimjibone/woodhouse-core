@@ -83,7 +83,7 @@ func TestAuthorize_ValidUserToken(t *testing.T) {
 
 	seedUser(t, userManager, "alice", auth.UserRole)
 
-	td, err := userJwtManager.GenerateTokens("alice", auth.UserRole)
+	td, err := userJwtManager.GenerateTokens("alice", "Test User", auth.UserRole)
 	if err != nil {
 		t.Fatalf("failed to generate tokens: %s", err)
 	}
@@ -110,7 +110,7 @@ func TestAuthorize_DeletedUser(t *testing.T) {
 
 	seedUser(t, userManager, "alice", auth.UserRole)
 
-	td, err := userJwtManager.GenerateTokens("alice", auth.UserRole)
+	td, err := userJwtManager.GenerateTokens("alice", "Test User", auth.UserRole)
 	if err != nil {
 		t.Fatalf("failed to generate tokens: %s", err)
 	}
@@ -130,7 +130,7 @@ func TestAuthorize_RevokedRefreshUUID(t *testing.T) {
 
 	seedUser(t, userManager, "alice", auth.UserRole)
 
-	td, err := userJwtManager.GenerateTokens("alice", auth.UserRole)
+	td, err := userJwtManager.GenerateTokens("alice", "Test User", auth.UserRole)
 	if err != nil {
 		t.Fatalf("failed to generate tokens: %s", err)
 	}
@@ -202,7 +202,7 @@ func TestAuthorize_RoleEnforcement(t *testing.T) {
 
 	seedUser(t, userManager, "bob", auth.UserRole)
 
-	td, err := userJwtManager.GenerateTokens("bob", auth.UserRole)
+	td, err := userJwtManager.GenerateTokens("bob", "Test User", auth.UserRole)
 	if err != nil {
 		t.Fatalf("failed to generate tokens: %s", err)
 	}

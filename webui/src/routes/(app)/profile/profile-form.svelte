@@ -4,7 +4,7 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { type User } from '$lib/api/v1/clients/user_service_pb';
 	import { UpdateUserFullname } from '@/stores/requests';
-	import { userData } from '@/stores/auth-store';
+	import { doRefresh, userData } from '@/stores/auth-store';
 	import { ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '@/tools/headline-case';
 	import { toast } from 'svelte-sonner';
@@ -50,6 +50,15 @@
 			}
 			// The stream pushes the saved record back, so the $effect above will
 			// pick it up - no local patch needed here.
+
+			// The sidebar reads its display name off the JWT, not the users
+			// stream, so without this it would lag behind the change here by
+			// up to the 60s refresh timer. Failures are swallowed on purpose:
+			// the save already succeeded, and the refresh timer will pick the
+			// new name up shortly anyway - a network blip here must not cost
+			// the user their success toast. (doRefresh resolves false on a bad
+			// response, but still rejects if fetch itself fails.)
+			await doRefresh().catch(() => {});
 			toast.success('Profile saved');
 		} finally {
 			submitting = false;

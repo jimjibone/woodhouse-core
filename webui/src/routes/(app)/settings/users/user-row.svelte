@@ -9,6 +9,7 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { UpdateUserFullname, UpdateUserRole } from '@/stores/requests';
+	import { doRefresh, userData } from '@/stores/auth-store';
 	import type { ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '@/tools/headline-case';
 
@@ -49,12 +50,30 @@
 		const role = data.get(`role-group-${id}`);
 		updateError = null;
 
+		let saved = false;
+
 		if (fullname && fullname !== user.fullname) {
-			updateError = await UpdateUserFullname(user.username, fullname.toString());
+			const err = await UpdateUserFullname(user.username, fullname.toString());
+			if (err) updateError = err;
+			else saved = true;
 		}
 
 		if (role && role !== roleToString(user.role)) {
-			updateError = await UpdateUserRole(user.username, roleFromString(role.toString()));
+			const err = await UpdateUserRole(user.username, roleFromString(role.toString()));
+			// Keep the first failure - a later success must not blank out the
+			// error from an earlier field.
+			if (err) updateError ??= err;
+			else saved = true;
+		}
+
+		// Fullname and role are both JWT claims, so an admin editing *their own*
+		// row here would otherwise keep seeing the old name in the sidebar (and
+		// the old role gating the admin-only nav) until the 60s refresh timer
+		// caught up. Same trick as the profile form. Failures are swallowed on
+		// purpose: the save already succeeded and the timer will catch up anyway,
+		// so a network blip must not surface as a save error.
+		if (saved && user.username === $userData.username) {
+			await doRefresh().catch(() => {});
 		}
 	}
 </script>

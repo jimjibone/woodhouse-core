@@ -10,6 +10,7 @@ export type UserData = {
     exp: number;
     access_uuid: string;
     username: string;
+    fullname: string;
     role: string;
 };
 
@@ -33,6 +34,7 @@ const userDataValue = writable<UserData>({
     exp: 0,
     access_uuid: "",
     username: "",
+    fullname: "",
     role: ""
 });
 
@@ -41,12 +43,17 @@ function setAccessToken(token: string) {
 
     if (token !== "") {
         const claims = jwtDecode<UserData>(token);
-        userDataValue.set(claims);
+        // An access token issued before the fullname claim existed has no
+        // "fullname" key at all, so decode it as undefined and normalize
+        // to "" here - otherwise the UserData type would lie about the
+        // field always being a string.
+        userDataValue.set({ ...claims, fullname: claims.fullname ?? "" });
     } else {
         userDataValue.set({
             exp: 0,
             access_uuid: "",
             username: "",
+            fullname: "",
             role: ""
         });
     }

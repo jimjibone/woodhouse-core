@@ -233,13 +233,20 @@ type RefreshTokenClaims struct {
 
 type AccessTokenClaims struct {
 	jwt.RegisteredClaims
-	AccessUUID  string    `json:"access_uuid"`
-	Username    string    `json:"username"`
+	AccessUUID string `json:"access_uuid"`
+	Username   string `json:"username"`
+	// Fullname is carried in the access token (rather than looked up from
+	// the users store) because the sidebar/profile chrome needs it on
+	// every page, and holding a users stream open app-wide just for a
+	// display name isn't worth it. Like Role, it's refreshed from the
+	// store on every access-token refresh, so it can lag by up to one
+	// refresh cycle after the user changes it.
+	Fullname    string    `json:"fullname"`
 	Role        auth.Role `json:"role"`
 	RefreshUUID string    `json:"refresh_uuid"`
 }
 
-func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateTokens(username, fullname string, role auth.Role) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -265,6 +272,7 @@ func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*Tok
 		},
 		AccessUUID:  td.AccessUUID,
 		Username:    username,
+		Fullname:    fullname,
 		Role:        role,
 		RefreshUUID: td.RefreshUUID,
 	}
@@ -301,7 +309,7 @@ func (manager *JWTManager) GenerateTokens(username string, role auth.Role) (*Tok
 	return td, nil
 }
 
-func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role, refreshUUID string) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateAccessToken(username, fullname string, role auth.Role, refreshUUID string) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -317,6 +325,7 @@ func (manager *JWTManager) GenerateAccessToken(username string, role auth.Role, 
 		},
 		AccessUUID:  accessUUID,
 		Username:    username,
+		Fullname:    fullname,
 		Role:        role,
 		RefreshUUID: refreshUUID,
 	}

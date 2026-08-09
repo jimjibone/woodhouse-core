@@ -25,7 +25,7 @@ func newTestJWTManager(t *testing.T) *JWTManager {
 func TestJWTManager_GenerateTokens_VerifyRoundTrip(t *testing.T) {
 	manager := newTestJWTManager(t)
 
-	td, err := manager.GenerateTokens("alice", auth.UserRole)
+	td, err := manager.GenerateTokens("alice", "Alice Example", auth.UserRole)
 	if err != nil {
 		t.Fatalf("GenerateTokens: unexpected error: %s", err)
 	}
@@ -36,6 +36,9 @@ func TestJWTManager_GenerateTokens_VerifyRoundTrip(t *testing.T) {
 	}
 	if atClaims.Username != "alice" {
 		t.Fatalf("VerifyAccessToken: unexpected username %q", atClaims.Username)
+	}
+	if atClaims.Fullname != "Alice Example" {
+		t.Fatalf("VerifyAccessToken: unexpected fullname %q", atClaims.Fullname)
 	}
 	if atClaims.RefreshUUID != td.RefreshUUID {
 		t.Fatalf("VerifyAccessToken: expected refresh uuid %q, got %q", td.RefreshUUID, atClaims.RefreshUUID)
@@ -50,10 +53,32 @@ func TestJWTManager_GenerateTokens_VerifyRoundTrip(t *testing.T) {
 	}
 }
 
+// TestJWTManager_GenerateTokens_EmptyFullnameRoundTrip asserts that a user
+// who has never set a display name (fullname == "") round-trips through
+// the access token as an empty string rather than erroring or being
+// dropped - this is the normal state for a brand new user, not an edge
+// case to reject.
+func TestJWTManager_GenerateTokens_EmptyFullnameRoundTrip(t *testing.T) {
+	manager := newTestJWTManager(t)
+
+	td, err := manager.GenerateTokens("alice", "", auth.UserRole)
+	if err != nil {
+		t.Fatalf("GenerateTokens: unexpected error: %s", err)
+	}
+
+	atClaims, err := manager.VerifyAccessToken(td.AccessToken)
+	if err != nil {
+		t.Fatalf("VerifyAccessToken: unexpected error: %s", err)
+	}
+	if atClaims.Fullname != "" {
+		t.Fatalf("VerifyAccessToken: expected empty fullname, got %q", atClaims.Fullname)
+	}
+}
+
 func TestJWTManager_RevokeRefreshUUID_KillsAccessAndRefreshTokens(t *testing.T) {
 	manager := newTestJWTManager(t)
 
-	td, err := manager.GenerateTokens("alice", auth.UserRole)
+	td, err := manager.GenerateTokens("alice", "Alice Example", auth.UserRole)
 	if err != nil {
 		t.Fatalf("GenerateTokens: unexpected error: %s", err)
 	}
@@ -79,12 +104,12 @@ func TestJWTManager_RevokeRefreshUUID_KillsAccessAndRefreshTokens(t *testing.T) 
 func TestJWTManager_GenerateAccessToken_BoundToLiveRefreshUUID(t *testing.T) {
 	manager := newTestJWTManager(t)
 
-	td, err := manager.GenerateTokens("alice", auth.UserRole)
+	td, err := manager.GenerateTokens("alice", "Alice Example", auth.UserRole)
 	if err != nil {
 		t.Fatalf("GenerateTokens: unexpected error: %s", err)
 	}
 
-	at, err := manager.GenerateAccessToken("alice", auth.UserRole, td.RefreshUUID)
+	at, err := manager.GenerateAccessToken("alice", "Alice Example", auth.UserRole, td.RefreshUUID)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken: unexpected error: %s", err)
 	}
@@ -103,13 +128,13 @@ func TestJWTManager_GenerateAccessToken_BoundToLiveRefreshUUID(t *testing.T) {
 func TestJWTManager_GenerateAccessToken_CrossUserBindingFails(t *testing.T) {
 	manager := newTestJWTManager(t)
 
-	aliceTokens, err := manager.GenerateTokens("alice", auth.UserRole)
+	aliceTokens, err := manager.GenerateTokens("alice", "Alice Example", auth.UserRole)
 	if err != nil {
 		t.Fatalf("GenerateTokens: unexpected error: %s", err)
 	}
 
 	// Mint an access token for "bob" but bound to alice's refresh UUID.
-	bobToken, err := manager.GenerateAccessToken("bob", auth.UserRole, aliceTokens.RefreshUUID)
+	bobToken, err := manager.GenerateAccessToken("bob", "Bob Example", auth.UserRole, aliceTokens.RefreshUUID)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken: unexpected error: %s", err)
 	}
@@ -123,7 +148,7 @@ func TestJWTManager_VerifyAccessToken_RejectsLegacyTokenWithoutRefreshUUID(t *te
 	manager := newTestJWTManager(t)
 
 	// A live refresh allocation exists for alice...
-	_, err := manager.GenerateTokens("alice", auth.UserRole)
+	_, err := manager.GenerateTokens("alice", "Alice Example", auth.UserRole)
 	if err != nil {
 		t.Fatalf("GenerateTokens: unexpected error: %s", err)
 	}
@@ -158,7 +183,7 @@ func TestJWTManager_VerifyAccessToken_RejectsLegacyTokenWithoutRefreshUUID(t *te
 func TestJWTManager_SubscribeRevocations(t *testing.T) {
 	manager := newTestJWTManager(t)
 
-	td, err := manager.GenerateTokens("alice", auth.UserRole)
+	td, err := manager.GenerateTokens("alice", "Alice Example", auth.UserRole)
 	if err != nil {
 		t.Fatalf("GenerateTokens: unexpected error: %s", err)
 	}
