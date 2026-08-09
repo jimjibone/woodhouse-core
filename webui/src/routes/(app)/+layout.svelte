@@ -1,13 +1,7 @@
 <script lang="ts">
-	import {
-		HeartIcon,
-		LampIcon,
-		UsersIcon,
-		ChevronsLeftRightEllipsisIcon,
-		LayersIcon,
-		SettingsIcon
-	} from '@lucide/svelte';
-	import AppSidebar, { type Dashboards } from '$lib/components/app-sidebar.svelte';
+	import { HeartIcon, LampIcon, SettingsIcon } from '@lucide/svelte';
+	import AppSidebar from '$lib/components/app-sidebar.svelte';
+	import { type Dashboards, settingsNav, isPathActive } from '$lib/nav';
 	import AppMobilebar from '$lib/components/app-mobilebar.svelte';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
 	import { Separator } from '$lib/components/ui/separator';
@@ -44,21 +38,6 @@
 			url: '/devices',
 			icon: LampIcon
 		},
-		{
-			name: 'Clients',
-			url: '/clients',
-			icon: ChevronsLeftRightEllipsisIcon
-		},
-		{
-			name: 'Users',
-			url: '/users',
-			icon: UsersIcon
-		},
-		{
-			name: 'Groups',
-			url: '/groups',
-			icon: LayersIcon
-		},
 		...($userData.role === 'admin'
 			? [
 					{
@@ -70,9 +49,24 @@
 			: [])
 	]);
 
-	let activeDashboard: string = $derived.by(() => {
-		return dashboards.find((item) => item.url === page.url.pathname)?.name ?? 'Unknown';
+	type Crumb = { name: string; url?: string };
+
+	// Settings sub-pages get a two-level trail so the header says where you are
+	// when the sidebar can only say "Settings".
+	const crumbs: Crumb[] = $derived.by(() => {
+		const path = page.url.pathname;
+
+		if (isPathActive(path, '/settings')) {
+			const section = settingsNav.find((item) => isPathActive(path, item.url));
+			return section ? [{ name: 'Settings', url: '/settings' }, { name: section.name }] : [{ name: 'Settings' }];
+		}
+
+		const dashboard = dashboards.find((item) => isPathActive(path, item.url));
+		return [{ name: dashboard?.name ?? 'Unknown' }];
 	});
+
+	// The tab title names the page you are on, not the whole trail.
+	const activeDashboard: string = $derived(crumbs[crumbs.length - 1].name);
 
 	const connStatus = createConnectionContext();
 
@@ -130,9 +124,18 @@
 				<Separator orientation="vertical" class="mr-2 data-[orientation=vertical]:h-4" />
 				<Breadcrumb.Root>
 					<Breadcrumb.List>
-						<Breadcrumb.Item>
-							<Breadcrumb.Page>{activeDashboard}</Breadcrumb.Page>
-						</Breadcrumb.Item>
+						{#each crumbs as crumb, i (crumb.name)}
+							{#if i > 0}
+								<Breadcrumb.Separator />
+							{/if}
+							<Breadcrumb.Item>
+								{#if crumb.url && i < crumbs.length - 1}
+									<Breadcrumb.Link href={crumb.url}>{crumb.name}</Breadcrumb.Link>
+								{:else}
+									<Breadcrumb.Page>{crumb.name}</Breadcrumb.Page>
+								{/if}
+							</Breadcrumb.Item>
+						{/each}
 					</Breadcrumb.List>
 				</Breadcrumb.Root>
 			</div>

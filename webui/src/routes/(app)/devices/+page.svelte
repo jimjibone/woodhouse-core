@@ -52,7 +52,7 @@
 			<h2 class="text-xl font-semibold">No devices yet</h2>
 			<p class="text-sm text-muted-foreground leading-relaxed">
 				Once a client pairs and registers its devices they will appear here. Check
-				<a href="/clients" class="text-foreground underline underline-offset-2 hover:no-underline"> Clients </a>
+				<a href="/settings/clients" class="text-foreground underline underline-offset-2 hover:no-underline"> Clients </a>
 				for more details on connected clients and pairing new ones.
 			</p>
 		</div>

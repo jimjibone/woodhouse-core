@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-	import { type Dashboards } from "./app-sidebar.svelte";
+	import { type Dashboards } from "$lib/nav";
 	import { MobileNavButton, MobileNavItem } from "$lib/components/wh/nav";
 	import { SearchIcon, XIcon } from "@lucide/svelte";
 	import { search } from "$lib/stores/search";

@@ -6,6 +6,7 @@
 	import { WoodhouseIcon } from "@/components/wh/icons";
 	import { toggleMode, mode } from "mode-watcher";
 	import { page } from "$app/state";
+	import { type Dashboards, isPathActive } from "$lib/nav";
 
 	let {
 		ref = $bindable(null),
@@ -20,34 +21,6 @@
 		email: "m@example.com",
 		avatar: "/avatars/shadcn.jpg",
 	};
-
-	export type Dashboards = {
-		name: string;
-		url: string;
-		icon: any;
-	}[];
-	// const dashboards: Dashboards = [
-	// 	{
-	// 		name: "Favorites",
-	// 		url: "/favorites",
-	// 		icon: HeartIcon,
-	// 	},
-	// 	{
-	// 		name: "Services",
-	// 		url: "/services",
-	// 		icon: Rows3Icon,
-	// 	},
-	// 	{
-	// 		name: "Devices",
-	// 		url: "/devices",
-	// 		icon: LampIcon,
-	// 	},
-	// 	{
-	// 		name: "Debug",
-	// 		url: "/debug",
-	// 		icon: BugIcon,
-	// 	},
-	// ];
 </script>
 
 <Sidebar.Root {collapsible} {...restProps}>
@@ -73,7 +46,7 @@
 			<Sidebar.Menu>
 				{#each dashboards as item (item.name)}
 					<Sidebar.MenuItem>
-						<Sidebar.MenuButton isActive={page.url.pathname === item.url}>
+						<Sidebar.MenuButton isActive={isPathActive(page.url.pathname, item.url)}>
 							{#snippet child({ props })}
 								<a href={item.url} {...props}>
 									<item.icon/>
