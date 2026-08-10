@@ -41,31 +41,36 @@
 
 	let updateError: ConnectError | null = $state(null);
 
+	// Local copies of these settings for the modal - supresses server updates
+	// during edit.
+	let fullname = $state('');
+	let role = $state('');
+
+	$effect(() => {
+		if (dialogOpen) return;
+		fullname = user.fullname;
+		role = roleToString(user.role);
+	});
+
 	async function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-
-		const form = event.target as HTMLFormElement;
-		const data = new FormData(form);
-		const fullname = data.get(`fullname-${id}`);
-		const role = data.get(`role-group-${id}`);
 		updateError = null;
 
 		let saved = false;
 
 		// Clearing the name is legitimate - the UI falls back to the username when
-		// fullname is empty - so an empty field is a real edit, not a skip. Only a
-		// missing field (null) means "nothing to save here". Same as the profile
-		// form.
-		const newFullname = fullname === null ? null : fullname.toString().trim();
+		// fullname is empty - so an empty field is a real edit, not a skip. Same as
+		// the profile form.
+		const newFullname = fullname.trim();
 
-		if (newFullname !== null && newFullname !== user.fullname) {
+		if (newFullname !== user.fullname) {
 			const err = await UpdateUserFullname(user.username, newFullname);
 			if (err) updateError = err;
 			else saved = true;
 		}
 
-		if (role && role !== roleToString(user.role)) {
-			const err = await UpdateUserRole(user.username, roleFromString(role.toString()));
+		if (role !== roleToString(user.role)) {
+			const err = await UpdateUserRole(user.username, roleFromString(role));
 			// Keep the first failure - a later success must not blank out the
 			// error from an earlier field.
 			if (err) updateError ??= err;
@@ -151,7 +156,7 @@
 						type="text"
 						placeholder="Dade Murphy"
 						autocomplete="off"
-						value={user.fullname}
+						bind:value={fullname}
 						onkeydown={handleKeydown}
 					/>
 					<Field.Description>This appears in the user interface.</Field.Description>
@@ -162,7 +167,7 @@
 				<Field.Set>
 					<Field.Label for="role-group-{id}">Role</Field.Label>
 					<Field.Description>Select the role for this user.</Field.Description>
-					<RadioGroup.Root value={roleToString(user.role)} name="role-group-{id}">
+					<RadioGroup.Root bind:value={role} name="role-group-{id}">
 						<Field.Label>
 							<Field.Field orientation="horizontal" class="cursor-pointer">
 								<Field.Content>
