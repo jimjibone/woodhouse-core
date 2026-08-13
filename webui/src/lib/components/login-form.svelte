@@ -58,11 +58,11 @@
 			</div>
 			<Field>
 				<FieldLabel for="username-{id}">Username</FieldLabel>
-				<Input name="username-{id}" type="text" placeholder="" required />
+				<Input id="username-{id}" name="username-{id}" type="text" placeholder="" required />
 			</Field>
 			<Field>
 				<FieldLabel for="password-{id}">Password</FieldLabel>
-				<Input name="password-{id}" type="password" placeholder="" required />
+				<Input id="password-{id}" name="password-{id}" type="password" placeholder="" required />
 			</Field>
 			{#if loginError}
 				<FieldError>{toSentenceCase(loginError.errorMsg)}</FieldError>

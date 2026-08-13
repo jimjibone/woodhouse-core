@@ -186,30 +186,32 @@
 <Dialog bind:open={dialogOpen}>
 	<form onsubmit={handleSubmit}>
 		<Field.Set>
-			<!-- <Field.Legend>Profile</Field.Legend>
-    		<Field.Description>This appears on invoices and emails.</Field.Description> -->
 			<Field.Group>
-				<Field.Field>
-					<Field.Label for="username">Username</Field.Label>
-					<Input id="username" disabled value={user.username} />
-				</Field.Field>
-				<Field.Field>
-					<Field.Label for="fullname-{id}">Full name</Field.Label>
-					<Input
-						name="fullname-{id}"
-						type="text"
-						placeholder="Dade Murphy"
-						autocomplete="off"
-						bind:value={fullname}
-						onkeydown={handleKeydown}
-					/>
-					<Field.Description>This appears in the user interface.</Field.Description>
-				</Field.Field>
+				<Field.Set>
+					<Field.Legend>Profile</Field.Legend>
+					<Field.Field>
+						<Field.Label for="username-{id}">Username</Field.Label>
+						<Input id="username-{id}" disabled value={user.username} />
+					</Field.Field>
+					<Field.Field>
+						<Field.Label for="fullname-{id}">Full name</Field.Label>
+						<Input
+							id="fullname-{id}"
+							name="fullname-{id}"
+							type="text"
+							placeholder="Dade Murphy"
+							autocomplete="off"
+							bind:value={fullname}
+							onkeydown={handleKeydown}
+						/>
+						<Field.Description>This appears in the user interface.</Field.Description>
+					</Field.Field>
+				</Field.Set>
 			</Field.Group>
 
 			<Field.Group>
 				<Field.Set>
-					<Field.Label for="role-group-{id}">Role</Field.Label>
+					<Field.Legend>Role</Field.Legend>
 					<Field.Description>Select the role for this user.</Field.Description>
 					<RadioGroup.Root bind:value={role} name="role-group-{id}">
 						<Field.Label>
@@ -243,7 +245,7 @@
 
 			<Field.Group>
 				<Field.Set>
-					<Field.Label for="reset-password-{id}">Password</Field.Label>
+					<Field.Legend>Password</Field.Legend>
 					{#if isSelf}
 						<Field.Description>
 							Change your own password from your <a href="/profile" class="underline">profile</a>, where it can be

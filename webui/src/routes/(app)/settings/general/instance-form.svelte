@@ -62,6 +62,7 @@
 			<Field.Field>
 				<Field.Label for="instance-name-{id}">Instance name</Field.Label>
 				<Input
+					id="instance-name-{id}"
 					name="instance-name-{id}"
 					type="text"
 					placeholder="woodhouse"

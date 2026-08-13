@@ -77,6 +77,7 @@
 			<Field.Field>
 				<Field.Label for="username-{id}">Username</Field.Label>
 				<Input
+					id="username-{id}"
 					name="username-{id}"
 					type="text"
 					placeholder="crashoverride"
@@ -89,6 +90,7 @@
 			<Field.Field>
 				<Field.Label for="fullname-{id}">Full name</Field.Label>
 				<Input
+					id="fullname-{id}"
 					name="fullname-{id}"
 					type="text"
 					placeholder="Dade Murphy"
@@ -100,6 +102,7 @@
 			<Field.Field>
 				<Field.Label for="initial-password-{id}">Initial password</Field.Label>
 				<Input
+					id="initial-password-{id}"
 					name="initial-password-{id}"
 					type="password"
 					placeholder="********"
@@ -115,7 +118,7 @@
 
 		<Field.Group>
 			<Field.Set>
-				<Field.Label for="role-group-{id}">Role</Field.Label>
+				<Field.Legend>Role</Field.Legend>
 				<Field.Description>Select the role for this user.</Field.Description>
 				<RadioGroup.Root value={roleToString(UserRole.USER)} name="role-group-{id}">
 					<Field.Label>
