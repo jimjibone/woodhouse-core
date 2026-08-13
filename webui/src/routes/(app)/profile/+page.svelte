@@ -7,6 +7,7 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import ProfileForm from './profile-form.svelte';
+	import ChangePasswordForm from '$lib/components/change-password-form.svelte';
 	import { onDestroy } from 'svelte';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 	import { doLogout, userData } from '@/stores/auth-store';
@@ -48,6 +49,10 @@
 	</div>
 
 	<ProfileForm user={me} />
+
+	<ChangePasswordForm
+		description="Change the password you sign in with. Doing so signs out every other session on your account."
+	/>
 
 	<Field.Set>
 		<Field.Legend>Appearance</Field.Legend>

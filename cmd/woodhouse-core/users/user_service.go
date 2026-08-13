@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jimjibone/log"
@@ -1000,12 +1001,56 @@ func (service *UserService) UpdateUser(ctx context.Context, req *clientsapi.Upda
 			return nil, status.Errorf(codes.PermissionDenied, "%s", err)
 		}
 	}
-	// if req.Password != nil {
-	// 	err := service.userManager.SetPassword(req.GetPassword())
-	// 	if err != nil {
-	// 		return nil, status.Errorf(codes.PermissionDenied, "%s", err)
-	// 	}
-	// }
+	if req.Password != nil {
+		if claims.Username == req.Username {
+			// Changing your own password. The re-entered current password is
+			// mandatory here even though the request is already authenticated:
+			// without it, anyone holding a stolen session could change the
+			// password and lock the real owner out of their own instance.
+			if req.CurrentPassword == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "current password required to change your own password")
+			}
+
+			err := service.userManager.ChangePassword(req.Username, req.GetCurrentPassword(), req.GetPassword())
+			switch {
+			case errors.Is(err, core.ErrIncorrectPassword):
+				// Deliberately not Unauthenticated: the webui treats that as a
+				// dead session and signs the user out, which is the wrong
+				// answer to a simple typo in the current-password field.
+				return nil, status.Errorf(codes.PermissionDenied, "current password is incorrect")
+			case errors.Is(err, core.ErrUserNotFound):
+				return nil, status.Errorf(codes.NotFound, "%s", err)
+			case err != nil:
+				return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+			}
+
+			// Evict every other session. A password change is how you recover
+			// from a session you no longer trust, so leaving the other ones
+			// alive until their refresh tokens expire would defeat the point.
+			// This session is spared so the user isn't signed out of the tab
+			// they just used.
+			service.userJwt.RevokeUserRefreshTokens(req.Username, claims.RefreshUUID)
+		} else {
+			// Admin resetting somebody else's password (non-admins were
+			// rejected above). No current-password check is possible here -
+			// the admin doesn't know it - so the target is flagged instead
+			// and must choose their own password before they can use the
+			// app. This grants an attacker holding an admin session nothing
+			// they couldn't already do by adding or deleting users.
+			err := service.userManager.ResetPassword(req.Username, req.GetPassword())
+			switch {
+			case errors.Is(err, core.ErrUserNotFound):
+				return nil, status.Errorf(codes.NotFound, "%s", err)
+			case err != nil:
+				return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+			}
+
+			// All of the target's sessions go, including any the attacker we
+			// are resetting against may be holding. They have no valid
+			// password any more, so nothing is left for them to keep using.
+			service.userJwt.RevokeUserRefreshTokens(req.Username, "")
+		}
+	}
 	return &clientsapi.UpdateUserResponse{}, nil
 }
 

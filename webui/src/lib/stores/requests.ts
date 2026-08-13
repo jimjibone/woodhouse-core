@@ -164,8 +164,44 @@ export const UpdateUserRole = async (username: string, role: UserRole): Promise<
 	);
 };
 
+// Changing your own password. The current password is required by the
+// server and is what stops a stolen session from locking the real owner
+// out, so it is not optional here either.
+export const UpdateUserPassword = async (
+	username: string,
+	currentPassword: string,
+	newPassword: string
+): Promise<null | ConnectError> => {
+	return UpdateUser(
+		create(UpdateUserRequestSchema, {
+			username: username,
+			currentPassword: currentPassword,
+			password: newPassword
+		})
+	);
+};
+
+// Admin-only: set a temporary password for somebody else. The server forces
+// them to choose their own on next login and drops all of their sessions.
+export const ResetUserPassword = async (username: string, newPassword: string): Promise<null | ConnectError> => {
+	return UpdateUser(
+		create(UpdateUserRequestSchema, {
+			username: username,
+			password: newPassword
+		})
+	);
+};
+
 export const UpdateUser = async (request: UpdateUserRequest): Promise<null | ConnectError> => {
-	console.log('sending update user: ' + toJsonString(UpdateUserRequestSchema, request));
+	// Log a copy with the password fields dropped - this request carries
+	// cleartext passwords on the change-password paths, and the console is
+	// not the place for them. Same treatment AddUser gives initialPassword.
+	const redacted = create(UpdateUserRequestSchema, {
+		...request,
+		password: request.password === undefined ? undefined : '<redacted>',
+		currentPassword: request.currentPassword === undefined ? undefined : '<redacted>'
+	});
+	console.log('sending update user: ' + toJsonString(UpdateUserRequestSchema, redacted));
 	try {
 		const response = await UserServiceClient.updateUser(request);
 		console.log('received update user: ' + toJsonString(UpdateUserResponseSchema, response));

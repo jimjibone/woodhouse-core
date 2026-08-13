@@ -241,12 +241,18 @@ type AccessTokenClaims struct {
 	// display name isn't worth it. Like Role, it's refreshed from the
 	// store on every access-token refresh, so it can lag by up to one
 	// refresh cycle after the user changes it.
-	Fullname    string    `json:"fullname"`
-	Role        auth.Role `json:"role"`
-	RefreshUUID string    `json:"refresh_uuid"`
+	Fullname string    `json:"fullname"`
+	Role     auth.Role `json:"role"`
+	// ResetPassword travels in the access token for the same reason as
+	// Fullname: the webui has to gate every page behind it, and that would
+	// otherwise mean holding a users stream open app-wide just to read one
+	// bool. It clears on the next access-token refresh after the user picks
+	// a new password, which the webui forces rather than waiting out.
+	ResetPassword bool   `json:"reset_password"`
+	RefreshUUID   string `json:"refresh_uuid"`
 }
 
-func (manager *JWTManager) GenerateTokens(username, fullname string, role auth.Role) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateTokens(username, fullname string, role auth.Role, resetPassword bool) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -270,11 +276,12 @@ func (manager *JWTManager) GenerateTokens(username, fullname string, role auth.R
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(td.AccessExpires),
 		},
-		AccessUUID:  td.AccessUUID,
-		Username:    username,
-		Fullname:    fullname,
-		Role:        role,
-		RefreshUUID: td.RefreshUUID,
+		AccessUUID:    td.AccessUUID,
+		Username:      username,
+		Fullname:      fullname,
+		Role:          role,
+		ResetPassword: resetPassword,
+		RefreshUUID:   td.RefreshUUID,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString(manager.accessSecret)
@@ -309,7 +316,7 @@ func (manager *JWTManager) GenerateTokens(username, fullname string, role auth.R
 	return td, nil
 }
 
-func (manager *JWTManager) GenerateAccessToken(username, fullname string, role auth.Role, refreshUUID string) (*TokenDetails, error) {
+func (manager *JWTManager) GenerateAccessToken(username, fullname string, role auth.Role, resetPassword bool, refreshUUID string) (*TokenDetails, error) {
 	u1, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %v", err)
@@ -323,11 +330,12 @@ func (manager *JWTManager) GenerateAccessToken(username, fullname string, role a
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpires),
 		},
-		AccessUUID:  accessUUID,
-		Username:    username,
-		Fullname:    fullname,
-		Role:        role,
-		RefreshUUID: refreshUUID,
+		AccessUUID:    accessUUID,
+		Username:      username,
+		Fullname:      fullname,
+		Role:          role,
+		ResetPassword: resetPassword,
+		RefreshUUID:   refreshUUID,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	accessToken, err := at.SignedString(manager.accessSecret)
@@ -355,6 +363,43 @@ func (manager *JWTManager) RevokeRefreshUUID(refreshUUID string) {
 	// Notify any active streams that this refresh UUID (and any access
 	// tokens bound to it) has been revoked.
 	manager.revocations.Pub(refreshUUID)
+}
+
+// RevokeUserRefreshTokens revokes every refresh token belonging to a user,
+// except the one named by exceptRefreshUUID (pass "" to revoke all of them).
+// It returns the number revoked.
+//
+// This is the eviction half of a password change: the current-password
+// check stops a stolen session from locking the owner out, and this stops
+// it from carrying on regardless. The caller's own session is spared so
+// changing your password doesn't sign you out of the tab you're using.
+func (manager *JWTManager) RevokeUserRefreshTokens(username string, exceptRefreshUUID string) int {
+	manager.mu.Lock()
+	revoked := make([]string, 0, len(manager.tokenAllocations))
+	for refreshUUID, allocation := range manager.tokenAllocations {
+		if allocation.Username != username || refreshUUID == exceptRefreshUUID {
+			continue
+		}
+		delete(manager.tokenAllocations, refreshUUID)
+		revoked = append(revoked, refreshUUID)
+	}
+	if len(revoked) > 0 {
+		manager.changed = true
+	}
+	manager.mu.Unlock()
+
+	// Published outside the lock: subscribers tear down live streams in
+	// response, and doing that while holding the manager lock invites a
+	// deadlock against anything that verifies a token on the way out.
+	for _, refreshUUID := range revoked {
+		manager.revocations.Pub(refreshUUID)
+	}
+
+	if len(revoked) > 0 {
+		manager.log.Infof("revoked %d session(s) for %s", len(revoked), username)
+	}
+
+	return len(revoked)
 }
 
 // SubscribeRevocations returns a subscription that receives refresh UUIDs

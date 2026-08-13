@@ -95,9 +95,10 @@ func (user *User) Clone() *User {
 
 func (user *User) Pb() *clientsapi.User {
 	return &clientsapi.User{
-		Username: user.Username,
-		Fullname: user.Fullname,
-		Role:     user.Role.Pb(),
+		Username:      user.Username,
+		Fullname:      user.Fullname,
+		Role:          user.Role.Pb(),
+		ResetPassword: user.ResetPassword,
 	}
 }
 

@@ -7,7 +7,9 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { page } from '$app/state';
-	import { loggedIn, userData } from '$lib/stores/auth-store';
+	import { doLogout, loggedIn, userData } from '$lib/stores/auth-store';
+	import ChangePasswordForm from '$lib/components/change-password-form.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
 	import { createConnectionContext } from '$lib/stores/connection-status.svelte';
 	import { settings, loadSettings, displayName } from '$lib/stores/settings-store';
@@ -114,68 +116,102 @@
 			goto(`/login?redirect=${redirectTo}`);
 		}
 	});
+
+	// Set while the user is still on a password somebody else chose for them
+	// - a new account, or one an admin has reset. Gating here rather than on
+	// /profile is deliberate: the temporary password was handed over out of
+	// band (spoken, messaged, written down), so it should not be enough to
+	// go on using the instance indefinitely. Cleared by the fresh access
+	// token the change-password form fetches on success.
+	const mustResetPassword = $derived($loggedIn && $userData.reset_password);
 </script>
 
 <svelte:head>
-	<title>{activeDashboard} · {title}</title>
+	<title>{mustResetPassword ? 'Choose a password' : activeDashboard} · {title}</title>
 </svelte:head>
 
-<Sidebar.Provider>
-	<AppSidebar {dashboards} {title} />
-	<Sidebar.Inset>
-		<header
-			class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear"
-		>
-			<div class="flex items-center gap-2 px-4">
-				<Sidebar.Trigger class="-ml-1" />
-				<Separator orientation="vertical" class="mr-2 data-[orientation=vertical]:h-4" />
-				<Breadcrumb.Root>
-					<Breadcrumb.List>
-						{#each crumbs as crumb, i (crumb.name)}
-							{#if i > 0}
-								<Breadcrumb.Separator />
-							{/if}
-							<Breadcrumb.Item>
-								{#if crumb.url && i < crumbs.length - 1}
-									<Breadcrumb.Link href={crumb.url}>{crumb.name}</Breadcrumb.Link>
-								{:else}
-									<Breadcrumb.Page>{crumb.name}</Breadcrumb.Page>
-								{/if}
-							</Breadcrumb.Item>
-						{/each}
-					</Breadcrumb.List>
-				</Breadcrumb.Root>
-			</div>
-
-			{#if shown}
-				<div class="ml-auto px-4 transition-opacity duration-1000" class:opacity-0={fading}>
-					{#if connStatus.connected}
-						<span class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-500">
-							<span class="relative flex size-2">
-								<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
-								></span>
-								<span class="relative inline-flex size-2 rounded-full bg-green-500"></span>
-							</span>
-							Live
-						</span>
-					{:else}
-						<span class="flex items-center gap-1.5 text-xs text-amber-500">
-							<span class="relative flex size-2">
-								<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"
-								></span>
-								<span class="relative inline-flex size-2 rounded-full bg-amber-400"></span>
-							</span>
-							Reconnecting…
-						</span>
-					{/if}
-				</div>
-			{/if}
-		</header>
-
-		<div class="p-2">
-			{@render children()}
+{#if mustResetPassword}
+	<!-- Rendered instead of the app, not over it: no sidebar, no nav, no
+	page content. The only ways out are changing the password or logging
+	out. -->
+	<main class="mx-auto grid min-h-svh max-w-md content-center gap-6 p-4">
+		<div class="grid gap-1">
+			<h1 class="text-xl font-semibold">Choose a password</h1>
+			<p class="text-muted-foreground text-sm">
+				You are signed in as {$userData.username} with a temporary password. Choose your own before continuing.
+			</p>
 		</div>
 
-		<AppMobilebar {dashboards} />
-	</Sidebar.Inset>
-</Sidebar.Provider>
+		<ChangePasswordForm
+			legend=""
+			description=""
+			currentLabel="Temporary password"
+			currentHelp="The one you signed in with just now."
+			submitLabel="Save and continue"
+		/>
+
+		<div class="flex justify-end">
+			<Button variant="ghost" class="cursor-pointer" onclick={() => doLogout()}>Log out</Button>
+		</div>
+	</main>
+{:else}
+	<Sidebar.Provider>
+		<AppSidebar {dashboards} {title} />
+		<Sidebar.Inset>
+			<header
+				class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear"
+			>
+				<div class="flex items-center gap-2 px-4">
+					<Sidebar.Trigger class="-ml-1" />
+					<Separator orientation="vertical" class="mr-2 data-[orientation=vertical]:h-4" />
+					<Breadcrumb.Root>
+						<Breadcrumb.List>
+							{#each crumbs as crumb, i (crumb.name)}
+								{#if i > 0}
+									<Breadcrumb.Separator />
+								{/if}
+								<Breadcrumb.Item>
+									{#if crumb.url && i < crumbs.length - 1}
+										<Breadcrumb.Link href={crumb.url}>{crumb.name}</Breadcrumb.Link>
+									{:else}
+										<Breadcrumb.Page>{crumb.name}</Breadcrumb.Page>
+									{/if}
+								</Breadcrumb.Item>
+							{/each}
+						</Breadcrumb.List>
+					</Breadcrumb.Root>
+				</div>
+
+				{#if shown}
+					<div class="ml-auto px-4 transition-opacity duration-1000" class:opacity-0={fading}>
+						{#if connStatus.connected}
+							<span class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-500">
+								<span class="relative flex size-2">
+									<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
+									></span>
+									<span class="relative inline-flex size-2 rounded-full bg-green-500"></span>
+								</span>
+								Live
+							</span>
+						{:else}
+							<span class="flex items-center gap-1.5 text-xs text-amber-500">
+								<span class="relative flex size-2">
+									<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"
+									></span>
+									<span class="relative inline-flex size-2 rounded-full bg-amber-400"></span>
+								</span>
+								Reconnecting…
+							</span>
+						{/if}
+					</div>
+				{/if}
+			</header>
+
+			<div class="p-2">
+				{@render children()}
+			</div>
+
+			<AppMobilebar {dashboards} />
+		</Sidebar.Inset>
+	</Sidebar.Provider>
+{/if}

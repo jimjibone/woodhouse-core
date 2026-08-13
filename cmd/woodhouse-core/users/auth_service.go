@@ -94,7 +94,7 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest, src netip.Add
 	}
 	srv.limits.RecordSuccess(in.Username)
 
-	tokens, err := srv.jwt.GenerateTokens(user.Username, user.Fullname, user.Role)
+	tokens, err := srv.jwt.GenerateTokens(user.Username, user.Fullname, user.Role, user.ResetPassword)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot generate access token")
 	}
@@ -177,7 +177,7 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 	var tokens *TokenDetails
 	if remainingDays < renewDays {
 		// Generate both tokens.
-		tokens, err = srv.jwt.GenerateTokens(user.Username, user.Fullname, user.Role)
+		tokens, err = srv.jwt.GenerateTokens(user.Username, user.Fullname, user.Role, user.ResetPassword)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to generate tokens: %s", err)
 		}
@@ -185,7 +185,7 @@ func (srv *AuthService) refreshBase(req *clientsapi.UserRefreshRequest) (*TokenD
 		srv.jwt.RevokeRefreshUUID(claims.RefreshUUID)
 	} else {
 		// Generate only the access token.
-		tokens, err = srv.jwt.GenerateAccessToken(user.Username, user.Fullname, user.Role, claims.RefreshUUID)
+		tokens, err = srv.jwt.GenerateAccessToken(user.Username, user.Fullname, user.Role, user.ResetPassword, claims.RefreshUUID)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to generate access token: %s", err)
 		}

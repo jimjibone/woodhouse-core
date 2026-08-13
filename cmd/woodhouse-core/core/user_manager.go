@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	ErrUserNotFound  = errors.New("user not found")
-	ErrAlreadyExists = errors.New("already exists")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrAlreadyExists     = errors.New("already exists")
+	ErrIncorrectPassword = errors.New("incorrect password")
 )
 
 type UserManager struct {
@@ -184,6 +185,76 @@ func (manager *UserManager) SetRole(username string, role auth.Role) error {
 	manager.changed = true
 
 	manager.log.Infof("user %q changed role to %q", user.Username, user.Role)
+
+	// Publish the new/updated user to the listeners.
+	manager.publisher.Pub(UserUpdate{Updated: user.Clone()})
+
+	return nil
+}
+
+// ChangePassword replaces a user's password, but only if currentPassword
+// matches the one already stored. This is the self-service path: the
+// re-entered current password is what stops a stolen session from changing
+// the password and locking the real owner out, so callers must not skip it
+// on the grounds that the request was already authenticated.
+//
+// The check and the write happen under one lock so a concurrent change
+// can't slip in between them.
+func (manager *UserManager) ChangePassword(username string, currentPassword, newPassword string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	user := manager.users[username]
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	if !user.IsCorrectPassword(currentPassword) {
+		manager.log.Warnf("user %q password change rejected: current password incorrect", user.Username)
+		return ErrIncorrectPassword
+	}
+
+	// SetPassword clears ResetPassword, which is what retires a temporary
+	// password an admin handed out.
+	if err := user.SetPassword(newPassword); err != nil {
+		return err
+	}
+
+	manager.users[user.Username] = user.Clone()
+	manager.changed = true
+
+	manager.log.Infof("user %q changed password", user.Username)
+
+	// Publish the new/updated user to the listeners.
+	manager.publisher.Pub(UserUpdate{Updated: user.Clone()})
+
+	return nil
+}
+
+// ResetPassword sets a temporary password for a user without knowing their
+// current one, and flags the account so they must choose a new password
+// before they can use the app. This is the admin path - for an admin
+// changing their own password, use ChangePassword.
+func (manager *UserManager) ResetPassword(username string, newPassword string) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	user := manager.users[username]
+	if user == nil {
+		return ErrUserNotFound
+	}
+
+	if err := user.SetPassword(newPassword); err != nil {
+		return err
+	}
+	// SetPassword clears the flag, so raise it after: the user is holding a
+	// password somebody else chose, exactly like a freshly created account.
+	user.ResetPassword = true
+
+	manager.users[user.Username] = user.Clone()
+	manager.changed = true
+
+	manager.log.Infof("user %q password reset by an admin, reset required on next login", user.Username)
 
 	// Publish the new/updated user to the listeners.
 	manager.publisher.Pub(UserUpdate{Updated: user.Clone()})

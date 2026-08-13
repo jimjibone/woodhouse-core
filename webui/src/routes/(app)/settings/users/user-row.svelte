@@ -8,7 +8,9 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { UpdateUserFullname, UpdateUserRole } from '@/stores/requests';
+	import { ResetUserPassword, UpdateUserFullname, UpdateUserRole } from '@/stores/requests';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { toast } from 'svelte-sonner';
 	import { doRefresh, userData } from '@/stores/auth-store';
 	import type { ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '@/tools/headline-case';
@@ -50,7 +52,44 @@
 		if (dialogOpen) return;
 		fullname = user.fullname;
 		role = roleToString(user.role);
+		newPassword = '';
+		resetError = null;
 	});
+
+	// Mirrors passwordMinSize in cmd/woodhouse-core/core/user.go.
+	const MIN_PASSWORD_LENGTH = 8;
+
+	let newPassword = $state('');
+	let resetError: string | null = $state(null);
+	let resetting = $state(false);
+
+	// An admin resetting their *own* password has to go through /profile
+	// instead: the server routes a self-change through the path that demands
+	// the current password, which this form has no field for and no business
+	// asking an admin to bypass.
+	const isSelf = $derived(user.username === $userData.username);
+
+	async function handleResetPassword() {
+		resetError = null;
+
+		if (newPassword.length < MIN_PASSWORD_LENGTH) {
+			resetError = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+			return;
+		}
+
+		resetting = true;
+		try {
+			const err = await ResetUserPassword(user.username, newPassword);
+			if (err) {
+				resetError = err.rawMessage;
+				return;
+			}
+			newPassword = '';
+			toast.success(`Password reset for ${user.username}. They must choose a new one at next sign-in.`);
+		} finally {
+			resetting = false;
+		}
+	}
 
 	async function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
@@ -129,7 +168,12 @@
 		<span class="font-semibold">{user.fullname ? user.fullname : 'No Name'}</span>
 		<span class="text-muted-foreground">{user.username}</span>
 	</div>
-	<div class="grow flex flex-row items-center justify-center">
+	<div class="grow flex flex-row items-center justify-center gap-2">
+		{#if user.resetPassword}
+			<!-- Either a brand new account or one that has just been reset:
+			they are still on a password somebody else chose. -->
+			<Badge variant="secondary">Password reset pending</Badge>
+		{/if}
 		<span class="text-muted-foreground">{roleToString(user.role)}</span>
 	</div>
 	<div class="shrink flex flex-row pr-2 gap-2 items-center">
@@ -196,6 +240,48 @@
 			<Field.Field>
 				<Button type="submit" class="cursor-pointer">Save</Button>
 			</Field.Field>
+
+			<Field.Group>
+				<Field.Set>
+					<Field.Label for="reset-password-{id}">Password</Field.Label>
+					{#if isSelf}
+						<Field.Description>
+							Change your own password from your <a href="/profile" class="underline">profile</a>, where it can be
+							confirmed against your current one.
+						</Field.Description>
+					{:else}
+						<Field.Description>
+							Set a temporary password for {user.username}. They must choose their own before they can use Woodhouse
+							again, and all of their existing sessions are signed out.
+						</Field.Description>
+						<Input
+							id="reset-password-{id}"
+							name="reset-password-{id}"
+							type="password"
+							placeholder="********"
+							autocomplete="off"
+							bind:value={newPassword}
+							onkeydown={handleKeydown}
+						/>
+						{#if resetError}
+							<Field.Error>{toSentenceCase(resetError)}</Field.Error>
+						{/if}
+						<Field.Field>
+							<!-- Deliberately type="button": resetting a password is
+							its own action, not part of saving name and role. -->
+							<Button
+								type="button"
+								variant="outline"
+								class="cursor-pointer"
+								disabled={resetting || newPassword.length === 0}
+								onclick={handleResetPassword}
+							>
+								{resetting ? 'Resetting…' : 'Reset password'}
+							</Button>
+						</Field.Field>
+					{/if}
+				</Field.Set>
+			</Field.Group>
 		</Field.Set>
 	</form>
 </Dialog>
