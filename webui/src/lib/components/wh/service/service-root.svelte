@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
-	import { ServiceSchema, type Service, type TimeValue } from '$lib/api/v1/clients/client_service_pb';
+	import {
+		Device_DeviceType,
+		ServiceSchema,
+		type Service
+	} from '$lib/api/v1/clients/client_service_pb';
 	import { type Snippet } from 'svelte';
 	import {
 		HeartIcon,
@@ -11,10 +15,15 @@
 		Loader2Icon,
 		SquareDashedIcon,
 		LampIcon,
+		GroupIcon,
 		BatteryWarningIcon,
 		BatteryLowIcon,
 		BatteryMediumIcon,
-		BatteryFullIcon
+		BatteryFullIcon,
+		ComponentIcon,
+
+		LayersIcon
+
 	} from '@lucide/svelte';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte.js';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -34,6 +43,7 @@
 		deviceName: string;
 		showDeviceName?: boolean;
 		deviceID: string;
+		deviceType?: Device_DeviceType;
 		online: boolean;
 		lastSeen?: Date;
 		batteryLevel?: bigint;
@@ -63,6 +73,7 @@
 		deviceName,
 		showDeviceName = true,
 		deviceID,
+		deviceType = undefined,
 		online,
 		lastSeen = undefined,
 		batteryLevel = undefined,
@@ -87,6 +98,8 @@
 		}
 		return service.alias ? service.alias : '';
 	});
+
+	let isGroup = $derived(deviceType === Device_DeviceType.GROUPED);
 
 	let popupTitle = $derived.by(() => {
 		let dev = deviceName !== '' ? deviceName : deviceID;
@@ -170,6 +183,9 @@
 					<div class="pl-2 pr-1 grid grid-cols-[1fr_auto] gap-1 max-w-full">
 						<span class="font-semibold whitespace-pre overflow-x-auto">
 							{serviceTitle}
+							{#if isGroup && showDeviceName}
+								<LayersIcon class="inline-block size-4 mb-0.5 text-muted-foreground" role="img" aria-label="Group" />
+							{/if}
 						</span>
 						<span class="flex flex-row gap-2 text-sm items-center whitespace-pre">
 							{#if lastSeen}
@@ -219,6 +235,9 @@
 						<Drawer.Title class="flex flex-row gap-2 items-center">
 							<span class="grow text-lg">
 								{popupTitle}
+								{#if isGroup}
+									<LayersIcon class="inline-block size-4 mb-0.5 text-muted-foreground" role="img" aria-label="Group" />
+								{/if}
 							</span>
 							{#if service.favorite}
 								<TooltipIcon variant="default" tooltip="Favorite">
@@ -259,6 +278,9 @@
 						<Dialog.Title class="flex flex-row gap-2 items-center">
 							<span class="grow">
 								{popupTitle}
+								{#if isGroup}
+									<LayersIcon class="inline-block size-4 mb-0.5 text-muted-foreground" role="img" aria-label="Group" />
+								{/if}
 							</span>
 							{#if service.favorite}
 								<TooltipIcon variant="default" tooltip="Favorite">

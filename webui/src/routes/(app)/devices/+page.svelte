@@ -4,7 +4,15 @@
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 	import { attributeToDate } from '$lib/tools/time';
 	import { cn } from '$lib/utils';
-	import { BatteryWarningIcon, BatteryLowIcon, BatteryMediumIcon, BatteryFullIcon, LampIcon } from '@lucide/svelte';
+	import { Device_DeviceType } from '$lib/api/v1/clients/client_service_pb';
+	import {
+		BatteryWarningIcon,
+		BatteryLowIcon,
+		BatteryMediumIcon,
+		BatteryFullIcon,
+		LampIcon,
+		LayersIcon
+	} from '@lucide/svelte';
 	import { search } from '$lib/stores/search';
 	import Fuse from 'fuse.js';
 	import { onDestroy } from 'svelte';
@@ -75,6 +83,9 @@
 							{:else}
 								{dev.id}
 							{/if}
+							{#if dev.typ === Device_DeviceType.GROUPED}
+								<LayersIcon class="inline-block size-4 mb-0.5 text-muted-foreground" role="img" aria-label="Group" />
+							{/if}
 						</a>
 						<span class="flex flex-row gap-2 text-sm md:text-xs items-center whitespace-pre">
 							{#if dev.lastSeen}
@@ -110,6 +121,7 @@
 								naturalWidth
 								{deviceName}
 								deviceID={dev.id}
+								deviceType={dev.typ}
 								online={dev.online}
 								service={srv}
 							/>

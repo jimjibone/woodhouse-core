@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
 	import { ServiceEnumerator } from '$lib/components/wh/service';
-	import { ServiceSchema } from '$lib/api/v1/clients/client_service_pb';
+	import { Device_DeviceType, ServiceSchema } from '$lib/api/v1/clients/client_service_pb';
 	import { toJsonString } from '@bufbuild/protobuf';
 	import { attributeToDate } from '$lib/tools/time';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
@@ -20,10 +20,12 @@
 	import {
 		Trash2Icon,
 		ChevronDownIcon,
+		ComponentIcon,
 		BatteryWarningIcon,
 		BatteryLowIcon,
 		BatteryMediumIcon,
-		BatteryFullIcon
+		BatteryFullIcon,
+		LayersIcon
 	} from '@lucide/svelte';
 
 	const deviceID = page.params.slug;
@@ -76,6 +78,9 @@
 			<div class="grid gap-1.5 min-w-0">
 				<h1 class={cn('text-2xl font-bold leading-tight truncate', !dev.name && 'font-mono')}>
 					{deviceName}
+					{#if dev.typ === Device_DeviceType.GROUPED}
+						<LayersIcon class="inline-block size-5 mb-1 text-muted-foreground" role="img" aria-label="Group" />
+					{/if}
 				</h1>
 				<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
 					<span class="flex items-center gap-1.5">
@@ -159,6 +164,7 @@
 							showDeviceName={false}
 							{deviceName}
 							deviceID={dev.id}
+							deviceType={dev.typ}
 							online={dev.online}
 							service={srv}
 						/>
