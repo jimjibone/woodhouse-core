@@ -35,6 +35,7 @@ type Favorite struct {
 	DeviceID     string
 	ServiceID    string
 	Name         Optional[string]
+	DeviceType   Optional[clientsapi.Device_DeviceType]
 	Online       Optional[bool]
 	LastSeen     Optional[time.Time]
 	BatteryLevel Optional[int64]
@@ -44,6 +45,14 @@ type Favorite struct {
 func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 	changed := false
 	if update != nil {
+		// The device type is only sent by some updates, so only take it when set.
+		if typ := update.GetTyp(); typ != clientsapi.Device_UNDEFINED {
+			if favorite.DeviceType.Get() != typ {
+				changed = true
+			}
+			favorite.DeviceType.Set(typ)
+		}
+
 		// Get the fave service.
 		gotInfo := false
 		gotOnline := false
@@ -154,6 +163,7 @@ func (favorite *Favorite) Clone() *Favorite {
 		DeviceID:     favorite.DeviceID,
 		ServiceID:    favorite.ServiceID,
 		Name:         favorite.Name,
+		DeviceType:   favorite.DeviceType,
 		Online:       favorite.Online,
 		LastSeen:     favorite.LastSeen,
 		BatteryLevel: favorite.BatteryLevel,
@@ -175,6 +185,9 @@ func (favorite *Favorite) Pb() *clientsapi.DeviceService {
 
 	if favorite.Name.Has() {
 		srv.DeviceName = proto.String(favorite.Name.Get())
+	}
+	if favorite.DeviceType.Has() {
+		srv.DeviceType = favorite.DeviceType.Get().Enum()
 	}
 	if favorite.Online.Has() {
 		srv.Online = proto.Bool(favorite.Online.Get())
