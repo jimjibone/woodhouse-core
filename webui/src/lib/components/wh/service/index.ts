@@ -9,6 +9,7 @@ import EnvironmentService from './environment.svelte';
 import GenericService from './generic.svelte';
 import InputService from './input.svelte';
 import LightbulbService from './lightbulb.svelte';
+import MotionService from './motion.svelte';
 import PresenceService from './presence.svelte';
 import RelayService from './relay.svelte';
 import UpdateService from './update.svelte';
@@ -28,6 +29,7 @@ export {
 	GenericService,
 	InputService,
 	LightbulbService,
+	MotionService,
 	PresenceService,
 	RelayService,
 	UpdateService,
