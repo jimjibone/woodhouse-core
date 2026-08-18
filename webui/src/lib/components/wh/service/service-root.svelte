@@ -67,6 +67,11 @@
 		details?: Snippet;
 		children?: Snippet<[]>;
 		drawerOpen?: boolean;
+		/**
+		 * Label used in the summary title when the service has no alias,
+		 * e.g. the service ID. It is formatted with headline case.
+		 */
+		fallbackAlias?: string;
 	};
 
 	let {
@@ -87,16 +92,19 @@
 		details = undefined,
 		children = undefined,
 		drawerOpen = $bindable(false),
-		naturalWidth = false
+		naturalWidth = false,
+		fallbackAlias = ''
 	}: Props = $props();
+
+	let serviceLabel = $derived(service.alias ? service.alias : fallbackAlias);
 
 	let serviceTitle = $derived.by(() => {
 		if (showDeviceName) {
 			let dev = deviceName !== '' ? deviceName : deviceID;
-			let srv = service.alias ? ': ' + toHeadlineCase(service.alias) : '';
+			let srv = serviceLabel ? ': ' + toHeadlineCase(serviceLabel) : '';
 			return dev + srv;
 		}
-		return service.alias ? service.alias : '';
+		return serviceLabel ? toHeadlineCase(serviceLabel) : '';
 	});
 
 	let isGroup = $derived(deviceType === Device_DeviceType.GROUPED);
