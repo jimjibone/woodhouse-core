@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -219,6 +220,41 @@ func (manager *GroupManager) UpdateGroupName(groupID, name string) error {
 	return nil
 }
 
+// handleInfoRequest handles an action request for a group's synthetic info
+// service. Only the name attribute is writable; a rename is routed to
+// UpdateGroupName.
+func (manager *GroupManager) handleInfoRequest(groupID string, req *clientsapi.ActionRequest) {
+	respond := func(st clientsapi.ActionResponse_ActionStatus, details string) {
+		manager.deviceManager.PushActionResponse(GroupClientID, &clientsapi.ActionResponse{
+			ActionId: req.GetActionId(),
+			Status:   st,
+			Details:  details,
+		}, false)
+	}
+
+	for _, val := range req.GetValues() {
+		if val.GetId() != "name" {
+			respond(clientsapi.ActionResponse_ERR_READONLY, "attribute is read only")
+			return
+		}
+		if val.GetText() == nil {
+			respond(clientsapi.ActionResponse_ERROR, "incorrect value type for name")
+			return
+		}
+		name := strings.TrimSpace(val.GetText().GetValue())
+		if name == "" {
+			respond(clientsapi.ActionResponse_ERROR, "name cannot be empty")
+			return
+		}
+		if err := manager.UpdateGroupName(groupID, name); err != nil {
+			respond(clientsapi.ActionResponse_ERROR, err.Error())
+			return
+		}
+	}
+
+	respond(clientsapi.ActionResponse_COMPLETE, "")
+}
+
 func (manager *GroupManager) UpdateGroupMembers(groupID string, members []*GroupMember) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -413,7 +449,11 @@ func (manager *GroupManager) run(ctx context.Context) {
 		if request.Request != nil {
 			for _, grp := range manager.groups {
 				if grp.GroupID == request.Request.GetDeviceId() {
-					go grp.HandleRequest(request.Request, manager.deviceManager)
+					if request.Request.GetServiceId() == GroupInfoServiceID {
+						go manager.handleInfoRequest(grp.GroupID, request.Request)
+					} else {
+						go grp.HandleRequest(request.Request, manager.deviceManager)
+					}
 				}
 			}
 		}

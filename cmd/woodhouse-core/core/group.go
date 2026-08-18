@@ -234,11 +234,15 @@ func (group *Group) initUpdate(fullState bool) *clientsapi.Device {
 	return update
 }
 
+// GroupInfoServiceID is the service ID of the synthetic info service emitted
+// for every group.
+const GroupInfoServiceID = "info"
+
 // Adds the info service to the device update.
 func (group *Group) updateInfo(update *clientsapi.Device) {
 	if update != nil {
 		update.Services = append(update.Services, &clientsapi.Service{
-			Id:  "info",
+			Id:  GroupInfoServiceID,
 			Typ: clientsapi.Service_INFO,
 			Attrs: []*clientsapi.Attribute{
 				&clientsapi.Attribute{
