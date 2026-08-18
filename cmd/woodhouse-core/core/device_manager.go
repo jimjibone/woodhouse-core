@@ -399,6 +399,60 @@ func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID st
 	return actionID, dev.ClientID, nil
 }
 
+// ValidateActionPerms rejects action values that write to attributes the last
+// known device state reports as read-only. Attributes not present in the
+// stored state are allowed through; write-only attributes may never appear in
+// the state and the bridge remains the final authority on permissions.
+func (manager *DeviceManager) ValidateActionPerms(deviceID, serviceID string, values []*clientsapi.Value) error {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	dev, found := manager.devices[deviceID]
+	if !found {
+		return status.Error(codes.NotFound, "device not found")
+	}
+
+	srv, found := dev.Services[serviceID]
+	if !found {
+		return status.Error(codes.NotFound, "service not found")
+	}
+
+	for _, val := range values {
+		for _, attr := range srv.GetAttrs() {
+			if attr.GetId() == val.GetId() {
+				if attributePerms(attr) == clientsapi.Permissions_PERM_READONLY {
+					return status.Errorf(codes.FailedPrecondition, "attribute %q is read only", val.GetId())
+				}
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+func attributePerms(attr *clientsapi.Attribute) clientsapi.Permissions {
+	switch {
+	case attr.GetBool() != nil:
+		return attr.GetBool().GetPerms()
+	case attr.GetInt() != nil:
+		return attr.GetInt().GetPerms()
+	case attr.GetFloat() != nil:
+		return attr.GetFloat().GetPerms()
+	case attr.GetText() != nil:
+		return attr.GetText().GetPerms()
+	case attr.GetDuration() != nil:
+		return attr.GetDuration().GetPerms()
+	case attr.GetTime() != nil:
+		return attr.GetTime().GetPerms()
+	case attr.GetColor() != nil:
+		return attr.GetColor().GetPerms()
+	case attr.GetEnum() != nil:
+		return attr.GetEnum().GetPerms()
+	}
+	return clientsapi.Permissions_PERM_UNDEFINED
+}
+
 func (manager *DeviceManager) load() error {
 	// Migrate 'devices' to 'devices.json'.
 	if manager.store.Has("devices") {

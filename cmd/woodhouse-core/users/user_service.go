@@ -677,6 +677,10 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 		return status.Error(codes.InvalidArgument, "service_id required")
 	}
 
+	if err := service.deviceManager.ValidateActionPerms(req.GetDeviceId(), req.GetServiceId(), req.GetValues()); err != nil {
+		return err
+	}
+
 	actionID, clientID, err := service.deviceManager.PrepAction(req.GetDeviceId())
 	if err != nil {
 		return err
