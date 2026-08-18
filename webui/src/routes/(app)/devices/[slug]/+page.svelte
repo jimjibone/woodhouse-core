@@ -4,15 +4,24 @@
 	import { goto } from '$app/navigation';
 	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
 	import { ServiceEnumerator } from '$lib/components/wh/service';
-	import { Device_DeviceType, ServiceSchema } from '$lib/api/v1/clients/client_service_pb';
-	import { toJsonString } from '@bufbuild/protobuf';
+	import {
+		Device_DeviceType,
+		ServiceSchema,
+		Service_ServiceType,
+		Permissions,
+		ValueSchema,
+		TextValueSchema,
+		ActionResponse_ActionStatus
+	} from '$lib/api/v1/clients/client_service_pb';
+	import { create, toJsonString } from '@bufbuild/protobuf';
 	import { attributeToDate } from '$lib/tools/time';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
-	import { SendRemoveDeviceRequest } from '$lib/stores/requests';
+	import { SendActionRequest, SendRemoveDeviceRequest } from '$lib/stores/requests';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Dialog from '$lib/components/wh/ui/dialog.svelte';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 	import { type ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '$lib/tools/headline-case';
@@ -25,7 +34,8 @@
 		BatteryLowIcon,
 		BatteryMediumIcon,
 		BatteryFullIcon,
-		LayersIcon
+		LayersIcon,
+		PencilIcon
 	} from '@lucide/svelte';
 
 	const deviceID = page.params.slug;
@@ -54,6 +64,44 @@
 	let removeError = $state<ConnectError | null>(null);
 	let removing = $state(false);
 	let rawOpen = $state(false);
+
+	// Renaming is only offered when the device's info service reports the name
+	// attribute as writable; bridges that support rename advertise this.
+	const infoService = $derived(dev?.services.find((srv) => srv.typ === Service_ServiceType.INFO));
+	const nameAttr = $derived(infoService?.attrs.find((attr) => attr.id === 'name'));
+	const canRename = $derived(
+		nameAttr?.text?.perms === Permissions.PERM_READWRITE || nameAttr?.text?.perms === Permissions.PERM_WRITEONLY
+	);
+
+	let renameOpen = $state(false);
+	let newName = $state('');
+	let renaming = $state(false);
+	let renameError = $state<string | null>(null);
+
+	async function handleRename(event: SubmitEvent) {
+		event.preventDefault();
+		const value = newName.trim();
+		if (!infoService || !value) return;
+		renaming = true;
+		renameError = null;
+		await SendActionRequest(
+			deviceID!,
+			infoService.id,
+			[create(ValueSchema, { id: 'name', text: create(TextValueSchema, { value }) })],
+			(response) => {
+				if (response.status >= ActionResponse_ActionStatus.COMPLETE) {
+					renaming = false;
+					if (response.status === ActionResponse_ActionStatus.COMPLETE) {
+						// The displayed name updates via the devices stream once the
+						// bridge confirms the rename.
+						renameOpen = false;
+					} else {
+						renameError = response.details || 'rename failed';
+					}
+				}
+			}
+		);
+	}
 
 	async function handleRemove() {
 		removing = true;
@@ -121,17 +169,34 @@
 					{/if}
 				</div>
 			</div>
-			<Button
-				variant="destructive"
-				size="icon"
-				class="size-8 shrink-0 cursor-pointer"
-				onclick={() => {
-					removeError = null;
-					removeConfirmOpen = true;
-				}}
-			>
-				<Trash2Icon />
-			</Button>
+			<div class="flex items-center gap-2 shrink-0">
+				{#if canRename}
+					<Button
+						variant="secondary"
+						size="icon"
+						class="size-8 cursor-pointer"
+						aria-label="Rename device"
+						onclick={() => {
+							renameError = null;
+							newName = dev?.name ?? '';
+							renameOpen = true;
+						}}
+					>
+						<PencilIcon />
+					</Button>
+				{/if}
+				<Button
+					variant="destructive"
+					size="icon"
+					class="size-8 cursor-pointer"
+					onclick={() => {
+						removeError = null;
+						removeConfirmOpen = true;
+					}}
+				>
+					<Trash2Icon />
+				</Button>
+			</div>
 		</div>
 
 		<!-- Device Info Card -->
@@ -189,6 +254,39 @@
 				{/each}
 			</Collapsible.Content>
 		</Collapsible.Root>
+
+		<!-- Rename Device Dialog -->
+		<Dialog bind:open={renameOpen} title="Rename Device">
+			<form onsubmit={handleRename} class="flex flex-col gap-4 pt-2">
+				<Input
+					type="text"
+					placeholder="Device name"
+					autocomplete="off"
+					bind:value={newName}
+					disabled={renaming}
+					required
+				/>
+
+				{#if renameError}
+					<Field.Error>{toSentenceCase(renameError)}</Field.Error>
+				{/if}
+
+				<div class="flex gap-2 justify-end">
+					<Button
+						type="button"
+						variant="secondary"
+						class="cursor-pointer"
+						onclick={() => (renameOpen = false)}
+						disabled={renaming}
+					>
+						Cancel
+					</Button>
+					<Button type="submit" class="cursor-pointer" disabled={renaming || !newName.trim() || newName.trim() === dev.name}>
+						{renaming ? 'Renaming…' : 'Rename'}
+					</Button>
+				</div>
+			</form>
+		</Dialog>
 
 		<!-- Remove Device Dialog -->
 		<Dialog bind:open={removeConfirmOpen} title="Remove Device">
