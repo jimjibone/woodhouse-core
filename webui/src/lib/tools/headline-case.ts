@@ -4,7 +4,12 @@ export function toHeadlineCase(input: string): string {
 		"on", "in", "at", "to", "from", "by", "with", "of", "over"
 	]);
 
-	const words = input.toLowerCase().split(/\s+/);
+	// Split on whitespace as well as underscores and hyphens so snake_case
+	// IDs like "permit_join" become "Permit Join".
+	const words = input
+		.toLowerCase()
+		.split(/[\s_-]+/)
+		.filter((word) => word.length > 0);
 
 	return words
 		.map((word, index) => {

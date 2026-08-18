@@ -6,6 +6,7 @@ import ContactService from './contact.svelte';
 import CoverService from './cover.svelte';
 import EnumService from './enum.svelte';
 import EnvironmentService from './environment.svelte';
+import GenericService from './generic.svelte';
 import InputService from './input.svelte';
 import LightbulbService from './lightbulb.svelte';
 import PresenceService from './presence.svelte';
@@ -24,6 +25,7 @@ export {
 	CoverService,
 	EnumService,
 	EnvironmentService,
+	GenericService,
 	InputService,
 	LightbulbService,
 	PresenceService,

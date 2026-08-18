@@ -30,6 +30,8 @@
 			<Services.EnumService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.ENVIRONMENT}
 			<Services.EnvironmentService {service} {...rest} />
+		{:else if service.typ == Service_ServiceType.GENERIC}
+			<Services.GenericService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.INPUT}
 			<Services.InputService {service} {...rest} />
 		{:else if service.typ == Service_ServiceType.LIGHTBULB}
