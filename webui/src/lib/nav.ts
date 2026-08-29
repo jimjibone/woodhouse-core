@@ -1,4 +1,10 @@
-import { ChevronsLeftRightEllipsisIcon, LayersIcon, SlidersHorizontalIcon, UsersIcon } from '@lucide/svelte';
+import {
+	ChevronsLeftRightEllipsisIcon,
+	LayersIcon,
+	MapPinIcon,
+	SlidersHorizontalIcon,
+	UsersIcon
+} from '@lucide/svelte';
 
 export type NavItem = {
 	name: string;
@@ -15,7 +21,8 @@ export const settingsNav: NavItem[] = [
 	{ name: 'General', url: '/settings/general', icon: SlidersHorizontalIcon },
 	{ name: 'Clients', url: '/settings/clients', icon: ChevronsLeftRightEllipsisIcon },
 	{ name: 'Users', url: '/settings/users', icon: UsersIcon },
-	{ name: 'Groups', url: '/settings/groups', icon: LayersIcon }
+	{ name: 'Groups', url: '/settings/groups', icon: LayersIcon },
+	{ name: 'Zones', url: '/settings/zones', icon: MapPinIcon }
 ];
 
 // A nav entry is active for its own page and anything beneath it. The trailing

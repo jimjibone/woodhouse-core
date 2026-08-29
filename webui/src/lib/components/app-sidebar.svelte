@@ -7,14 +7,21 @@
 	import { toggleMode, mode } from 'mode-watcher';
 	import { page } from '$app/state';
 	import { type Dashboards, isPathActive } from '$lib/nav';
+	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import { zoneIcon } from '$lib/zone-icons';
 
 	let {
 		ref = $bindable(null),
 		collapsible = 'icon',
 		dashboards = [],
+		zones = [],
 		title = 'Woodhouse',
 		...restProps
-	}: ComponentProps<typeof Sidebar.Root> & { dashboards: Dashboards; title?: string } = $props();
+	}: ComponentProps<typeof Sidebar.Root> & {
+		dashboards: Dashboards;
+		zones?: Zone[];
+		title?: string;
+	} = $props();
 </script>
 
 <Sidebar.Root {collapsible} {...restProps}>
@@ -54,6 +61,33 @@
 				{/each}
 			</Sidebar.Menu>
 		</Sidebar.Group>
+
+		<!--
+			Zones are visible to every user - they are how you navigate to a room's
+			devices. Only creating and editing them is admin-only, which lives under
+			Settings. The group is omitted entirely until a zone exists so a fresh
+			install does not show an empty heading.
+		-->
+		{#if zones.length > 0}
+			<Sidebar.Group>
+				<Sidebar.GroupLabel>Zones</Sidebar.GroupLabel>
+				<Sidebar.Menu>
+					{#each zones as zone (zone.id)}
+						{@const ZoneIcon = zoneIcon(zone.icon)}
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton isActive={isPathActive(page.url.pathname, '/zones/' + zone.id)}>
+								{#snippet child({ props })}
+									<a href={'/zones/' + zone.id} {...props}>
+										<ZoneIcon />
+										<span>{zone.name}</span>
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+					{/each}
+				</Sidebar.Menu>
+			</Sidebar.Group>
+		{/if}
 	</Sidebar.Content>
 	<Sidebar.Separator />
 	<Sidebar.Footer>

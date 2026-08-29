@@ -3,6 +3,8 @@ package users
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/jimjibone/log"
@@ -23,6 +25,7 @@ type UserService struct {
 	deviceManager    *core.DeviceManager
 	favoritesManager *core.FavoritesManager
 	groupManager     *core.GroupManager
+	zoneManager      *core.ZoneManager
 	userManager      *core.UserManager
 	clientManager    *core.ClientManager
 	settingsManager  *core.SettingsManager
@@ -30,12 +33,13 @@ type UserService struct {
 	userJwt          *JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, userManager *core.UserManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, zoneManager *core.ZoneManager, userManager *core.UserManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
 	service := &UserService{
 		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:    deviceManager,
 		favoritesManager: favoritesManager,
 		groupManager:     groupManager,
+		zoneManager:      zoneManager,
 		userManager:      userManager,
 		clientManager:    clientManager,
 		settingsManager:  settingsManager,
@@ -667,6 +671,199 @@ func (service *UserService) RemoveGroup(ctx context.Context, req *clientsapi.Rem
 	}
 
 	return &clientsapi.RemoveGroupResponse{}, nil
+}
+
+// zoneIconPattern is a deliberately loose sanity check. The icon is an opaque
+// key the client maps onto its own icon set - the server has no business
+// knowing which names are valid, only that the value is a short, boring
+// identifier rather than arbitrary text.
+var zoneIconPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
+
+func validZoneIcon(icon string) error {
+	if icon == "" {
+		return errors.New("icon not defined")
+	}
+	if len(icon) > 64 {
+		return errors.New("icon too long")
+	}
+	if !zoneIconPattern.MatchString(icon) {
+		return errors.New("icon must be lowercase letters, digits and hyphens")
+	}
+	return nil
+}
+
+func (service *UserService) ZonesStream(req *clientsapi.ZonesStreamRequest, server clientsapi.UserService_ZonesStreamServer) error {
+	claims := server.Context().Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+
+	service.log.Debugf("zone stream started")
+	defer service.log.Debugf("zone stream finished")
+
+	revocations := service.userJwt.SubscribeRevocations()
+	defer revocations.Close()
+
+	lis := service.zoneManager.GetListener()
+	defer lis.Close()
+
+	heartbeat := func() *clientsapi.ZonesStreamResponse {
+		return &clientsapi.ZonesStreamResponse{
+			Update: &clientsapi.ZonesStreamResponse_Heartbeat{Heartbeat: &clientsapi.Heartbeat{}},
+		}
+	}
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-server.Context().Done():
+			return status.Errorf(codes.Canceled, "context canceled")
+
+		case revoked := <-revocations.Sub():
+			if revoked == claims.RefreshUUID {
+				return status.Error(codes.Unauthenticated, "session revoked")
+			}
+
+		case <-ticker.C:
+			// Keepalive so the client can spot a dead stream.
+			err := server.Send(heartbeat())
+			if err != nil {
+				service.log.Errorf("failed to send zone stream keepalive: %s", err)
+				return status.Errorf(codes.Internal, "failed to send keepalive")
+			}
+
+		case update := <-lis.Sub():
+			// The three manager states map one-to-one onto the three oneof
+			// cases, so every response carries exactly one thing. An update
+			// with neither field set is the manager's end-of-initial-batch
+			// sentinel, which the client reads off the first heartbeat.
+			msg := &clientsapi.ZonesStreamResponse{}
+			switch {
+			case update.Updated != nil:
+				msg.Update = &clientsapi.ZonesStreamResponse_ZoneUpdate{ZoneUpdate: update.Updated.Pb()}
+			case update.Removed != nil:
+				msg.Update = &clientsapi.ZonesStreamResponse_RemovedId{RemovedId: *update.Removed}
+			default:
+				msg = heartbeat()
+			}
+
+			err := server.Send(msg)
+			if err != nil {
+				service.log.Errorf("failed to send zone stream update: %s", err)
+				return status.Errorf(codes.Internal, "failed to send update")
+			}
+		}
+	}
+}
+
+func (service *UserService) AddZone(ctx context.Context, req *clientsapi.AddZoneRequest) (*clientsapi.AddZoneResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to add zones")
+	}
+
+	name := strings.TrimSpace(req.GetName())
+	if name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name not defined")
+	}
+	if err := validZoneIcon(req.GetIcon()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+	}
+
+	// Generate a unique ID for the zone.
+	zoneID, err := random.GenerateRandomString(10)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate zone id: %s", err)
+	}
+
+	zone := core.NewZone(zoneID, name, req.GetIcon(), req.GetDeviceIds())
+	err = service.zoneManager.AddZone(zone)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to add zone: %s", err)
+	}
+
+	return &clientsapi.AddZoneResponse{
+		Zone: zone.Pb(),
+	}, nil
+}
+
+func (service *UserService) UpdateZone(ctx context.Context, req *clientsapi.UpdateZoneRequest) (*clientsapi.UpdateZoneResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to update zones")
+	}
+	if req.GetId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "id not defined")
+	}
+
+	if req.Name != nil {
+		name := strings.TrimSpace(req.GetName())
+		if name == "" {
+			return nil, status.Errorf(codes.InvalidArgument, "name cannot be empty")
+		}
+		if err := service.zoneManager.UpdateZoneName(req.GetId(), name); err != nil {
+			return nil, zoneError("failed to update zone name", err)
+		}
+	}
+
+	if req.Icon != nil {
+		if err := validZoneIcon(req.GetIcon()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+		}
+		if err := service.zoneManager.UpdateZoneIcon(req.GetId(), req.GetIcon()); err != nil {
+			return nil, zoneError("failed to update zone icon", err)
+		}
+	}
+
+	// Membership is only touched when the caller says so, so that clearing a
+	// zone is expressible - an empty device list is a real edit, not a
+	// "leave it alone".
+	if req.GetSetDevices() {
+		if err := service.zoneManager.SetZoneDevices(req.GetId(), req.GetDeviceIds()); err != nil {
+			return nil, zoneError("failed to update zone devices", err)
+		}
+	}
+
+	return &clientsapi.UpdateZoneResponse{}, nil
+}
+
+func (service *UserService) RemoveZone(ctx context.Context, req *clientsapi.RemoveZoneRequest) (*clientsapi.RemoveZoneResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to remove zones")
+	}
+	if req.GetId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "id not defined")
+	}
+
+	err := service.zoneManager.RemoveZone(req.GetId())
+	if err != nil {
+		return nil, zoneError("failed to remove zone", err)
+	}
+
+	return &clientsapi.RemoveZoneResponse{}, nil
+}
+
+// zoneError maps a ZoneManager error onto a gRPC status. A missing zone is the
+// caller naming something that is not there, not a server fault - the webui
+// shows these messages verbatim, so the code decides whether the user sees a
+// retryable failure or a correctable one.
+func zoneError(what string, err error) error {
+	if errors.Is(err, core.ErrZoneNotFound) {
+		return status.Errorf(codes.NotFound, "%s: %s", what, err)
+	}
+	return status.Errorf(codes.InvalidArgument, "%s: %s", what, err)
 }
 
 func (service *UserService) SendAction(req *clientsapi.ActionRequest, server clientsapi.UserService_SendActionServer) error {

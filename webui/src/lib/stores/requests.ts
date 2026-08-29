@@ -29,6 +29,12 @@ import {
 	ForgetClientResponseSchema,
 	UpdateGroupRequestSchema,
 	UpdateGroupResponseSchema,
+	AddZoneRequestSchema,
+	AddZoneResponseSchema,
+	UpdateZoneRequestSchema,
+	UpdateZoneResponseSchema,
+	RemoveZoneRequestSchema,
+	RemoveZoneResponseSchema,
 	UpdateUserRequestSchema,
 	UpdateUserResponseSchema,
 	UserImageRequestSchema,
@@ -310,6 +316,64 @@ export const RemoveGroup = async (id: string): Promise<null | ConnectError> => {
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error remove group: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const AddZone = async (name: string, icon: string, deviceIds: string[]): Promise<null | ConnectError> => {
+	const request = create(AddZoneRequestSchema, { name, icon, deviceIds });
+	console.log('sending add zone: ' + toJsonString(AddZoneRequestSchema, request));
+	try {
+		const response = await UserServiceClient.addZone(request);
+		console.log('received add zone: ' + toJsonString(AddZoneResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error add zone: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+// Membership is only sent when `deviceIds` is passed, and then it replaces the
+// zone's devices in full. Passing an empty array empties the zone - that is why
+// the request carries an explicit setDevices flag rather than treating an empty
+// list as "leave it alone", the way UpdateGroup does.
+export const UpdateZone = async (
+	id: string,
+	changes: { name?: string; icon?: string; deviceIds?: string[] }
+): Promise<null | ConnectError> => {
+	const request = create(UpdateZoneRequestSchema, {
+		id,
+		name: changes.name,
+		icon: changes.icon,
+		setDevices: changes.deviceIds !== undefined,
+		deviceIds: changes.deviceIds ?? []
+	});
+	console.log('sending update zone: ' + toJsonString(UpdateZoneRequestSchema, request));
+	try {
+		const response = await UserServiceClient.updateZone(request);
+		console.log('received update zone: ' + toJsonString(UpdateZoneResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error update zone: ' + err.message);
+			return err;
+		}
+	}
+	return null;
+};
+
+export const RemoveZone = async (id: string): Promise<null | ConnectError> => {
+	const request = create(RemoveZoneRequestSchema, { id });
+	console.log('sending remove zone: ' + toJsonString(RemoveZoneRequestSchema, request));
+	try {
+		const response = await UserServiceClient.removeZone(request);
+		console.log('received remove zone: ' + toJsonString(RemoveZoneResponseSchema, response));
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error remove zone: ' + err.message);
 			return err;
 		}
 	}

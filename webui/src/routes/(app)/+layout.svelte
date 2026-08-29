@@ -13,8 +13,16 @@
 	import { goto } from '$app/navigation';
 	import { createConnectionContext } from '$lib/stores/connection-status.svelte';
 	import { settings, loadSettings, displayName } from '$lib/stores/settings-store';
+	import { ZonesStore } from '$lib/stores/zones-stream';
+	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import { onDestroy } from 'svelte';
 
 	let { children } = $props();
+
+	// Zones drive both navs, so they are loaded here rather than per-page. Every
+	// user sees them; only editing them is admin-only.
+	let zones = $state<Zone[]>([]);
+	onDestroy(ZonesStore.subscribe((update) => (zones = update.zones)));
 
 	// What the interface calls this server feeds the sidebar and the tab title,
 	// so load it as soon as we have a session rather than only on /settings.
@@ -68,6 +76,13 @@
 		// needs its own case rather than falling through to "Unknown".
 		if (isPathActive(path, '/profile')) {
 			return [{ name: 'Profile' }];
+		}
+
+		// Zone pages are not in the dashboards array - there is one per zone and
+		// they come from the server - so they need their own trail.
+		if (isPathActive(path, '/zones')) {
+			const zone = zones.find((z) => path === '/zones/' + z.id);
+			return zone ? [{ name: 'Zones', url: '/zones' }, { name: zone.name }] : [{ name: 'Zones' }];
 		}
 
 		const dashboard = dashboards.find((item) => isPathActive(path, item.url));
@@ -156,7 +171,7 @@
 	</main>
 {:else}
 	<Sidebar.Provider>
-		<AppSidebar {dashboards} {title} />
+		<AppSidebar {dashboards} {zones} {title} />
 		<Sidebar.Inset>
 			<header
 				class="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear"
@@ -211,7 +226,7 @@
 				{@render children()}
 			</div>
 
-			<AppMobilebar {dashboards} />
+			<AppMobilebar {dashboards} {zones} />
 		</Sidebar.Inset>
 	</Sidebar.Provider>
 {/if}

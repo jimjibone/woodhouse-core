@@ -164,6 +164,12 @@ func main() {
 			}
 			defer groupManager.Close()
 
+			zoneManager, err := core.NewZoneManager(store, deviceManager)
+			if err != nil {
+				return fmt.Errorf("failed to create zone manager: %s", err)
+			}
+			defer zoneManager.Close()
+
 			userManager, err := core.NewUserManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create user manager: %s", err)
@@ -191,7 +197,7 @@ func main() {
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, zoneManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
