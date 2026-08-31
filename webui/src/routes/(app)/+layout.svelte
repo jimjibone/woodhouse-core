@@ -9,6 +9,7 @@
 	import { page } from '$app/state';
 	import { doLogout, loggedIn, userData } from '$lib/stores/auth-store';
 	import ChangePasswordForm from '$lib/components/change-password-form.svelte';
+	import NotificationsBell from '$lib/components/notifications-bell.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
 	import { createConnectionContext } from '$lib/stores/connection-status.svelte';
@@ -197,29 +198,36 @@
 					</Breadcrumb.Root>
 				</div>
 
-				{#if shown}
-					<div class="ml-auto px-4 transition-opacity duration-1000" class:opacity-0={fading}>
-						{#if connStatus.connected}
-							<span class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-500">
-								<span class="relative flex size-2">
-									<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
-									></span>
-									<span class="relative inline-flex size-2 rounded-full bg-green-500"></span>
+				<!-- ml-auto lives on this always-present wrapper rather than on the
+				     connection indicator, which is conditional: with it on the
+				     indicator, the bell jumps to the breadcrumb whenever the
+				     indicator is not shown. -->
+				<div class="ml-auto flex items-center gap-2 px-4">
+					{#if shown}
+						<div class="transition-opacity duration-1000" class:opacity-0={fading}>
+							{#if connStatus.connected}
+								<span class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-500">
+									<span class="relative flex size-2">
+										<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
+										></span>
+										<span class="relative inline-flex size-2 rounded-full bg-green-500"></span>
+									</span>
+									Live
 								</span>
-								Live
-							</span>
-						{:else}
-							<span class="flex items-center gap-1.5 text-xs text-amber-500">
-								<span class="relative flex size-2">
-									<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"
-									></span>
-									<span class="relative inline-flex size-2 rounded-full bg-amber-400"></span>
+							{:else}
+								<span class="flex items-center gap-1.5 text-xs text-amber-500">
+									<span class="relative flex size-2">
+										<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"
+										></span>
+										<span class="relative inline-flex size-2 rounded-full bg-amber-400"></span>
+									</span>
+									Reconnecting…
 								</span>
-								Reconnecting…
-							</span>
-						{/if}
-					</div>
-				{/if}
+							{/if}
+						</div>
+					{/if}
+					<NotificationsBell />
+				</div>
 			</header>
 
 			<div class="p-2">

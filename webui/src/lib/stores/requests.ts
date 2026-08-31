@@ -12,6 +12,10 @@ import {
 import {
 	AddFavoriteRequestSchema,
 	AddGroupRequestSchema,
+	DismissNotificationRequestSchema,
+	MarkAllNotificationsReadRequestSchema,
+	MarkNotificationReadRequestSchema,
+	SendTestNotificationRequestSchema,
 	AddGroupResponseSchema,
 	AddUserRequestSchema,
 	AddUserResponseSchema,
@@ -39,8 +43,11 @@ import {
 	UpdateUserResponseSchema,
 	UserImageRequestSchema,
 	UserRole,
+	NotificationLevel,
+	NotificationAudience_Kind,
 	GetSettingsRequestSchema,
 	UpdateSettingsRequestSchema,
+	type Notification,
 	type UpdateUserRequest
 } from '$lib/api/v1/clients/user_service_pb';
 import { type GroupMember } from '$lib/api/v1/clients/group_pb';
@@ -473,6 +480,77 @@ export const UpdateSettings = async (update: {
 	} catch (err) {
 		if (err instanceof ConnectError) {
 			console.error('error update settings: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
+};
+
+export const MarkNotificationRead = async (id: string): Promise<null | ConnectError> => {
+	const request = create(MarkNotificationReadRequestSchema, { id });
+	console.log('sending mark notification read: ' + toJsonString(MarkNotificationReadRequestSchema, request));
+	try {
+		await UserServiceClient.markNotificationRead(request);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error mark notification read: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
+	return null;
+};
+
+export const MarkAllNotificationsRead = async (): Promise<null | ConnectError> => {
+	const request = create(MarkAllNotificationsReadRequestSchema, {});
+	console.log('sending mark all notifications read');
+	try {
+		await UserServiceClient.markAllNotificationsRead(request);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error mark all notifications read: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
+	return null;
+};
+
+export const DismissNotification = async (id: string): Promise<null | ConnectError> => {
+	const request = create(DismissNotificationRequestSchema, { id });
+	console.log('sending dismiss notification: ' + toJsonString(DismissNotificationRequestSchema, request));
+	try {
+		await UserServiceClient.dismissNotification(request);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error dismiss notification: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
+	return null;
+};
+
+// Raises a notification for the given audience. The only notification trigger
+// there is for now - everything else that will eventually raise one (devices,
+// bridges, reactors, the core itself) goes through the same manager.
+export const SendTestNotification = async (test: {
+	title?: string;
+	body?: string;
+	level?: NotificationLevel;
+	audience?: { kind: NotificationAudience_Kind; role?: UserRole; username?: string };
+}): Promise<Notification | ConnectError> => {
+	const request = create(SendTestNotificationRequestSchema, test);
+	console.log('sending test notification: ' + toJsonString(SendTestNotificationRequestSchema, request));
+	try {
+		const response = await UserServiceClient.sendTestNotification(request);
+		if (response.notification === undefined) {
+			return new ConnectError('server returned no notification');
+		}
+		return response.notification;
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error send test notification: ' + err.message);
 			return err;
 		}
 		throw err;

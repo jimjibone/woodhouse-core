@@ -9,7 +9,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/jimjibone/log v0.0.0-20260606072821-03b097ef99de
 	github.com/jimjibone/queue v0.0.0-20260831221337-3cbb048fc891
-	github.com/jimjibone/woodhouse-api v0.0.0-20260616214800-b2cf0c4eb042
+	github.com/jimjibone/woodhouse-api v0.0.0-20260831221826-5c15092e1557
 	github.com/schollz/mnemonicode v1.0.1
 	github.com/urfave/cli/v2 v2.16.3
 	golang.org/x/crypto v0.48.0

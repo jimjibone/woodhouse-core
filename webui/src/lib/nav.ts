@@ -1,4 +1,5 @@
 import {
+	BellIcon,
 	ChevronsLeftRightEllipsisIcon,
 	LayersIcon,
 	MapPinIcon,
@@ -22,7 +23,8 @@ export const settingsNav: NavItem[] = [
 	{ name: 'Clients', url: '/settings/clients', icon: ChevronsLeftRightEllipsisIcon },
 	{ name: 'Users', url: '/settings/users', icon: UsersIcon },
 	{ name: 'Groups', url: '/settings/groups', icon: LayersIcon },
-	{ name: 'Zones', url: '/settings/zones', icon: MapPinIcon }
+	{ name: 'Zones', url: '/settings/zones', icon: MapPinIcon },
+	{ name: 'Notifications', url: '/settings/notifications', icon: BellIcon }
 ];
 
 // A nav entry is active for its own page and anything beneath it. The trailing

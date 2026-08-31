@@ -21,30 +21,32 @@ import (
 
 type UserService struct {
 	clientsapi.UnimplementedUserServiceServer
-	log              *log.Context
-	deviceManager    *core.DeviceManager
-	favoritesManager *core.FavoritesManager
-	groupManager     *core.GroupManager
-	zoneManager      *core.ZoneManager
-	userManager      *core.UserManager
-	clientManager    *core.ClientManager
-	settingsManager  *core.SettingsManager
-	clientJwt        *clients.JWTManager
-	userJwt          *JWTManager
+	log                 *log.Context
+	deviceManager       *core.DeviceManager
+	favoritesManager    *core.FavoritesManager
+	groupManager        *core.GroupManager
+	zoneManager         *core.ZoneManager
+	notificationManager *core.NotificationManager
+	userManager         *core.UserManager
+	clientManager       *core.ClientManager
+	settingsManager     *core.SettingsManager
+	clientJwt           *clients.JWTManager
+	userJwt             *JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, zoneManager *core.ZoneManager, userManager *core.UserManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, zoneManager *core.ZoneManager, notificationManager *core.NotificationManager, userManager *core.UserManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
 	service := &UserService{
-		log:              log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
-		deviceManager:    deviceManager,
-		favoritesManager: favoritesManager,
-		groupManager:     groupManager,
-		zoneManager:      zoneManager,
-		userManager:      userManager,
-		clientManager:    clientManager,
-		settingsManager:  settingsManager,
-		clientJwt:        clientJwt,
-		userJwt:          userJwt,
+		log:                 log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
+		deviceManager:       deviceManager,
+		favoritesManager:    favoritesManager,
+		groupManager:        groupManager,
+		zoneManager:         zoneManager,
+		notificationManager: notificationManager,
+		userManager:         userManager,
+		clientManager:       clientManager,
+		settingsManager:     settingsManager,
+		clientJwt:           clientJwt,
+		userJwt:             userJwt,
 	}
 	return service
 }

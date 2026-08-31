@@ -86,6 +86,14 @@ func (manager *UserManager) GetListener() *queue.Sub[UserUpdate] {
 	return sub
 }
 
+// GetUserUpdates subscribes to user changes without the initial replay of
+// current state, mirroring DeviceManager.GetDeviceUpdates. Prefer it over
+// GetListener for in-process subscribers that only care about changes, so they
+// are not handed a burst of users they have no use for on startup.
+func (manager *UserManager) GetUserUpdates() *queue.Sub[UserUpdate] {
+	return manager.publisher.NewSub()
+}
+
 func (manager *UserManager) HasAnAdmin() bool {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()

@@ -176,6 +176,14 @@ func main() {
 			}
 			defer userManager.Close()
 
+			// After the user manager: it watches for user removals so a
+			// deleted account's read state does not outlive it.
+			notificationManager, err := core.NewNotificationManager(store, userManager)
+			if err != nil {
+				return fmt.Errorf("failed to create notification manager: %s", err)
+			}
+			defer notificationManager.Close()
+
 			userJwtManager, err := users.NewJWTManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create user jwt manager: %s", err)
@@ -197,7 +205,7 @@ func main() {
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, zoneManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, zoneManager, notificationManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())

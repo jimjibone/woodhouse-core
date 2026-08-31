@@ -18,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/user_service.proto.
  */
 export const file_clients_user_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldENsaWVudHNSZXF1ZXN0IhYKFENsaWVudHNTdHJlYW1SZXF1ZXN0ImEKFUNsaWVudHNTdHJlYW1SZXNwb25zZRIwCgZjbGllbnQYASABKAsyIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50EhYKDmNsaWVudF9yZW1vdmVkGAIgASgJIh4KHFBhaXJpbmdSZXF1ZXN0c1N0cmVhbVJlcXVlc3QiewodUGFpcmluZ1JlcXVlc3RzU3RyZWFtUmVzcG9uc2USQQoPcGFpcmluZ19yZXF1ZXN0GAEgASgLMigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJpbmdSZXF1ZXN0EhcKD3BhaXJpbmdfcmVtb3ZlZBgCIAEoCSJSChVBcHByb3ZlUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEhIKCnJlcXVlc3RfaWQYAyABKAlKBAgCEANSDHBhaXJpbmdfY29kZSIYChZBcHByb3ZlUGFpcmluZ1Jlc3BvbnNlIjsKEkRlbnlQYWlyaW5nUmVxdWVzdBIRCgljbGllbnRfaWQYASABKAkSEgoKcmVxdWVzdF9pZBgCIAEoCSIVChNEZW55UGFpcmluZ1Jlc3BvbnNlIigKE1VucGFpckNsaWVudFJlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJIhYKFFVucGFpckNsaWVudFJlc3BvbnNlIigKE0ZvcmdldENsaWVudFJlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJIhYKFEZvcmdldENsaWVudFJlc3BvbnNlIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSJhChVEZXZpY2VzU3RyZWFtUmVzcG9uc2USMAoGZGV2aWNlGAEgASgLMiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZRIWCg5kZXZpY2VfcmVtb3ZlZBgCIAEoCSIoChNSZW1vdmVEZXZpY2VSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCSIWChRSZW1vdmVEZXZpY2VSZXNwb25zZSKRAwoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZRJFCgtkZXZpY2VfdHlwZRgNIAEoDjIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UuRGV2aWNlVHlwZUgEiAEBQg4KDF9kZXZpY2VfbmFtZUIJCgdfb25saW5lQgwKCl9sYXN0X3NlZW5CEAoOX2JhdHRlcnlfbGV2ZWxCDgoMX2RldmljZV90eXBlIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZSIVChNHcm91cHNTdHJlYW1SZXF1ZXN0ImEKFEdyb3Vwc1N0cmVhbVJlc3BvbnNlEjUKDGdyb3VwX3VwZGF0ZRgBIAEoCzIfLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cBISCgpyZW1vdmVkX2lkGAIgASgJIpQBCg9BZGRHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRI7CgR0eXBlGAIgASgOMi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNlcnZpY2UuU2VydmljZVR5cGUSNgoHbWVtYmVycxgDIAMoCzIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cE1lbWJlciJCChBBZGRHcm91cFJlc3BvbnNlEi4KBWdyb3VwGAEgASgLMh8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3VwInQKElVwZGF0ZUdyb3VwUmVxdWVzdBIKCgJpZBgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESNgoHbWVtYmVycxgDIAMoCzIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cE1lbWJlckIHCgVfbmFtZSIVChNVcGRhdGVHcm91cFJlc3BvbnNlIiAKElJlbW92ZUdyb3VwUmVxdWVzdBIKCgJpZBgBIAEoCSIVChNSZW1vdmVHcm91cFJlc3BvbnNlIgsKCUhlYXJ0YmVhdCIUChJab25lc1N0cmVhbVJlcXVlc3QipgEKE1pvbmVzU3RyZWFtUmVzcG9uc2USNQoLem9uZV91cGRhdGUYASABKAsyHi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuWm9uZUgAEhQKCnJlbW92ZWRfaWQYAiABKAlIABI4CgloZWFydGJlYXQYAyABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSGVhcnRiZWF0SABCCAoGdXBkYXRlIkAKDkFkZFpvbmVSZXF1ZXN0EgwKBG5hbWUYASABKAkSDAoEaWNvbhgCIAEoCRISCgpkZXZpY2VfaWRzGAMgAygJIj8KD0FkZFpvbmVSZXNwb25zZRIsCgR6b25lGAEgASgLMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlpvbmUigAEKEVVwZGF0ZVpvbmVSZXF1ZXN0EgoKAmlkGAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIRCgRpY29uGAMgASgJSAGIAQESEwoLc2V0X2RldmljZXMYBCABKAgSEgoKZGV2aWNlX2lkcxgFIAMoCUIHCgVfbmFtZUIHCgVfaWNvbiIUChJVcGRhdGVab25lUmVzcG9uc2UiHwoRUmVtb3ZlWm9uZVJlcXVlc3QSCgoCaWQYASABKAkiFAoSUmVtb3ZlWm9uZVJlc3BvbnNlIhQKElVzZXJzU3RyZWFtUmVxdWVzdCJZChNVc2Vyc1N0cmVhbVJlc3BvbnNlEiwKBHVzZXIYASABKAsyHi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlchIUCgx1c2VyX3JlbW92ZWQYAiABKAkigAEKDkFkZFVzZXJSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJEhAKCGZ1bGxuYW1lGAIgASgJEjAKBHJvbGUYAyABKA4yIi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJvbGUSGAoQaW5pdGlhbF9wYXNzd29yZBgEIAEoCSIRCg9BZGRVc2VyUmVzcG9uc2Ui4QEKEVVwZGF0ZVVzZXJSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJEhUKCGZ1bGxuYW1lGAIgASgJSACIAQESNQoEcm9sZRgDIAEoDjIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUm9sZUgBiAEBEhUKCHBhc3N3b3JkGAQgASgJSAKIAQESHQoQY3VycmVudF9wYXNzd29yZBgFIAEoCUgDiAEBQgsKCV9mdWxsbmFtZUIHCgVfcm9sZUILCglfcGFzc3dvcmRCEwoRX2N1cnJlbnRfcGFzc3dvcmQiFAoSVXBkYXRlVXNlclJlc3BvbnNlIiUKEVJlbW92ZVVzZXJSZXF1ZXN0EhAKCHVzZXJuYW1lGAEgASgJIhQKElJlbW92ZVVzZXJSZXNwb25zZSJmChNJbWFnZXNTdHJlYW1SZXF1ZXN0EhIKCmRldmljZV9pZHMYASADKAkSOwoKc2l6ZV9oaW50cxgCIAMoCzInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZVNpemVIaW50ImsKDUltYWdlU2l6ZUhpbnQSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkSFAoMYXR0cmlidXRlX2lkGAMgASgJEg0KBXdpZHRoGAQgASgNEg4KBmhlaWdodBgFIAEoDSJuChBVc2VySW1hZ2VSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJEhQKDGF0dHJpYnV0ZV9pZBgDIAEoCRINCgV3aWR0aBgEIAEoDRIOCgZoZWlnaHQYBSABKA0iiAEKFEltYWdlc1N0cmVhbVJlc3BvbnNlEhEKCWRldmljZV9pZBgBIAEoCRISCgpzZXJ2aWNlX2lkGAIgASgJEhQKDGF0dHJpYnV0ZV9pZBgDIAEoCRIMCgRkYXRhGAQgASgMEhEKCW1pbWVfdHlwZRgFIAEoCRISCgpmZXRjaGVkX2F0GAYgASgDInQKBFVzZXISEAoIdXNlcm5hbWUYASABKAkSEAoIZnVsbG5hbWUYAiABKAkSMAoEcm9sZRgDIAEoDjIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUm9sZRIWCg5yZXNldF9wYXNzd29yZBgEIAEoCCI9CghTZXR0aW5ncxIVCg1pbnN0YW5jZV9uYW1lGAEgASgJEhoKEnNob3dfaW5zdGFuY2VfbmFtZRgCIAEoCCIUChJHZXRTZXR0aW5nc1JlcXVlc3QiSwoTR2V0U2V0dGluZ3NSZXNwb25zZRI0CghzZXR0aW5ncxgBIAEoCzIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5TZXR0aW5ncyJ9ChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSGgoNaW5zdGFuY2VfbmFtZRgBIAEoCUgAiAEBEh8KEnNob3dfaW5zdGFuY2VfbmFtZRgCIAEoCEgBiAEBQhAKDl9pbnN0YW5jZV9uYW1lQhUKE19zaG93X2luc3RhbmNlX25hbWUiTgoWVXBkYXRlU2V0dGluZ3NSZXNwb25zZRI0CghzZXR0aW5ncxgBIAEoCzIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5TZXR0aW5ncypMCghVc2VyUm9sZRIXChNVU0VSX1JPTEVfVU5ERUZJTkVEEAASEwoPVVNFUl9ST0xFX0FETUlOEAESEgoOVVNFUl9ST0xFX1VTRVIQAjLVGQoLVXNlclNlcnZpY2USXQoKR2V0Q2xpZW50cxIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXRDbGllbnRzUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5DbGllbnQwARJyCg1DbGllbnRzU3RyZWFtEi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNsaWVudHNTdHJlYW1SZXF1ZXN0Gi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNsaWVudHNTdHJlYW1SZXNwb25zZTABEooBChVQYWlyaW5nUmVxdWVzdHNTdHJlYW0SNi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGFpcmluZ1JlcXVlc3RzU3RyZWFtUmVxdWVzdBo3Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyaW5nUmVxdWVzdHNTdHJlYW1SZXNwb25zZTABEnMKDkFwcHJvdmVQYWlyaW5nEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFwcHJvdmVQYWlyaW5nUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BcHByb3ZlUGFpcmluZ1Jlc3BvbnNlEmoKC0RlbnlQYWlyaW5nEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRlbnlQYWlyaW5nUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZW55UGFpcmluZ1Jlc3BvbnNlEm0KDFVucGFpckNsaWVudBItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VbnBhaXJDbGllbnRSZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVucGFpckNsaWVudFJlc3BvbnNlEm0KDEZvcmdldENsaWVudBItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Gb3JnZXRDbGllbnRSZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZvcmdldENsaWVudFJlc3BvbnNlEl0KCkdldERldmljZXMSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0RGV2aWNlc1JlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlMAEScgoNRGV2aWNlc1N0cmVhbRIuLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVxdWVzdBovLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVzcG9uc2UwARJtCgxSZW1vdmVEZXZpY2USLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRGV2aWNlUmVxdWVzdBouLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVEZXZpY2VSZXNwb25zZRJ4Cg9GYXZvcml0ZXNTdHJlYW0SMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmF2b3JpdGVzU3RyZWFtUmVxdWVzdBoxLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXNwb25zZTABEmoKC0FkZEZhdm9yaXRlEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRGYXZvcml0ZVJlc3BvbnNlEnMKDlJlbW92ZUZhdm9yaXRlEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVGYXZvcml0ZVJlc3BvbnNlEm8KDEdyb3Vwc1N0cmVhbRItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cHNTdHJlYW1SZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3Vwc1N0cmVhbVJlc3BvbnNlMAESYQoIQWRkR3JvdXASKS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkR3JvdXBSZXF1ZXN0Gioud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEdyb3VwUmVzcG9uc2USagoLVXBkYXRlR3JvdXASLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlR3JvdXBSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZUdyb3VwUmVzcG9uc2USagoLUmVtb3ZlR3JvdXASLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlR3JvdXBSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUdyb3VwUmVzcG9uc2USbAoLWm9uZXNTdHJlYW0SLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuWm9uZXNTdHJlYW1SZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlpvbmVzU3RyZWFtUmVzcG9uc2UwARJeCgdBZGRab25lEigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFpvbmVSZXF1ZXN0Gikud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFpvbmVSZXNwb25zZRJnCgpVcGRhdGVab25lEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVpvbmVSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVpvbmVSZXNwb25zZRJnCgpSZW1vdmVab25lEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVpvbmVSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVpvbmVSZXNwb25zZRJhCgpTZW5kQWN0aW9uEicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlcXVlc3QaKC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWN0aW9uUmVzcG9uc2UwARJpChBTZW5kSW1hZ2VSZXF1ZXN0Eioud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJJbWFnZVJlcXVlc3QaJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VSZXNwb25zZTABEm8KDEltYWdlc1N0cmVhbRItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZXNTdHJlYW1SZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlc1N0cmVhbVJlc3BvbnNlMAESbAoLVXNlcnNTdHJlYW0SLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlcnNTdHJlYW1SZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJzU3RyZWFtUmVzcG9uc2UwARJeCgdBZGRVc2VyEigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFVzZXJSZXF1ZXN0Gikud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFVzZXJSZXNwb25zZRJnCgpVcGRhdGVVc2VyEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVVzZXJSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVVzZXJSZXNwb25zZRJnCgpSZW1vdmVVc2VyEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVVzZXJSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVVzZXJSZXNwb25zZRJqCgtHZXRTZXR0aW5ncxIsLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXRTZXR0aW5nc1JlcXVlc3QaLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0U2V0dGluZ3NSZXNwb25zZRJzCg5VcGRhdGVTZXR0aW5ncxIvLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VcGRhdGVTZXR0aW5nc1JlcXVlc3QaMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlU2V0dGluZ3NSZXNwb25zZUI9WjtnaXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtYXBpL2dvL3YxL2NsaWVudHM7Y2xpZW50c2FwaWIGcHJvdG8z", [file_clients_client, file_clients_client_service, file_clients_group, file_clients_zone]);
+  fileDesc("ChpjbGllbnRzL3VzZXJfc2VydmljZS5wcm90bxIYd29vZGhvdXNlLmFwaS52MS5jbGllbnRzIhMKEUdldENsaWVudHNSZXF1ZXN0IhYKFENsaWVudHNTdHJlYW1SZXF1ZXN0ImEKFUNsaWVudHNTdHJlYW1SZXNwb25zZRIwCgZjbGllbnQYASABKAsyIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQ2xpZW50EhYKDmNsaWVudF9yZW1vdmVkGAIgASgJIh4KHFBhaXJpbmdSZXF1ZXN0c1N0cmVhbVJlcXVlc3QiewodUGFpcmluZ1JlcXVlc3RzU3RyZWFtUmVzcG9uc2USQQoPcGFpcmluZ19yZXF1ZXN0GAEgASgLMigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlBhaXJpbmdSZXF1ZXN0EhcKD3BhaXJpbmdfcmVtb3ZlZBgCIAEoCSJSChVBcHByb3ZlUGFpcmluZ1JlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJEhIKCnJlcXVlc3RfaWQYAyABKAlKBAgCEANSDHBhaXJpbmdfY29kZSIYChZBcHByb3ZlUGFpcmluZ1Jlc3BvbnNlIjsKEkRlbnlQYWlyaW5nUmVxdWVzdBIRCgljbGllbnRfaWQYASABKAkSEgoKcmVxdWVzdF9pZBgCIAEoCSIVChNEZW55UGFpcmluZ1Jlc3BvbnNlIigKE1VucGFpckNsaWVudFJlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJIhYKFFVucGFpckNsaWVudFJlc3BvbnNlIigKE0ZvcmdldENsaWVudFJlcXVlc3QSEQoJY2xpZW50X2lkGAEgASgJIhYKFEZvcmdldENsaWVudFJlc3BvbnNlIhMKEUdldERldmljZXNSZXF1ZXN0IjIKFERldmljZXNTdHJlYW1SZXF1ZXN0EhoKEmluY2x1ZGVfZGV2aWNlX2lkcxgBIAMoCSJhChVEZXZpY2VzU3RyZWFtUmVzcG9uc2USMAoGZGV2aWNlGAEgASgLMiAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRldmljZRIWCg5kZXZpY2VfcmVtb3ZlZBgCIAEoCSIoChNSZW1vdmVEZXZpY2VSZXF1ZXN0EhEKCWRldmljZV9pZBgBIAEoCSIWChRSZW1vdmVEZXZpY2VSZXNwb25zZSKRAwoNRGV2aWNlU2VydmljZRILCgNrZXkYASABKAkSEQoJZGV2aWNlX2lkGAIgASgJEhIKCmZ1bGxfc3RhdGUYAyABKAgSGAoLZGV2aWNlX25hbWUYBSABKAlIAIgBARITCgZvbmxpbmUYByABKAhIAYgBARI7CglsYXN0X3NlZW4YCSABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVGltZVZhbHVlSAKIAQESGgoNYmF0dGVyeV9sZXZlbBgLIAEoA0gDiAEBEjIKB3NlcnZpY2UYDCABKAsyIS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VydmljZRJFCgtkZXZpY2VfdHlwZRgNIAEoDjIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2UuRGV2aWNlVHlwZUgEiAEBQg4KDF9kZXZpY2VfbmFtZUIJCgdfb25saW5lQgwKCl9sYXN0X3NlZW5CEAoOX2JhdHRlcnlfbGV2ZWxCDgoMX2RldmljZV90eXBlIhgKFkZhdm9yaXRlc1N0cmVhbVJlcXVlc3QibwoXRmF2b3JpdGVzU3RyZWFtUmVzcG9uc2USPwoOZGV2aWNlX3NlcnZpY2UYASABKAsyJy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlU2VydmljZRITCgtrZXlfcmVtb3ZlZBgCIAEoCSI7ChJBZGRGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiFQoTQWRkRmF2b3JpdGVSZXNwb25zZSI+ChVSZW1vdmVGYXZvcml0ZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkiGAoWUmVtb3ZlRmF2b3JpdGVSZXNwb25zZSIVChNHcm91cHNTdHJlYW1SZXF1ZXN0ImEKFEdyb3Vwc1N0cmVhbVJlc3BvbnNlEjUKDGdyb3VwX3VwZGF0ZRgBIAEoCzIfLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cBISCgpyZW1vdmVkX2lkGAIgASgJIpQBCg9BZGRHcm91cFJlcXVlc3QSDAoEbmFtZRgBIAEoCRI7CgR0eXBlGAIgASgOMi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNlcnZpY2UuU2VydmljZVR5cGUSNgoHbWVtYmVycxgDIAMoCzIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cE1lbWJlciJCChBBZGRHcm91cFJlc3BvbnNlEi4KBWdyb3VwGAEgASgLMh8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3VwInQKElVwZGF0ZUdyb3VwUmVxdWVzdBIKCgJpZBgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESNgoHbWVtYmVycxgDIAMoCzIlLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cE1lbWJlckIHCgVfbmFtZSIVChNVcGRhdGVHcm91cFJlc3BvbnNlIiAKElJlbW92ZUdyb3VwUmVxdWVzdBIKCgJpZBgBIAEoCSIVChNSZW1vdmVHcm91cFJlc3BvbnNlIgsKCUhlYXJ0YmVhdCIUChJab25lc1N0cmVhbVJlcXVlc3QipgEKE1pvbmVzU3RyZWFtUmVzcG9uc2USNQoLem9uZV91cGRhdGUYASABKAsyHi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuWm9uZUgAEhQKCnJlbW92ZWRfaWQYAiABKAlIABI4CgloZWFydGJlYXQYAyABKAsyIy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSGVhcnRiZWF0SABCCAoGdXBkYXRlIkAKDkFkZFpvbmVSZXF1ZXN0EgwKBG5hbWUYASABKAkSDAoEaWNvbhgCIAEoCRISCgpkZXZpY2VfaWRzGAMgAygJIj8KD0FkZFpvbmVSZXNwb25zZRIsCgR6b25lGAEgASgLMh4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlpvbmUigAEKEVVwZGF0ZVpvbmVSZXF1ZXN0EgoKAmlkGAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIRCgRpY29uGAMgASgJSAGIAQESEwoLc2V0X2RldmljZXMYBCABKAgSEgoKZGV2aWNlX2lkcxgFIAMoCUIHCgVfbmFtZUIHCgVfaWNvbiIUChJVcGRhdGVab25lUmVzcG9uc2UiHwoRUmVtb3ZlWm9uZVJlcXVlc3QSCgoCaWQYASABKAkiFAoSUmVtb3ZlWm9uZVJlc3BvbnNlIucBChROb3RpZmljYXRpb25BdWRpZW5jZRJBCgRraW5kGAEgASgOMjMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLk5vdGlmaWNhdGlvbkF1ZGllbmNlLktpbmQSMAoEcm9sZRgCIAEoDjIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUm9sZRIQCgh1c2VybmFtZRgDIAEoCSJICgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIMCghLSU5EX0FMTBABEg0KCUtJTkRfUk9MRRACEg0KCUtJTkRfVVNFUhADIp0CCgxOb3RpZmljYXRpb24SCgoCaWQYASABKAkSEgoKY3JlYXRlZF9hdBgCIAEoAxI6CgVsZXZlbBgDIAEoDjIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Ob3RpZmljYXRpb25MZXZlbBINCgV0aXRsZRgEIAEoCRIMCgRib2R5GAUgASgJEg4KBnNvdXJjZRgGIAEoCRIQCghjYXRlZ29yeRgHIAEoCRIUCgxjb2xsYXBzZV9rZXkYCCABKAkSQAoIYXVkaWVuY2UYCSABKAsyLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuTm90aWZpY2F0aW9uQXVkaWVuY2USDAoEcmVhZBgKIAEoCBIMCgRsaW5rGAsgASgJIhwKGk5vdGlmaWNhdGlvbnNTdHJlYW1SZXF1ZXN0Ir4BChtOb3RpZmljYXRpb25zU3RyZWFtUmVzcG9uc2USRQoTbm90aWZpY2F0aW9uX3VwZGF0ZRgBIAEoCzImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Ob3RpZmljYXRpb25IABIUCgpyZW1vdmVkX2lkGAIgASgJSAASOAoJaGVhcnRiZWF0GAMgASgLMiMud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkhlYXJ0YmVhdEgAQggKBnVwZGF0ZSIpChtNYXJrTm90aWZpY2F0aW9uUmVhZFJlcXVlc3QSCgoCaWQYASABKAkiHgocTWFya05vdGlmaWNhdGlvblJlYWRSZXNwb25zZSIhCh9NYXJrQWxsTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0IiIKIE1hcmtBbGxOb3RpZmljYXRpb25zUmVhZFJlc3BvbnNlIigKGkRpc21pc3NOb3RpZmljYXRpb25SZXF1ZXN0EgoKAmlkGAEgASgJIh0KG0Rpc21pc3NOb3RpZmljYXRpb25SZXNwb25zZSLkAQobU2VuZFRlc3ROb3RpZmljYXRpb25SZXF1ZXN0EhIKBXRpdGxlGAEgASgJSACIAQESEQoEYm9keRgCIAEoCUgBiAEBEj8KBWxldmVsGAMgASgOMisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLk5vdGlmaWNhdGlvbkxldmVsSAKIAQESQAoIYXVkaWVuY2UYBCABKAsyLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuTm90aWZpY2F0aW9uQXVkaWVuY2VCCAoGX3RpdGxlQgcKBV9ib2R5QggKBl9sZXZlbCJcChxTZW5kVGVzdE5vdGlmaWNhdGlvblJlc3BvbnNlEjwKDG5vdGlmaWNhdGlvbhgBIAEoCzImLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Ob3RpZmljYXRpb24iFAoSVXNlcnNTdHJlYW1SZXF1ZXN0IlkKE1VzZXJzU3RyZWFtUmVzcG9uc2USLAoEdXNlchgBIAEoCzIeLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyEhQKDHVzZXJfcmVtb3ZlZBgCIAEoCSKAAQoOQWRkVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkSEAoIZnVsbG5hbWUYAiABKAkSMAoEcm9sZRgDIAEoDjIiLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUm9sZRIYChBpbml0aWFsX3Bhc3N3b3JkGAQgASgJIhEKD0FkZFVzZXJSZXNwb25zZSLhAQoRVXBkYXRlVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkSFQoIZnVsbG5hbWUYAiABKAlIAIgBARI1CgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlSAGIAQESFQoIcGFzc3dvcmQYBCABKAlIAogBARIdChBjdXJyZW50X3Bhc3N3b3JkGAUgASgJSAOIAQFCCwoJX2Z1bGxuYW1lQgcKBV9yb2xlQgsKCV9wYXNzd29yZEITChFfY3VycmVudF9wYXNzd29yZCIUChJVcGRhdGVVc2VyUmVzcG9uc2UiJQoRUmVtb3ZlVXNlclJlcXVlc3QSEAoIdXNlcm5hbWUYASABKAkiFAoSUmVtb3ZlVXNlclJlc3BvbnNlImYKE0ltYWdlc1N0cmVhbVJlcXVlc3QSEgoKZGV2aWNlX2lkcxgBIAMoCRI7CgpzaXplX2hpbnRzGAIgAygLMicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlU2l6ZUhpbnQiawoNSW1hZ2VTaXplSGludBIRCglkZXZpY2VfaWQYASABKAkSEgoKc2VydmljZV9pZBgCIAEoCRIUCgxhdHRyaWJ1dGVfaWQYAyABKAkSDQoFd2lkdGgYBCABKA0SDgoGaGVpZ2h0GAUgASgNIm4KEFVzZXJJbWFnZVJlcXVlc3QSEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkSFAoMYXR0cmlidXRlX2lkGAMgASgJEg0KBXdpZHRoGAQgASgNEg4KBmhlaWdodBgFIAEoDSKIAQoUSW1hZ2VzU3RyZWFtUmVzcG9uc2USEQoJZGV2aWNlX2lkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkSFAoMYXR0cmlidXRlX2lkGAMgASgJEgwKBGRhdGEYBCABKAwSEQoJbWltZV90eXBlGAUgASgJEhIKCmZldGNoZWRfYXQYBiABKAMidAoEVXNlchIQCgh1c2VybmFtZRgBIAEoCRIQCghmdWxsbmFtZRgCIAEoCRIwCgRyb2xlGAMgASgOMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSb2xlEhYKDnJlc2V0X3Bhc3N3b3JkGAQgASgIIj0KCFNldHRpbmdzEhUKDWluc3RhbmNlX25hbWUYASABKAkSGgoSc2hvd19pbnN0YW5jZV9uYW1lGAIgASgIIhQKEkdldFNldHRpbmdzUmVxdWVzdCJLChNHZXRTZXR0aW5nc1Jlc3BvbnNlEjQKCHNldHRpbmdzGAEgASgLMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNldHRpbmdzIn0KFVVwZGF0ZVNldHRpbmdzUmVxdWVzdBIaCg1pbnN0YW5jZV9uYW1lGAEgASgJSACIAQESHwoSc2hvd19pbnN0YW5jZV9uYW1lGAIgASgISAGIAQFCEAoOX2luc3RhbmNlX25hbWVCFQoTX3Nob3dfaW5zdGFuY2VfbmFtZSJOChZVcGRhdGVTZXR0aW5nc1Jlc3BvbnNlEjQKCHNldHRpbmdzGAEgASgLMiIud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNldHRpbmdzKrIBChFOb3RpZmljYXRpb25MZXZlbBIiCh5OT1RJRklDQVRJT05fTEVWRUxfVU5TUEVDSUZJRUQQABIbChdOT1RJRklDQVRJT05fTEVWRUxfSU5GTxABEh4KGk5PVElGSUNBVElPTl9MRVZFTF9TVUNDRVNTEAISHgoaTk9USUZJQ0FUSU9OX0xFVkVMX1dBUk5JTkcQAxIcChhOT1RJRklDQVRJT05fTEVWRUxfRVJST1IQBCpMCghVc2VyUm9sZRIXChNVU0VSX1JPTEVfVU5ERUZJTkVEEAASEwoPVVNFUl9ST0xFX0FETUlOEAESEgoOVVNFUl9ST0xFX1VTRVIQAjKFHwoLVXNlclNlcnZpY2USXQoKR2V0Q2xpZW50cxIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5HZXRDbGllbnRzUmVxdWVzdBogLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5DbGllbnQwARJyCg1DbGllbnRzU3RyZWFtEi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNsaWVudHNTdHJlYW1SZXF1ZXN0Gi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkNsaWVudHNTdHJlYW1SZXNwb25zZTABEooBChVQYWlyaW5nUmVxdWVzdHNTdHJlYW0SNi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUGFpcmluZ1JlcXVlc3RzU3RyZWFtUmVxdWVzdBo3Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5QYWlyaW5nUmVxdWVzdHNTdHJlYW1SZXNwb25zZTABEnMKDkFwcHJvdmVQYWlyaW5nEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFwcHJvdmVQYWlyaW5nUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BcHByb3ZlUGFpcmluZ1Jlc3BvbnNlEmoKC0RlbnlQYWlyaW5nEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRlbnlQYWlyaW5nUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZW55UGFpcmluZ1Jlc3BvbnNlEm0KDFVucGFpckNsaWVudBItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VbnBhaXJDbGllbnRSZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVucGFpckNsaWVudFJlc3BvbnNlEm0KDEZvcmdldENsaWVudBItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Gb3JnZXRDbGllbnRSZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkZvcmdldENsaWVudFJlc3BvbnNlEl0KCkdldERldmljZXMSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0RGV2aWNlc1JlcXVlc3QaIC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRGV2aWNlMAEScgoNRGV2aWNlc1N0cmVhbRIuLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVxdWVzdBovLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5EZXZpY2VzU3RyZWFtUmVzcG9uc2UwARJtCgxSZW1vdmVEZXZpY2USLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlRGV2aWNlUmVxdWVzdBouLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVEZXZpY2VSZXNwb25zZRJ4Cg9GYXZvcml0ZXNTdHJlYW0SMC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuRmF2b3JpdGVzU3RyZWFtUmVxdWVzdBoxLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5GYXZvcml0ZXNTdHJlYW1SZXNwb25zZTABEmoKC0FkZEZhdm9yaXRlEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEZhdm9yaXRlUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRGYXZvcml0ZVJlc3BvbnNlEnMKDlJlbW92ZUZhdm9yaXRlEi8ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUZhdm9yaXRlUmVxdWVzdBowLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVGYXZvcml0ZVJlc3BvbnNlEm8KDEdyb3Vwc1N0cmVhbRItLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Hcm91cHNTdHJlYW1SZXF1ZXN0Gi4ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdyb3Vwc1N0cmVhbVJlc3BvbnNlMAESYQoIQWRkR3JvdXASKS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWRkR3JvdXBSZXF1ZXN0Gioud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZEdyb3VwUmVzcG9uc2USagoLVXBkYXRlR3JvdXASLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlR3JvdXBSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZUdyb3VwUmVzcG9uc2USagoLUmVtb3ZlR3JvdXASLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuUmVtb3ZlR3JvdXBSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZUdyb3VwUmVzcG9uc2USbAoLWm9uZXNTdHJlYW0SLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuWm9uZXNTdHJlYW1SZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlpvbmVzU3RyZWFtUmVzcG9uc2UwARJeCgdBZGRab25lEigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFpvbmVSZXF1ZXN0Gikud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFkZFpvbmVSZXNwb25zZRJnCgpVcGRhdGVab25lEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVpvbmVSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVpvbmVSZXNwb25zZRJnCgpSZW1vdmVab25lEisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVpvbmVSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlJlbW92ZVpvbmVSZXNwb25zZRKEAQoTTm90aWZpY2F0aW9uc1N0cmVhbRI0Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Ob3RpZmljYXRpb25zU3RyZWFtUmVxdWVzdBo1Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Ob3RpZmljYXRpb25zU3RyZWFtUmVzcG9uc2UwARKFAQoUTWFya05vdGlmaWNhdGlvblJlYWQSNS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuTWFya05vdGlmaWNhdGlvblJlYWRSZXF1ZXN0GjYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLk1hcmtOb3RpZmljYXRpb25SZWFkUmVzcG9uc2USkQEKGE1hcmtBbGxOb3RpZmljYXRpb25zUmVhZBI5Lndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5NYXJrQWxsTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0Gjoud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLk1hcmtBbGxOb3RpZmljYXRpb25zUmVhZFJlc3BvbnNlEoIBChNEaXNtaXNzTm90aWZpY2F0aW9uEjQud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRpc21pc3NOb3RpZmljYXRpb25SZXF1ZXN0GjUud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkRpc21pc3NOb3RpZmljYXRpb25SZXNwb25zZRKFAQoUU2VuZFRlc3ROb3RpZmljYXRpb24SNS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuU2VuZFRlc3ROb3RpZmljYXRpb25SZXF1ZXN0GjYud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlNlbmRUZXN0Tm90aWZpY2F0aW9uUmVzcG9uc2USYQoKU2VuZEFjdGlvbhInLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BY3Rpb25SZXF1ZXN0Gigud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjdGlvblJlc3BvbnNlMAESaQoQU2VuZEltYWdlUmVxdWVzdBIqLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VySW1hZ2VSZXF1ZXN0Gicud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkltYWdlUmVzcG9uc2UwARJvCgxJbWFnZXNTdHJlYW0SLS53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuSW1hZ2VzU3RyZWFtUmVxdWVzdBouLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5JbWFnZXNTdHJlYW1SZXNwb25zZTABEmwKC1VzZXJzU3RyZWFtEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJzU3RyZWFtUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2Vyc1N0cmVhbVJlc3BvbnNlMAESXgoHQWRkVXNlchIoLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRVc2VyUmVxdWVzdBopLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5BZGRVc2VyUmVzcG9uc2USZwoKVXBkYXRlVXNlchIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VcGRhdGVVc2VyUmVxdWVzdBosLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5VcGRhdGVVc2VyUmVzcG9uc2USZwoKUmVtb3ZlVXNlchIrLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVVc2VyUmVxdWVzdBosLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5SZW1vdmVVc2VyUmVzcG9uc2USagoLR2V0U2V0dGluZ3MSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuR2V0U2V0dGluZ3NSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkdldFNldHRpbmdzUmVzcG9uc2UScwoOVXBkYXRlU2V0dGluZ3MSLy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0GjAud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVwZGF0ZVNldHRpbmdzUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9qaW1qaWJvbmUvd29vZGhvdXNlLWFwaS9nby92MS9jbGllbnRzO2NsaWVudHNhcGliBnByb3RvMw", [file_clients_client, file_clients_client_service, file_clients_group, file_clients_zone]);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetClientsRequest
@@ -894,6 +894,379 @@ export const RemoveZoneResponseSchema: GenMessage<RemoveZoneResponse> = /*@__PUR
   messageDesc(file_clients_user_service, 41);
 
 /**
+ * Who a notification is for. An enum plus its operand rather than a oneof: the
+ * audience is data the server stores and evaluates, not a discriminator
+ * between unrelated payloads, and it round-trips through JSON on disk. An
+ * unspecified kind matches nobody, so an audience that fails to decode fails
+ * closed rather than reaching everyone.
+ *
+ * @generated from message woodhouse.api.v1.clients.NotificationAudience
+ */
+export type NotificationAudience = Message<"woodhouse.api.v1.clients.NotificationAudience"> & {
+  /**
+   * @generated from field: woodhouse.api.v1.clients.NotificationAudience.Kind kind = 1;
+   */
+  kind: NotificationAudience_Kind;
+
+  /**
+   * Only meaningful when kind is KIND_ROLE.
+   *
+   * @generated from field: woodhouse.api.v1.clients.UserRole role = 2;
+   */
+  role: UserRole;
+
+  /**
+   * Only meaningful when kind is KIND_USER.
+   *
+   * @generated from field: string username = 3;
+   */
+  username: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.NotificationAudience.
+ * Use `create(NotificationAudienceSchema)` to create a new message.
+ */
+export const NotificationAudienceSchema: GenMessage<NotificationAudience> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 42);
+
+/**
+ * @generated from enum woodhouse.api.v1.clients.NotificationAudience.Kind
+ */
+export enum NotificationAudience_Kind {
+  /**
+   * @generated from enum value: KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Every user.
+   *
+   * @generated from enum value: KIND_ALL = 1;
+   */
+  ALL = 1,
+
+  /**
+   * Every user holding `role`.
+   *
+   * @generated from enum value: KIND_ROLE = 2;
+   */
+  ROLE = 2,
+
+  /**
+   * The single user named by `username`.
+   *
+   * @generated from enum value: KIND_USER = 3;
+   */
+  USER = 3,
+}
+
+/**
+ * Describes the enum woodhouse.api.v1.clients.NotificationAudience.Kind.
+ */
+export const NotificationAudience_KindSchema: GenEnum<NotificationAudience_Kind> = /*@__PURE__*/
+  enumDesc(file_clients_user_service, 42, 0);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.Notification
+ */
+export type Notification = Message<"woodhouse.api.v1.clients.Notification"> & {
+  /**
+   * Server-generated, unique.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Unix milliseconds.
+   *
+   * @generated from field: int64 created_at = 2;
+   */
+  createdAt: bigint;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.NotificationLevel level = 3;
+   */
+  level: NotificationLevel;
+
+  /**
+   * One short line.
+   *
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * Optional detail. May be empty.
+   *
+   * @generated from field: string body = 5;
+   */
+  body: string;
+
+  /**
+   * An opaque origin key, e.g. "settings-test" or "device-offline". For
+   * grouping and filtering, not for display.
+   *
+   * @generated from field: string source = 6;
+   */
+  source: string;
+
+  /**
+   * A coarse bucket for future per-user preferences, e.g. "system",
+   * "devices", "security". May be empty.
+   *
+   * @generated from field: string category = 7;
+   */
+  category: string;
+
+  /**
+   * Optional. A new notification carrying the same non-empty collapse_key
+   * replaces the previous one, so a flapping sensor does not accumulate a
+   * hundred rows. Empty means never collapse.
+   *
+   * @generated from field: string collapse_key = 8;
+   */
+  collapseKey: string;
+
+  /**
+   * @generated from field: woodhouse.api.v1.clients.NotificationAudience audience = 9;
+   */
+  audience?: NotificationAudience | undefined;
+
+  /**
+   * Read by the user whose stream this is, and nobody else. It is a
+   * projection of per-user state rather than a property of the notification,
+   * which is why the same notification arrives with different values on two
+   * users' streams.
+   *
+   * @generated from field: bool read = 10;
+   */
+  read: boolean;
+
+  /**
+   * Optional client-relative link opened when the notification is activated,
+   * e.g. "/devices/00158d00045c089f". Never absolute.
+   *
+   * @generated from field: string link = 11;
+   */
+  link: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.Notification.
+ * Use `create(NotificationSchema)` to create a new message.
+ */
+export const NotificationSchema: GenMessage<Notification> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 43);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.NotificationsStreamRequest
+ */
+export type NotificationsStreamRequest = Message<"woodhouse.api.v1.clients.NotificationsStreamRequest"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.NotificationsStreamRequest.
+ * Use `create(NotificationsStreamRequestSchema)` to create a new message.
+ */
+export const NotificationsStreamRequestSchema: GenMessage<NotificationsStreamRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 44);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.NotificationsStreamResponse
+ */
+export type NotificationsStreamResponse = Message<"woodhouse.api.v1.clients.NotificationsStreamResponse"> & {
+  /**
+   * Exactly one of these is set on every response, for the same reasons as
+   * ZonesStreamResponse above.
+   *
+   * @generated from oneof woodhouse.api.v1.clients.NotificationsStreamResponse.update
+   */
+  update: {
+    /**
+     * A Notification was added, changed, or had its read state flipped for
+     * the user this stream belongs to.
+     *
+     * @generated from field: woodhouse.api.v1.clients.Notification notification_update = 1;
+     */
+    value: Notification;
+    case: "notificationUpdate";
+  } | {
+    /**
+     * The ID of a Notification that left this user's inbox, either trimmed
+     * from the history or dismissed by them.
+     *
+     * @generated from field: string removed_id = 2;
+     */
+    value: string;
+    case: "removedId";
+  } | {
+    /**
+     * Keepalive. The first one also ends the initial batch.
+     *
+     * @generated from field: woodhouse.api.v1.clients.Heartbeat heartbeat = 3;
+     */
+    value: Heartbeat;
+    case: "heartbeat";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.NotificationsStreamResponse.
+ * Use `create(NotificationsStreamResponseSchema)` to create a new message.
+ */
+export const NotificationsStreamResponseSchema: GenMessage<NotificationsStreamResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 45);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.MarkNotificationReadRequest
+ */
+export type MarkNotificationReadRequest = Message<"woodhouse.api.v1.clients.MarkNotificationReadRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.MarkNotificationReadRequest.
+ * Use `create(MarkNotificationReadRequestSchema)` to create a new message.
+ */
+export const MarkNotificationReadRequestSchema: GenMessage<MarkNotificationReadRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 46);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.MarkNotificationReadResponse
+ */
+export type MarkNotificationReadResponse = Message<"woodhouse.api.v1.clients.MarkNotificationReadResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.MarkNotificationReadResponse.
+ * Use `create(MarkNotificationReadResponseSchema)` to create a new message.
+ */
+export const MarkNotificationReadResponseSchema: GenMessage<MarkNotificationReadResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 47);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.MarkAllNotificationsReadRequest
+ */
+export type MarkAllNotificationsReadRequest = Message<"woodhouse.api.v1.clients.MarkAllNotificationsReadRequest"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.MarkAllNotificationsReadRequest.
+ * Use `create(MarkAllNotificationsReadRequestSchema)` to create a new message.
+ */
+export const MarkAllNotificationsReadRequestSchema: GenMessage<MarkAllNotificationsReadRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 48);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.MarkAllNotificationsReadResponse
+ */
+export type MarkAllNotificationsReadResponse = Message<"woodhouse.api.v1.clients.MarkAllNotificationsReadResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.MarkAllNotificationsReadResponse.
+ * Use `create(MarkAllNotificationsReadResponseSchema)` to create a new message.
+ */
+export const MarkAllNotificationsReadResponseSchema: GenMessage<MarkAllNotificationsReadResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 49);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.DismissNotificationRequest
+ */
+export type DismissNotificationRequest = Message<"woodhouse.api.v1.clients.DismissNotificationRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.DismissNotificationRequest.
+ * Use `create(DismissNotificationRequestSchema)` to create a new message.
+ */
+export const DismissNotificationRequestSchema: GenMessage<DismissNotificationRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 50);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.DismissNotificationResponse
+ */
+export type DismissNotificationResponse = Message<"woodhouse.api.v1.clients.DismissNotificationResponse"> & {
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.DismissNotificationResponse.
+ * Use `create(DismissNotificationResponseSchema)` to create a new message.
+ */
+export const DismissNotificationResponseSchema: GenMessage<DismissNotificationResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 51);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.SendTestNotificationRequest
+ */
+export type SendTestNotificationRequest = Message<"woodhouse.api.v1.clients.SendTestNotificationRequest"> & {
+  /**
+   * Optional: falls back to a canned test title.
+   *
+   * @generated from field: optional string title = 1;
+   */
+  title?: string | undefined;
+
+  /**
+   * Optional: falls back to a canned test body.
+   *
+   * @generated from field: optional string body = 2;
+   */
+  body?: string | undefined;
+
+  /**
+   * Optional: defaults to info.
+   *
+   * @generated from field: optional woodhouse.api.v1.clients.NotificationLevel level = 3;
+   */
+  level?: NotificationLevel | undefined;
+
+  /**
+   * Optional. Defaults to KIND_USER targeting the calling admin, so pressing
+   * "send test" on a shared instance does not notify the whole household by
+   * accident.
+   *
+   * @generated from field: woodhouse.api.v1.clients.NotificationAudience audience = 4;
+   */
+  audience?: NotificationAudience | undefined;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.SendTestNotificationRequest.
+ * Use `create(SendTestNotificationRequestSchema)` to create a new message.
+ */
+export const SendTestNotificationRequestSchema: GenMessage<SendTestNotificationRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 52);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.SendTestNotificationResponse
+ */
+export type SendTestNotificationResponse = Message<"woodhouse.api.v1.clients.SendTestNotificationResponse"> & {
+  /**
+   * The notification as stored, including the generated ID.
+   *
+   * @generated from field: woodhouse.api.v1.clients.Notification notification = 1;
+   */
+  notification?: Notification | undefined;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.SendTestNotificationResponse.
+ * Use `create(SendTestNotificationResponseSchema)` to create a new message.
+ */
+export const SendTestNotificationResponseSchema: GenMessage<SendTestNotificationResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_service, 53);
+
+/**
  * @generated from message woodhouse.api.v1.clients.UsersStreamRequest
  */
 export type UsersStreamRequest = Message<"woodhouse.api.v1.clients.UsersStreamRequest"> & {
@@ -904,7 +1277,7 @@ export type UsersStreamRequest = Message<"woodhouse.api.v1.clients.UsersStreamRe
  * Use `create(UsersStreamRequestSchema)` to create a new message.
  */
 export const UsersStreamRequestSchema: GenMessage<UsersStreamRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 42);
+  messageDesc(file_clients_user_service, 54);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UsersStreamResponse
@@ -930,7 +1303,7 @@ export type UsersStreamResponse = Message<"woodhouse.api.v1.clients.UsersStreamR
  * Use `create(UsersStreamResponseSchema)` to create a new message.
  */
 export const UsersStreamResponseSchema: GenMessage<UsersStreamResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 43);
+  messageDesc(file_clients_user_service, 55);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddUserRequest
@@ -962,7 +1335,7 @@ export type AddUserRequest = Message<"woodhouse.api.v1.clients.AddUserRequest"> 
  * Use `create(AddUserRequestSchema)` to create a new message.
  */
 export const AddUserRequestSchema: GenMessage<AddUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 44);
+  messageDesc(file_clients_user_service, 56);
 
 /**
  * @generated from message woodhouse.api.v1.clients.AddUserResponse
@@ -975,7 +1348,7 @@ export type AddUserResponse = Message<"woodhouse.api.v1.clients.AddUserResponse"
  * Use `create(AddUserResponseSchema)` to create a new message.
  */
 export const AddUserResponseSchema: GenMessage<AddUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 45);
+  messageDesc(file_clients_user_service, 57);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateUserRequest
@@ -1018,7 +1391,7 @@ export type UpdateUserRequest = Message<"woodhouse.api.v1.clients.UpdateUserRequ
  * Use `create(UpdateUserRequestSchema)` to create a new message.
  */
 export const UpdateUserRequestSchema: GenMessage<UpdateUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 46);
+  messageDesc(file_clients_user_service, 58);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateUserResponse
@@ -1031,7 +1404,7 @@ export type UpdateUserResponse = Message<"woodhouse.api.v1.clients.UpdateUserRes
  * Use `create(UpdateUserResponseSchema)` to create a new message.
  */
 export const UpdateUserResponseSchema: GenMessage<UpdateUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 47);
+  messageDesc(file_clients_user_service, 59);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveUserRequest
@@ -1048,7 +1421,7 @@ export type RemoveUserRequest = Message<"woodhouse.api.v1.clients.RemoveUserRequ
  * Use `create(RemoveUserRequestSchema)` to create a new message.
  */
 export const RemoveUserRequestSchema: GenMessage<RemoveUserRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 48);
+  messageDesc(file_clients_user_service, 60);
 
 /**
  * @generated from message woodhouse.api.v1.clients.RemoveUserResponse
@@ -1061,7 +1434,7 @@ export type RemoveUserResponse = Message<"woodhouse.api.v1.clients.RemoveUserRes
  * Use `create(RemoveUserResponseSchema)` to create a new message.
  */
 export const RemoveUserResponseSchema: GenMessage<RemoveUserResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 49);
+  messageDesc(file_clients_user_service, 61);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ImagesStreamRequest
@@ -1088,7 +1461,7 @@ export type ImagesStreamRequest = Message<"woodhouse.api.v1.clients.ImagesStream
  * Use `create(ImagesStreamRequestSchema)` to create a new message.
  */
 export const ImagesStreamRequestSchema: GenMessage<ImagesStreamRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 50);
+  messageDesc(file_clients_user_service, 62);
 
 /**
  * ImageSizeHint tells the server the rendered pixel size of a specific camera
@@ -1132,7 +1505,7 @@ export type ImageSizeHint = Message<"woodhouse.api.v1.clients.ImageSizeHint"> & 
  * Use `create(ImageSizeHintSchema)` to create a new message.
  */
 export const ImageSizeHintSchema: GenMessage<ImageSizeHint> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 51);
+  messageDesc(file_clients_user_service, 63);
 
 /**
  * UserImageRequest is like ImageRequest but with an optional size hint for
@@ -1176,7 +1549,7 @@ export type UserImageRequest = Message<"woodhouse.api.v1.clients.UserImageReques
  * Use `create(UserImageRequestSchema)` to create a new message.
  */
 export const UserImageRequestSchema: GenMessage<UserImageRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 52);
+  messageDesc(file_clients_user_service, 64);
 
 /**
  * @generated from message woodhouse.api.v1.clients.ImagesStreamResponse
@@ -1220,7 +1593,7 @@ export type ImagesStreamResponse = Message<"woodhouse.api.v1.clients.ImagesStrea
  * Use `create(ImagesStreamResponseSchema)` to create a new message.
  */
 export const ImagesStreamResponseSchema: GenMessage<ImagesStreamResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 53);
+  messageDesc(file_clients_user_service, 65);
 
 /**
  * @generated from message woodhouse.api.v1.clients.User
@@ -1256,7 +1629,7 @@ export type User = Message<"woodhouse.api.v1.clients.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 54);
+  messageDesc(file_clients_user_service, 66);
 
 /**
  * Settings holds the server-wide configuration that can be changed at runtime.
@@ -1287,7 +1660,7 @@ export type Settings = Message<"woodhouse.api.v1.clients.Settings"> & {
  * Use `create(SettingsSchema)` to create a new message.
  */
 export const SettingsSchema: GenMessage<Settings> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 55);
+  messageDesc(file_clients_user_service, 67);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetSettingsRequest
@@ -1300,7 +1673,7 @@ export type GetSettingsRequest = Message<"woodhouse.api.v1.clients.GetSettingsRe
  * Use `create(GetSettingsRequestSchema)` to create a new message.
  */
 export const GetSettingsRequestSchema: GenMessage<GetSettingsRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 56);
+  messageDesc(file_clients_user_service, 68);
 
 /**
  * @generated from message woodhouse.api.v1.clients.GetSettingsResponse
@@ -1317,7 +1690,7 @@ export type GetSettingsResponse = Message<"woodhouse.api.v1.clients.GetSettingsR
  * Use `create(GetSettingsResponseSchema)` to create a new message.
  */
 export const GetSettingsResponseSchema: GenMessage<GetSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 57);
+  messageDesc(file_clients_user_service, 69);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateSettingsRequest
@@ -1343,7 +1716,7 @@ export type UpdateSettingsRequest = Message<"woodhouse.api.v1.clients.UpdateSett
  * Use `create(UpdateSettingsRequestSchema)` to create a new message.
  */
 export const UpdateSettingsRequestSchema: GenMessage<UpdateSettingsRequest> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 58);
+  messageDesc(file_clients_user_service, 70);
 
 /**
  * @generated from message woodhouse.api.v1.clients.UpdateSettingsResponse
@@ -1362,7 +1735,43 @@ export type UpdateSettingsResponse = Message<"woodhouse.api.v1.clients.UpdateSet
  * Use `create(UpdateSettingsResponseSchema)` to create a new message.
  */
 export const UpdateSettingsResponseSchema: GenMessage<UpdateSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_clients_user_service, 59);
+  messageDesc(file_clients_user_service, 71);
+
+/**
+ * @generated from enum woodhouse.api.v1.clients.NotificationLevel
+ */
+export enum NotificationLevel {
+  /**
+   * @generated from enum value: NOTIFICATION_LEVEL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: NOTIFICATION_LEVEL_INFO = 1;
+   */
+  INFO = 1,
+
+  /**
+   * @generated from enum value: NOTIFICATION_LEVEL_SUCCESS = 2;
+   */
+  SUCCESS = 2,
+
+  /**
+   * @generated from enum value: NOTIFICATION_LEVEL_WARNING = 3;
+   */
+  WARNING = 3,
+
+  /**
+   * @generated from enum value: NOTIFICATION_LEVEL_ERROR = 4;
+   */
+  ERROR = 4,
+}
+
+/**
+ * Describes the enum woodhouse.api.v1.clients.NotificationLevel.
+ */
+export const NotificationLevelSchema: GenEnum<NotificationLevel> = /*@__PURE__*/
+  enumDesc(file_clients_user_service, 0);
 
 /**
  * @generated from enum woodhouse.api.v1.clients.UserRole
@@ -1388,7 +1797,7 @@ export enum UserRole {
  * Describes the enum woodhouse.api.v1.clients.UserRole.
  */
 export const UserRoleSchema: GenEnum<UserRole> = /*@__PURE__*/
-  enumDesc(file_clients_user_service, 0);
+  enumDesc(file_clients_user_service, 1);
 
 /**
  * @generated from service woodhouse.api.v1.clients.UserService
@@ -1612,6 +2021,63 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof RemoveZoneRequestSchema;
     output: typeof RemoveZoneResponseSchema;
+  },
+  /**
+   * Get a stream of Notifications addressed to the calling user. The first
+   * batch is the stored history they can still see, followed by updates as
+   * they occur. Every response carries `read` for the calling user only, so
+   * two users on the same notification see different values. The stream also
+   * includes a 10 second heartbeat; the first one ends the initial batch.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.NotificationsStream
+   */
+  notificationsStream: {
+    methodKind: "server_streaming";
+    input: typeof NotificationsStreamRequestSchema;
+    output: typeof NotificationsStreamResponseSchema;
+  },
+  /**
+   * Mark one notification read for the calling user. Idempotent.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.MarkNotificationRead
+   */
+  markNotificationRead: {
+    methodKind: "unary";
+    input: typeof MarkNotificationReadRequestSchema;
+    output: typeof MarkNotificationReadResponseSchema;
+  },
+  /**
+   * Mark every notification currently visible to the calling user read.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.MarkAllNotificationsRead
+   */
+  markAllNotificationsRead: {
+    methodKind: "unary";
+    input: typeof MarkAllNotificationsReadRequestSchema;
+    output: typeof MarkAllNotificationsReadResponseSchema;
+  },
+  /**
+   * Dismiss one notification for the calling user. It leaves their inbox but
+   * stays in the history for everybody else in its audience.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.DismissNotification
+   */
+  dismissNotification: {
+    methodKind: "unary";
+    input: typeof DismissNotificationRequestSchema;
+    output: typeof DismissNotificationResponseSchema;
+  },
+  /**
+   * Send a test notification. Admin only; it exists so the delivery path can
+   * be exercised before anything in the system generates notifications of
+   * its own.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserService.SendTestNotification
+   */
+  sendTestNotification: {
+    methodKind: "unary";
+    input: typeof SendTestNotificationRequestSchema;
+    output: typeof SendTestNotificationResponseSchema;
   },
   /**
    * Send an action to a device service.
