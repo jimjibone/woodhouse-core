@@ -3,8 +3,8 @@ Description=woodhouse-shelly
 After=network-online.target
 
 [Service]
-WorkingDirectory=/home/user/woodhouse-4/build-linux-amd64
-ExecStart=/home/user/woodhouse-4/build-linux-amd64/woodhouse-shelly \
+WorkingDirectory=/home/user/woodhouse
+ExecStart=/home/user/woodhouse/woodhouse-shelly \
     --addr localhost:4000 \
     --store shelly.db \
     -v
