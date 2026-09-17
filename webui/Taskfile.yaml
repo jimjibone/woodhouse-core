@@ -9,9 +9,9 @@ tasks:
     run: when_changed
     sources:
       - ./buf.gen.yaml
-      - ../api/proto/v1/*/*.proto
+      - ../api/proto/v1/**/*.proto
     generates:
-      - ./src/api/v1/*/*.pb.go
+      - ./src/lib/api/v1/**/*_pb.ts
     cmds:
       - mkdir -p ./src/lib/api/v1
       - npx buf generate ../api/proto/v1
@@ -27,6 +27,17 @@ tasks:
   build:
     deps:
       - proto-web-v1
+    sources:
+      - ./package.json
+      - ./package-lock.json
+      - ./svelte.config.js
+      - ./vite.config.ts
+      - ./tsconfig.json
+      - ./components.json
+      - ./src/**/*
+      - ./static/**/*
+    generates:
+      - ./build/**/*
     cmds:
       - npm run build
 
