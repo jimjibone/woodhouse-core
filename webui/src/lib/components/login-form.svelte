@@ -72,8 +72,7 @@
 			</Field>
 		</FieldGroup>
 	</form>
-	<!-- <FieldDescription class="px-6 text-center">
-		By clicking continue, you agree to our <a href="##">Terms of Service</a> and
-		<a href="##">Privacy Policy</a>.
-	</FieldDescription> -->
+	<FieldDescription class="px-6 text-center">
+		Seeing a certificate warning? <a href="/trust">Trust this server</a>.
+	</FieldDescription>
 </div>

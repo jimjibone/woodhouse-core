@@ -136,7 +136,9 @@ will show the instance name instead.
 1. Start the core with `task run-core`.
 2. Open the admin web interface at <https://localhost:4080> and create your user
    account. The server uses a self-signed certificate, so your browser will
-   show a security warning on first visit — this is safe to accept.
+   show a security warning on first visit - this is safe to accept. The
+   warning can be removed for good by installing the server's local CA from
+   <https://localhost:4080/trust> (open it on each device).
 3. Connect a bridge (Zigbee, Shelly, Tasmota, …) to start discovering devices.
    Bridges pair with the core and must be approved before they can connect.
 4. Write a reactor against the [`wh`](https://github.com/jimjibone/wh) client

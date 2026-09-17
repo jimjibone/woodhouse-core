@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -111,6 +113,11 @@ func main() {
 			return nil
 		},
 		Action: func(args *cli.Context) error {
+			// Create a context for the background goroutines started below
+			// (e.g. the web cert manager's renewal loop).
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			// Try to listen on the selected server addresses.
 			apiLis, err := net.Listen("tcp", config.LoadedConfig.Server.ApiAddr)
 			if err != nil {
@@ -124,10 +131,21 @@ func main() {
 			// Create the config store.
 			store := stores.NewFSStore(args.Path("config-dir"))
 
+			// Create the cert manager, used for the gRPC server's pinned leaf
+			// certificate.
 			certManager, err := cert.NewCertManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create cert manager: %s", err)
 			}
+
+			// Create the web cert manager, which runs in the background to
+			// renew the CA-signed chain for the web server.
+			webCertManager, err := cert.NewWebCertManager(store)
+			if err != nil {
+				return fmt.Errorf("failed to create web cert manager: %s", err)
+			}
+			go webCertManager.Run(ctx)
+
 			clientJwtManager, err := clients.NewJWTManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create client jwt manager: %s", err)
@@ -288,6 +306,26 @@ func main() {
 				mux.HandleFunc("/api/login", userAuthService.LoginWeb)
 				mux.HandleFunc("/api/refresh", userAuthService.RefreshWeb)
 				mux.HandleFunc("/api/logout", userAuthService.LogoutWeb)
+				// Deliberately unauthenticated: a new device has no session
+				// yet, and the CA certificate is not a secret (it's the
+				// thing being handed out for a device to trust).
+				mux.HandleFunc("GET /api/trust/ca.crt", func(res http.ResponseWriter, req *http.Request) {
+					res.Header().Set("Content-Type", "application/x-x509-ca-cert")
+					res.Header().Set("Content-Disposition", `attachment; filename="woodhouse-ca.crt"`)
+					res.Header().Set("Cache-Control", "no-store")
+					res.Write(webCertManager.CAPEM())
+				})
+				// Also deliberately unauthenticated, for the same reason.
+				mux.HandleFunc("GET /api/trust/info", func(res http.ResponseWriter, req *http.Request) {
+					data, err := json.Marshal(webCertManager.Info())
+					if err != nil {
+						http.Error(res, "internal error", http.StatusInternalServerError)
+						return
+					}
+					res.Header().Set("Content-Type", "application/json")
+					res.Header().Set("Cache-Control", "no-store")
+					res.Write(data)
+				})
 				// Note that we don't strip the last `/` from the api path as
 				// this is required to remain a valid gRPC method call (all must
 				// start with `/`).
@@ -302,8 +340,8 @@ func main() {
 				httpServer := &http.Server{
 					Handler: mux,
 					TLSConfig: &tls.Config{
-						Certificates: []tls.Certificate{*certManager.Cert()},
-						MinVersion:   tls.VersionTLS12,
+						GetCertificate: webCertManager.GetCertificate,
+						MinVersion:     tls.VersionTLS12,
 					},
 				}
 				log.Infof("web server ready at https://%s", webLis.Addr())
