@@ -7,6 +7,7 @@
 		FloatValueSchema,
 		IntValueSchema,
 		Permissions,
+		TextValueSchema,
 		ValueSchema,
 		type Attribute,
 		type TimeAttribute
@@ -15,7 +16,14 @@
 	import ServiceAction from './service-action.svelte';
 	import { SlidersHorizontalIcon } from '@lucide/svelte';
 	import { create, toJsonString } from '@bufbuild/protobuf';
-	import { BoolContent, DurationContent, EnumContent, FloatContent, IntContent } from '$lib/components/wh/attributes';
+	import {
+		BoolContent,
+		DurationContent,
+		EnumContent,
+		FloatContent,
+		IntContent,
+		TextContent
+	} from '$lib/components/wh/attributes';
 	import { toHeadlineCase } from '$lib/tools/headline-case';
 	import { toPreciseDuration } from '$lib/tools/duration';
 	import { unitLabel } from '$lib/tools/units';
@@ -26,6 +34,21 @@
 
 	const isWritable = (perms: Permissions | undefined) =>
 		perms === Permissions.PERM_READWRITE || perms === Permissions.PERM_WRITEONLY;
+
+	const permsOf = (attr: Attribute) =>
+		attr.bool?.perms ??
+		attr.int?.perms ??
+		attr.float?.perms ??
+		attr.text?.perms ??
+		attr.duration?.perms ??
+		attr.time?.perms ??
+		attr.color?.perms ??
+		attr.enum?.perms;
+
+	// A write-only attribute carries no readable state - whatever sits in its
+	// field is a placeholder, not something the device reported - so it has
+	// nothing to contribute to the condensed summary line.
+	const attrWriteOnly = (attr: Attribute) => permsOf(attr) === Permissions.PERM_WRITEONLY;
 
 	const attrWritable = (attr: Attribute) =>
 		isWritable(
@@ -76,7 +99,12 @@
 	};
 
 	const maxSummaryValues = 3;
-	let summaryValues = $derived(attrs.map(attrSummary).filter((val) => val !== ''));
+	let summaryValues = $derived(
+		attrs
+			.filter((attr) => !attrWriteOnly(attr))
+			.map(attrSummary)
+			.filter((val) => val !== '')
+	);
 	let shownValues = $derived(summaryValues.slice(0, maxSummaryValues));
 	let moreCount = $derived(summaryValues.length - shownValues.length);
 
@@ -98,6 +126,10 @@
 
 	const sendActionEnum = async (id: string, val: string) => {
 		serviceAction.send([create(ValueSchema, { id: id, enum: create(EnumValueSchema, { value: val }) })]);
+	};
+
+	const sendActionText = async (id: string, val: string) => {
+		serviceAction.send([create(ValueSchema, { id: id, text: create(TextValueSchema, { value: val }) })]);
 	};
 </script>
 
@@ -182,7 +214,15 @@
 					onaction={isWritable(attr.enum.perms) ? (val) => sendActionEnum(attr.id, val) : undefined}
 				/>
 			{:else if attr.text}
-				{@render readRow(attr.id, attr.text.value)}
+				{#if isWritable(attr.text.perms)}
+					<TextContent
+						name={toHeadlineCase(attr.id)}
+						attr={attr.text}
+						onaction={(val) => sendActionText(attr.id, val)}
+					/>
+				{:else}
+					{@render readRow(attr.id, attr.text.value)}
+				{/if}
 			{:else if attr.time}
 				{@render readRow(attr.id, timeIsSet(attr.time) ? timeDate(attr.time).toLocaleString() : 'Not set')}
 			{:else}
