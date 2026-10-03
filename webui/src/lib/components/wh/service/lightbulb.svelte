@@ -34,6 +34,10 @@
 	let attrColor: ColorAttribute | undefined = $state(undefined);
 	let attrTransition: DurationAttribute | undefined = $state(undefined);
 	let attrOthers: Attribute[] = $state([]);
+	// Active colour mode ('color_temp' or 'color'), undefined when the bulb does not report one.
+	let colorMode: string | undefined = $state(undefined);
+	const dimColorTemp = $derived(colorMode === 'color');
+	const dimColor = $derived(colorMode === 'color_temp');
 
 	const foregroundLight = 'hsl(0 0% 100%)';
 	const foregroundDark = 'hsl(240 10% 3.9%)';
@@ -49,6 +53,7 @@
 		let brightnessValue: BigInt | undefined = undefined;
 		let colorValue: ColorHueSat | undefined = undefined;
 		let colorTempValue: IntAttribute | undefined = undefined;
+		let modeValue: string | undefined = undefined;
 		for (const attr of service.attrs) {
 			if (attr.id === 'on') {
 				attrOn = attr.bool;
@@ -62,6 +67,8 @@
 			} else if (attr.id === 'color') {
 				attrColor = attr.color;
 				colorValue = attr.color?.hueSat !== undefined ? attr.color?.hueSat : undefined;
+			} else if (attr.id === 'color_mode') {
+				modeValue = attr.enum?.value !== undefined ? attr.enum.value : undefined;
 			} else if (attr.id === 'transition') {
 				attrTransition = attr.duration;
 			} else {
@@ -69,6 +76,7 @@
 			}
 		}
 		attrOthers = others;
+		colorMode = modeValue;
 
 		let color: any;
 		if (!online || !onValue) {
@@ -85,7 +93,10 @@
 				color = chroma.rgb(0, 0, 0);
 			} else {
 				const bri = Number(brightnessValue) / 200.0 + 0.5;
-				if (colorValue !== undefined && colorValue !== undefined) {
+				// An explicit colour mode picks the branch; otherwise colour wins over colour temp.
+				const useColorTemp =
+					colorTempValue !== undefined && (modeValue === 'color_temp' || (modeValue !== 'color' && colorValue === undefined));
+				if (colorValue !== undefined && !useColorTemp) {
 					color = chroma.hsv(colorValue.hue, colorValue.sat / 100.0, bri);
 				} else if (colorTempValue !== undefined) {
 					const kelvin = (1.0 / Number(colorTempValue.value)) * 1000000.0;
@@ -203,12 +214,12 @@
 			{attrBrightness.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 		</p>
 	{/if}
-	{#if attrColorTemp !== undefined}
+	{#if attrColorTemp !== undefined && colorMode !== 'color'}
 		<p class="text-muted-foreground">
 			{(1000000.0 / Number(attrColorTemp.value)).toLocaleString(undefined, { maximumFractionDigits: 0 })}°K
 		</p>
 	{/if}
-	{#if attrColor !== undefined && attrColor.hueSat !== undefined}
+	{#if attrColor !== undefined && attrColor.hueSat !== undefined && colorMode !== 'color_temp'}
 		<p class="text-muted-foreground">Hue {attrColor.hueSat.hue.toFixed(0)}°</p>
 		<p class="text-muted-foreground">Sat {attrColor.hueSat.sat.toFixed(0)}%</p>
 	{/if}
@@ -238,7 +249,12 @@
 				/>
 			{/if}
 			{#if attrColorTemp !== undefined}
-				<VerticalColorTempContent attr={attrColorTemp} onaction={sendActionColorTemp} resetOnClose={!drawerOpen} />
+				<VerticalColorTempContent
+					attr={attrColorTemp}
+					onaction={sendActionColorTemp}
+					resetOnClose={!drawerOpen}
+					class={dimColorTemp ? 'opacity-50' : ''}
+				/>
 			{/if}
 		</div>
 	{/if}
@@ -257,6 +273,7 @@
 				transform={(val) => 1000000.0 / Number(val)}
 				units="°K"
 				invert
+				class={dimColorTemp ? 'opacity-50' : ''}
 			/>
 		{/if}
 		{#if attrColor !== undefined}
@@ -268,6 +285,7 @@
 					max={360}
 					onaction={(val) => sendActionColor(val, attrColor!.hueSat!.sat)}
 					units="°"
+					class={dimColor ? 'opacity-50' : ''}
 				/>
 				<FloatContent
 					name="Sat"
@@ -276,6 +294,7 @@
 					max={100}
 					onaction={(val) => sendActionColor(attrColor!.hueSat!.hue, val)}
 					units="%"
+					class={dimColor ? 'opacity-50' : ''}
 				/>
 			{/if}
 		{/if}

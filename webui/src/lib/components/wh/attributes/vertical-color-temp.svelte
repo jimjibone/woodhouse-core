@@ -12,11 +12,13 @@
 	let {
 		attr,
 		resetOnClose = false,
-		onaction
+		onaction,
+		class: className = ''
 	}: {
 		attr: IntAttribute;
 		resetOnClose?: boolean;
 		onaction: (value: bigint) => void;
+		class?: string;
 	} = $props();
 
 	let changing: number | null = $state(null);
@@ -133,7 +135,7 @@
 	const formatKelvin = (k: number) => k.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '°K';
 </script>
 
-<div class="flex flex-col items-center gap-2">
+<div class={cn('flex flex-col items-center gap-2', className)}>
 	<!-- svelte-ignore a11y_interactive_supports_focus -->
 	<div class="relative">
 		<!-- External label to the left, visible only while dragging -->

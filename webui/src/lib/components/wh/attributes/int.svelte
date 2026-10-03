@@ -9,14 +9,16 @@
 		onaction,
 		transform = (value) => Number(value),
 		units,
-		invert
+		invert,
+		class: className = ''
 	}: {
 		name: string,
 		attr: IntAttribute,
 		onaction: (value: bigint)=>void,
 		transform?: (value: bigint)=>number,
 		units: string,
-		invert?: boolean
+		invert?: boolean,
+		class?: string
 	} = $props();
 
 	let ghostMax: string = $derived.by(() => {
@@ -42,10 +44,10 @@
 	};
 </script>
 
-<div>{name}</div>
+<div class={className}>{name}</div>
 {#if invert}
 	<Slider
-		class="shrink"
+		class={cn("shrink", className)}
 		type="single"
 		step={Number(attr.step)}
 		min={-Number(attr.max)}
@@ -56,7 +58,7 @@
 	/>
 {:else}
 	<Slider
-		class="shrink"
+		class={cn("shrink", className)}
 		type="single"
 		step={Number(attr.step)}
 		min={Number(attr.min)}
@@ -66,7 +68,7 @@
 		onValueCommit={sendAction}
 	/>
 {/if}
-<div class={cn("inline-block", changing ? "font-semibold" : "text-muted-foreground")}>
+<div class={cn("inline-block", changing ? "font-semibold" : "text-muted-foreground", className)}>
 	<span class="invisible block h-0 overflow-hidden font-semibold">
 		{ghostMax+units}
 	</span>

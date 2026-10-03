@@ -54,7 +54,7 @@
 
 <div class={className}>{name}</div>
 <Slider
-	class={'shrink' + className}
+	class={cn('shrink', className)}
 	type="single"
 	{step}
 	{min}
@@ -63,7 +63,7 @@
 	onValueChange={startAction}
 	onValueCommit={sendAction}
 />
-<div class={cn('inline-block', changing ? 'font-semibold' : 'text-muted-foreground')}>
+<div class={cn('inline-block', changing ? 'font-semibold' : 'text-muted-foreground', className)}>
 	<span class="invisible block h-0 overflow-hidden font-semibold">
 		{ghostMax + units}
 	</span>
