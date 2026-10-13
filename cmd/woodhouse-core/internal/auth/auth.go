@@ -22,8 +22,21 @@ func RequiresAuth(method string) bool {
 	return !slices.Contains(noAuthMethods, method)
 }
 
+// userServicePrefixes are the services called with user (not client) access
+// tokens. Anything else is treated as a client method, callable by any
+// paired client, so user-facing services must be listed here.
+var userServicePrefixes = []string{
+	"/woodhouse.api.v1.clients.UserService/",
+	"/woodhouse.api.v1.clients.SystemService/",
+}
+
 func IsUserMethod(method string) bool {
-	return strings.HasPrefix(method, "/woodhouse.api.v1.clients.UserService/")
+	for _, prefix := range userServicePrefixes {
+		if strings.HasPrefix(method, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // roleMap is a map of method names (keys) and the list of roles which are allowed to access them.
@@ -63,6 +76,16 @@ var roleMap = map[string][]Role{
 	"/woodhouse.api.v1.clients.UserService/ImagesStream":             {AdminRole, UserRole},
 	"/woodhouse.api.v1.clients.UserService/GetSettings":              {AdminRole, UserRole},
 	"/woodhouse.api.v1.clients.UserService/UpdateSettings":           {AdminRole},
+
+	// System management (woodhouse-os): admins only.
+	"/woodhouse.api.v1.clients.SystemService/GetSystemInfo":    {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/GetUpdateReports": {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/GetWifiStatus":    {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/ScanWifi":         {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/JoinWifi":         {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/SetSSH":           {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/Reboot":           {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/FactoryReset":     {AdminRole},
 }
 
 func IsUserAuthorised(method string, role Role) bool {

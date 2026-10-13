@@ -26,6 +26,7 @@ import (
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/yamlfile"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/local"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/system"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-core/discovery"
 	"github.com/jimjibone/woodhouse-core/shared/cert"
@@ -35,6 +36,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -71,6 +73,12 @@ func main() {
 				Name:      "local-socket",
 				Usage:     "Serve local-only services (device bootstrap) on the unix socket at `PATH`",
 				EnvVars:   []string{"WOODHOUSE_LOCAL_SOCKET"},
+				TakesFile: true,
+			},
+			&cli.StringFlag{
+				Name:      "agent-socket",
+				Usage:     "Forward system management (SystemService) to the woodhouse-os agent at unix socket `PATH`",
+				EnvVars:   []string{"WOODHOUSE_AGENT_SOCKET"},
 				TakesFile: true,
 			},
 		},
@@ -238,6 +246,21 @@ func main() {
 
 			settingsManager := core.NewSettingsManager(broadcaster)
 
+			// System management is forwarded to the woodhouse-os agent. The
+			// service is registered either way (the authorization policy
+			// expects every RPC it names to exist); without an agent every
+			// call fails with UNAVAILABLE.
+			var agentClient localapi.AgentServiceClient
+			if path := args.String("agent-socket"); path != "" {
+				conn, err := grpc.NewClient("unix://"+path, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				if err != nil {
+					return fmt.Errorf("failed to create agent client: %w", err)
+				}
+				defer conn.Close()
+				agentClient = localapi.NewAgentServiceClient(conn)
+			}
+			systemService := system.New(agentClient)
+
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
 			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, zoneManager, notificationManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
@@ -256,6 +279,7 @@ func main() {
 			clientsapi.RegisterClientServiceServer(server, clientService)
 			clientsapi.RegisterUserServiceServer(server, userService)
 			clientsapi.RegisterUserAuthServiceServer(server, userAuthService)
+			clientsapi.RegisterSystemServiceServer(server, systemService)
 
 			// Cross-check the authorization policy against what was actually
 			// registered above. Stale entries for removed RPCs are dead data

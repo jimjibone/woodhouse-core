@@ -21,6 +21,7 @@ func registeredMethods(t *testing.T) []string {
 	clientsapi.RegisterClientServiceServer(server, nil)
 	clientsapi.RegisterUserServiceServer(server, nil)
 	clientsapi.RegisterUserAuthServiceServer(server, nil)
+	clientsapi.RegisterSystemServiceServer(server, nil)
 
 	var methods []string
 	for name, info := range server.GetServiceInfo() {
@@ -143,6 +144,23 @@ func TestSettingsAuthorisation(t *testing.T) {
 	for _, method := range []string{get, update} {
 		if !RequiresAuth(method) {
 			t.Errorf("%q should require auth", method)
+		}
+	}
+}
+
+func TestSystemServiceIsAdminOnlyUserMethod(t *testing.T) {
+	const method = "/woodhouse.api.v1.clients.SystemService/FactoryReset"
+
+	// Not a user method would mean any paired client (bridge) could call it.
+	if !IsUserMethod(method) {
+		t.Fatalf("%q must be a user method", method)
+	}
+	if !RequiresAuth(method) {
+		t.Fatalf("%q must require auth", method)
+	}
+	for role, want := range map[Role]bool{AdminRole: true, UserRole: false, NoAuthRole: false} {
+		if got := IsUserAuthorised(method, role); got != want {
+			t.Errorf("IsUserAuthorised(%q, %s) = %v, want %v", method, role, got, want)
 		}
 	}
 }
