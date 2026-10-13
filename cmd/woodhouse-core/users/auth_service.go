@@ -23,16 +23,28 @@ type AuthService struct {
 	users  *core.UserManager
 	jwt    *JWTManager
 	limits *limits.Login
+
+	// firstLoginAdmin makes the first login on a server with no admin create
+	// that admin. Appliances turn it off: their first admin is created during
+	// device adoption (see the local BootstrapService) instead, so a stranger
+	// on the network cannot claim the server first (SECURITY-REVIEW M-2).
+	firstLoginAdmin bool
 }
 
 func NewAuthService(users *core.UserManager, jwt *JWTManager, lim *limits.Login) *AuthService {
 	srv := &AuthService{
-		log:    log.NewContext(log.DefaultLogger, "users-auth", log.DebugLevel),
-		users:  users,
-		jwt:    jwt,
-		limits: lim,
+		log:             log.NewContext(log.DefaultLogger, "users-auth", log.DebugLevel),
+		users:           users,
+		jwt:             jwt,
+		limits:          lim,
+		firstLoginAdmin: true,
 	}
 	return srv
+}
+
+// DisableFirstLoginAdmin stops the first login from creating an admin.
+func (srv *AuthService) DisableFirstLoginAdmin() {
+	srv.firstLoginAdmin = false
 }
 
 func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest, src netip.Addr) (*TokenDetails, error) {
@@ -59,7 +71,7 @@ func (srv *AuthService) loginBase(in *clientsapi.UserLoginRequest, src netip.Add
 
 	// Special case if there are no admins and this user does not already
 	// exist... add this user as an admin and log them in.
-	if user == nil && !srv.users.HasAnAdmin() {
+	if user == nil && srv.firstLoginAdmin && !srv.users.HasAnAdmin() {
 		// Add the user as an admin.
 		admin, err := core.NewUser(in.Username, "", in.Password, auth.AdminRole)
 		if err != nil {

@@ -18,12 +18,14 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jimjibone/log"
 	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	localapi "github.com/jimjibone/woodhouse-api/go/v1/local"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/yamlfile"
+	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/local"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/users"
 	"github.com/jimjibone/woodhouse-core/discovery"
 	"github.com/jimjibone/woodhouse-core/shared/cert"
@@ -59,6 +61,17 @@ func main() {
 				Name:    "debug",
 				Aliases: []string{"v"},
 				Usage:   "Enable debug logging",
+			},
+			&cli.BoolFlag{
+				Name:    "appliance",
+				Usage:   "Appliance mode: the first admin is created by the device agent, not by the first login",
+				EnvVars: []string{"WOODHOUSE_APPLIANCE"},
+			},
+			&cli.StringFlag{
+				Name:      "local-socket",
+				Usage:     "Serve local-only services (device bootstrap) on the unix socket at `PATH`",
+				EnvVars:   []string{"WOODHOUSE_LOCAL_SOCKET"},
+				TakesFile: true,
 			},
 		},
 		Before: func(args *cli.Context) error {
@@ -209,6 +222,10 @@ func main() {
 			defer userJwtManager.Close()
 			loginLimits := limits.NewLogin(limits.Config{})
 			userAuthService := users.NewAuthService(userManager, userJwtManager, loginLimits)
+			if args.Bool("appliance") {
+				userAuthService.DisableFirstLoginAdmin()
+				log.Infof("appliance mode: first login will not create an admin")
+			}
 
 			// Broadcast our existence. This is created before the services
 			// because the settings manager renames the advertisement live when
@@ -270,6 +287,27 @@ func main() {
 				}
 				server.GracefulStop()
 			}()
+
+			// Serve local-only services on a unix socket, if asked. These have
+			// no auth interceptor: only processes that can open the socket
+			// (owner-only permissions) reach them.
+			localErr := make(chan error, 1)
+			if path := args.String("local-socket"); path != "" {
+				localLis, err := listenUnix(path)
+				if err != nil {
+					return fmt.Errorf("failed to listen on local socket: %w", err)
+				}
+				localServer := grpc.NewServer()
+				localapi.RegisterBootstrapServiceServer(localServer, local.NewBootstrapService(
+					userManager, settingsManager, loginLimits, apiLis.Addr(), webLis.Addr(), certManager.Cert().Certificate[0]))
+				defer localServer.Stop()
+				go func() {
+					log.Infof("local server ready at unix://%s", path)
+					if err := localServer.Serve(localLis); err != nil {
+						localErr <- fmt.Errorf("local server: %w", err)
+					}
+				}()
+			}
 
 			// Run the web server with grpc-web support.
 			webServerErr := make(chan error, 1)
@@ -358,6 +396,8 @@ func main() {
 				return err
 			case err := <-webServerErr:
 				return err
+			case err := <-localErr:
+				return err
 			case <-sig:
 				log.Infof("exiting...")
 			}
@@ -370,4 +410,19 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+// listenUnix listens on a unix socket readable and writable only by this
+// user, replacing a stale socket left by an earlier run.
+func listenUnix(path string) (net.Listener, error) {
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	old := syscall.Umask(0o177)
+	lis, err := net.Listen("unix", path)
+	syscall.Umask(old)
+	if err != nil {
+		return nil, err
+	}
+	return lis, nil
 }

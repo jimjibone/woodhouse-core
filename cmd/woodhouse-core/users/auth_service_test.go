@@ -112,6 +112,19 @@ func TestLogin_BootstrapThenSecondLogin(t *testing.T) {
 	}
 }
 
+func TestLogin_FirstLoginAdminDisabled(t *testing.T) {
+	srv, userManager, _ := newTestAuthService(t, limits.Config{})
+	srv.DisableFirstLoginAdmin()
+
+	_, err := srv.Login(ctxWithIP("10.0.0.9"), &clientsapi.UserLoginRequest{Username: "admin", Password: "adminpass1"})
+	if status.Code(err) != codes.Unauthenticated {
+		t.Fatalf("expected Unauthenticated, got %v", err)
+	}
+	if userManager.HasAnAdmin() {
+		t.Fatalf("expected no admin to be created")
+	}
+}
+
 func TestLogin_UnknownUserAndWrongPasswordReturnSameError(t *testing.T) {
 	srv, userManager, _ := newTestAuthService(t, limits.Config{LoginBurst: 20, LoginPerMin: 20 * 60})
 	seedAdmin(t, userManager, "admin", "adminpass1")
