@@ -17,6 +17,12 @@ import (
 type fakeAgent struct {
 	localapi.UnimplementedAgentServiceServer
 	resetCalls int
+	remote     *clientsapi.SetRemoteSupportRequest
+}
+
+func (f *fakeAgent) SetRemoteSupport(ctx context.Context, req *clientsapi.SetRemoteSupportRequest) (*clientsapi.SetRemoteSupportResponse, error) {
+	f.remote = req
+	return &clientsapi.SetRemoteSupportResponse{}, nil
 }
 
 func (f *fakeAgent) GetSystemInfo(ctx context.Context, req *clientsapi.GetSystemInfoRequest) (*clientsapi.GetSystemInfoResponse, error) {
@@ -64,6 +70,10 @@ func TestForwardsToAgent(t *testing.T) {
 	}
 	if _, err := s.FactoryReset(ctx, &clientsapi.FactoryResetRequest{Confirm: true}); err != nil || agent.resetCalls != 1 {
 		t.Fatalf("reset err %v calls %d", err, agent.resetCalls)
+	}
+
+	if _, err := s.SetRemoteSupport(ctx, &clientsapi.SetRemoteSupportRequest{Enabled: false}); err != nil || agent.remote == nil || agent.remote.Enabled {
+		t.Fatalf("remote support err %v forwarded %+v", err, agent.remote)
 	}
 
 	// Methods the agent does not implement surface as UNIMPLEMENTED.

@@ -80,3 +80,10 @@ func (s *Service) FactoryReset(ctx context.Context, req *clientsapi.FactoryReset
 	}
 	return s.agent.FactoryReset(ctx, req)
 }
+
+func (s *Service) SetRemoteSupport(ctx context.Context, req *clientsapi.SetRemoteSupportRequest) (*clientsapi.SetRemoteSupportResponse, error) {
+	if s.agent == nil {
+		return nil, errNoAgent
+	}
+	return s.agent.SetRemoteSupport(ctx, req)
+}

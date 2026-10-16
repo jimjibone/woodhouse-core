@@ -86,6 +86,7 @@ var roleMap = map[string][]Role{
 	"/woodhouse.api.v1.clients.SystemService/SetSSH":           {AdminRole},
 	"/woodhouse.api.v1.clients.SystemService/Reboot":           {AdminRole},
 	"/woodhouse.api.v1.clients.SystemService/FactoryReset":     {AdminRole},
+	"/woodhouse.api.v1.clients.SystemService/SetRemoteSupport": {AdminRole},
 }
 
 func IsUserAuthorised(method string, role Role) bool {
