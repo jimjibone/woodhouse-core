@@ -138,9 +138,17 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 					}
 				}
 			}
+			for _, id := range update.RemovedDeviceIds {
+				if id == "" {
+					return status.Errorf(codes.InvalidArgument, "removed device has empty id")
+				}
+			}
 
 			for _, dev := range update.DeviceInfo {
 				service.deviceManager.PushDeviceUpdate(claims.ClientID, dev)
+			}
+			for _, id := range update.RemovedDeviceIds {
+				service.deviceManager.RemoveClientDevice(claims.ClientID, id)
 			}
 
 		case revokedID := <-revocations.Sub():

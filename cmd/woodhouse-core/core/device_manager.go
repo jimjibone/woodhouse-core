@@ -51,9 +51,10 @@ type DeviceManager struct {
 }
 
 type rxDeviceUpdate struct {
-	ClientID string
-	Update   *clientsapi.Device
-	Offline  bool
+	ClientID  string
+	Update    *clientsapi.Device
+	Offline   bool
+	RemovedID string // The client reported this device as removed.
 }
 
 type txDeviceUpdate struct {
@@ -188,6 +189,13 @@ func (manager *DeviceManager) RemoveDevice(deviceID string, force bool) error {
 
 func (manager *DeviceManager) PushDeviceUpdate(clientID string, update *clientsapi.Device) {
 	manager.rxDeviceUpdates.Push(rxDeviceUpdate{ClientID: clientID, Update: update})
+}
+
+// RemoveClientDevice removes a device that the client reports it no longer
+// provides, even if online. The device is only removed if it is owned by the
+// client. It is queued with the client's device updates so ordering is kept.
+func (manager *DeviceManager) RemoveClientDevice(clientID, deviceID string) {
+	manager.rxDeviceUpdates.Push(rxDeviceUpdate{ClientID: clientID, RemovedID: deviceID})
 }
 
 func (manager *DeviceManager) SetClientOffline(clientID string) {
@@ -501,7 +509,7 @@ func (manager *DeviceManager) load() error {
 		// Read the state into the manager (convert slice to map).
 		manager.devices = make(map[string]*Device)
 		for _, upd := range config.Devices {
-			dev, err := newDevice(manager.log, "", upd)
+			dev, err := newDevice(manager.log, upd.GetClientId(), upd)
 			if err != nil {
 				manager.log.Warnf("failed to load device %q: %s", upd.GetId(), err)
 			} else {
@@ -621,6 +629,21 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 				})
 			} else {
 				manager.log.Warnf("device updated has empty device ID: %s", update)
+			}
+		} else if update.RemovedID != "" {
+			dev, found := manager.devices[update.RemovedID]
+			if !found {
+				manager.log.Debugf("client %q removed unknown device %q", update.ClientID, update.RemovedID)
+			} else if dev.ClientID != update.ClientID {
+				manager.log.Warnf("client %q cannot remove device %q owned by client %q", update.ClientID, dev.ID, dev.ClientID)
+			} else {
+				delete(manager.devices, dev.ID)
+				manager.changed = true
+				manager.txDeviceUpdates.Pub(txDeviceUpdate{
+					ClientID:  update.ClientID,
+					RemovedID: dev.ID,
+				})
+				manager.log.Infof("client %q removed device %q", update.ClientID, dev.ID)
 			}
 		} else if update.Offline {
 			manager.log.Infof("client %q has gone offline", update.ClientID)
