@@ -103,6 +103,34 @@ func TestRecordFailure_DrainsPenaltyTokens(t *testing.T) {
 	}
 }
 
+func TestRecordIPFailure_DrainsPenaltyTokensWithoutAccountBackoff(t *testing.T) {
+	clock := newFakeClock()
+	l := NewLogin(Config{LoginBurst: 10, LoginPerMin: 60, FailPenalty: 3, Now: clock.Now})
+	ip := mustAddr(t, "10.0.0.3")
+
+	// Same drain as RecordFailure: 3 failures burn 9 of the 10 tokens.
+	for i := 0; i < 3; i++ {
+		l.RecordIPFailure(ip)
+	}
+
+	ok, _ := l.AllowIP(ip)
+	if !ok {
+		t.Fatalf("expected the last remaining token to still allow one more attempt")
+	}
+	ok, _ = l.AllowIP(ip)
+	if ok {
+		t.Fatalf("expected burst drained after 3 failures (9 tokens) + 1 allowed attempt")
+	}
+
+	// No account was charged, however many failures there were.
+	if wait := l.AccountRetryIn(""); wait != 0 {
+		t.Fatalf("expected no account backoff, got %s", wait)
+	}
+	if wait := l.AccountRetryIn("alice"); wait != 0 {
+		t.Fatalf("expected no account backoff, got %s", wait)
+	}
+}
+
 func TestAllowIP_ZeroAddrSharesBucket(t *testing.T) {
 	clock := newFakeClock()
 	l := NewLogin(Config{LoginBurst: 3, LoginPerMin: 60, Now: clock.Now})

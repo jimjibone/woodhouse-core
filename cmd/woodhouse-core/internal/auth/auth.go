@@ -8,11 +8,13 @@ import (
 )
 
 // noAuthMethods are the RPCs callable without an access token: login/refresh,
-// and the pairing handshake a client must complete before it has one.
+// accepting an invite (the invite token is the authorization), and the pairing
+// handshake a client must complete before it has one.
 var noAuthMethods = []string{
 	"/woodhouse.api.v1.clients.UserAuthService/Login",
 	"/woodhouse.api.v1.clients.UserAuthService/Refresh",
 	"/woodhouse.api.v1.clients.UserAuthService/Logout",
+	"/woodhouse.api.v1.clients.UserAuthService/AcceptInvite",
 	"/woodhouse.api.v1.clients.AuthService/Pair",
 	"/woodhouse.api.v1.clients.AuthService/Refresh",
 	"/woodhouse.api.v1.clients.AuthService/Ping",
@@ -73,6 +75,9 @@ var roleMap = map[string][]Role{
 	"/woodhouse.api.v1.clients.UserService/AddUser":                  {AdminRole},
 	"/woodhouse.api.v1.clients.UserService/UpdateUser":               {AdminRole, UserRole},
 	"/woodhouse.api.v1.clients.UserService/RemoveUser":               {AdminRole},
+	"/woodhouse.api.v1.clients.UserService/CreateInvite":             {AdminRole},
+	"/woodhouse.api.v1.clients.UserService/ListInvites":              {AdminRole},
+	"/woodhouse.api.v1.clients.UserService/RevokeInvite":             {AdminRole},
 	"/woodhouse.api.v1.clients.UserService/ImagesStream":             {AdminRole, UserRole},
 	"/woodhouse.api.v1.clients.UserService/GetSettings":              {AdminRole, UserRole},
 	"/woodhouse.api.v1.clients.UserService/UpdateSettings":           {AdminRole},

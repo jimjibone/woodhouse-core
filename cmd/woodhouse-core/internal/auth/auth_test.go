@@ -148,6 +148,34 @@ func TestSettingsAuthorisation(t *testing.T) {
 	}
 }
 
+func TestInviteAuthorisation(t *testing.T) {
+	// Managing invites is an admin action, and needs a token.
+	for _, method := range []string{
+		"/woodhouse.api.v1.clients.UserService/CreateInvite",
+		"/woodhouse.api.v1.clients.UserService/ListInvites",
+		"/woodhouse.api.v1.clients.UserService/RevokeInvite",
+	} {
+		if !RequiresAuth(method) {
+			t.Errorf("%q should require auth", method)
+		}
+		for role, want := range map[Role]bool{AdminRole: true, UserRole: false, NoAuthRole: false} {
+			if got := IsUserAuthorised(method, role); got != want {
+				t.Errorf("IsUserAuthorised(%q, %s) = %v, want %v", method, role, got, want)
+			}
+		}
+	}
+
+	// Accepting one is how a person with no account gets a session, so it
+	// cannot ask for one. It is not a role-gated user method either.
+	const accept = "/woodhouse.api.v1.clients.UserAuthService/AcceptInvite"
+	if RequiresAuth(accept) {
+		t.Errorf("%q should not require auth", accept)
+	}
+	if IsUserMethod(accept) {
+		t.Errorf("%q should not be a user method", accept)
+	}
+}
+
 func TestSystemServiceIsAdminOnlyUserMethod(t *testing.T) {
 	const method = "/woodhouse.api.v1.clients.SystemService/FactoryReset"
 

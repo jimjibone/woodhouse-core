@@ -3,6 +3,7 @@ package discovery
 import (
 	"fmt"
 	"net"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -33,7 +34,7 @@ type netSnapshot struct {
 }
 
 type addrProvider func() netSnapshot
-type registerFunc func(instance string, port int, ifaces []net.Interface) (server, error)
+type registerFunc func(instance string, port int, txt []string, ifaces []net.Interface) (server, error)
 
 // Broadcaster advertises the service over mDNS. It does not require the host
 // to have an address when created: a background loop registers once an
@@ -44,6 +45,7 @@ type Broadcaster struct {
 	server   server
 	instance string
 	port     int
+	txt      []string
 	ifaces   []net.Interface // interfaces of the live registration
 	key      string          // snapshot key of the live registration
 
@@ -59,7 +61,9 @@ type Broadcaster struct {
 	shutdown sync.Once
 }
 
-func NewBroadcaster(instance string, serveraddr net.Addr) (*Broadcaster, error) {
+// NewBroadcaster starts advertising instance on the port of serveraddr, with
+// txt as the TXT record (see TXT). The TXT can be changed later with SetTXT.
+func NewBroadcaster(instance string, serveraddr net.Addr, txt []string) (*Broadcaster, error) {
 	_, port, err := net.SplitHostPort(serveraddr.String())
 	if err != nil {
 		return nil, err
@@ -68,15 +72,16 @@ func NewBroadcaster(instance string, serveraddr net.Addr) (*Broadcaster, error) 
 	if err != nil {
 		return nil, err
 	}
-	b := newBroadcaster(instance, portno, systemAddrs, register)
+	b := newBroadcaster(instance, portno, txt, systemAddrs, register)
 	b.start()
 	return b, nil
 }
 
-func newBroadcaster(instance string, port int, addrs addrProvider, reg registerFunc) *Broadcaster {
+func newBroadcaster(instance string, port int, txt []string, addrs addrProvider, reg registerFunc) *Broadcaster {
 	return &Broadcaster{
 		instance:     instance,
 		port:         port,
+		txt:          slices.Clone(txt),
 		addrs:        addrs,
 		register:     reg,
 		pollInterval: defaultPollInterval,
@@ -145,7 +150,7 @@ func (b *Broadcaster) sync() bool {
 	}
 
 	b.clear()
-	srv, err := b.register(b.instance, b.port, snap.ifaces)
+	srv, err := b.register(b.instance, b.port, b.txt, snap.ifaces)
 	if err != nil {
 		log.Warnf("failed to advertise %q over mDNS, will retry: %s", b.instance, err)
 		return false
@@ -214,9 +219,9 @@ func (b *Broadcaster) SetInstance(instance string) error {
 	b.server.Shutdown()
 	b.server = nil
 
-	srv, err := b.register(instance, b.port, b.ifaces)
+	srv, err := b.register(instance, b.port, b.txt, b.ifaces)
 	if err != nil {
-		restored, restoreErr := b.register(b.instance, b.port, b.ifaces)
+		restored, restoreErr := b.register(b.instance, b.port, b.txt, b.ifaces)
 		if restoreErr != nil {
 			b.clear()
 			b.poke()
@@ -228,6 +233,58 @@ func (b *Broadcaster) SetInstance(instance string) error {
 
 	b.server = srv
 	b.instance = instance
+	return nil
+}
+
+// TXT returns the TXT record currently being advertised.
+func (b *Broadcaster) TXT() []string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return slices.Clone(b.txt)
+}
+
+// SetTXT changes the advertised TXT record. zeroconf cannot update a live
+// registration, so like SetInstance this withdraws the current advertisement
+// and publishes a fresh one, with the same brief gap.
+//
+// If the new registration fails the previous TXT is restored, leaving the
+// broadcaster as it was. If that restore also fails the broadcaster is left
+// advertising nothing and the error says so; the background loop keeps
+// retrying the previous TXT.
+//
+// If nothing is being advertised (no host addresses yet, or registration is
+// failing) the TXT is stored and used by the next registration attempt.
+func (b *Broadcaster) SetTXT(txt []string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if slices.Equal(txt, b.txt) {
+		return nil
+	}
+
+	if b.server == nil {
+		b.txt = slices.Clone(txt)
+		b.poke()
+		return nil
+	}
+
+	b.server.Shutdown()
+	b.server = nil
+
+	srv, err := b.register(b.instance, b.port, txt, b.ifaces)
+	if err != nil {
+		restored, restoreErr := b.register(b.instance, b.port, b.txt, b.ifaces)
+		if restoreErr != nil {
+			b.clear()
+			b.poke()
+			return fmt.Errorf("failed to advertise TXT %q (%w) and failed to restore %q: %w", txt, err, b.txt, restoreErr)
+		}
+		b.server = restored
+		return fmt.Errorf("failed to advertise TXT %q: %w", txt, err)
+	}
+
+	b.server = srv
+	b.txt = slices.Clone(txt)
 	return nil
 }
 
@@ -286,8 +343,8 @@ func systemAddrs() netSnapshot {
 	return netSnapshot{ifaces: ifaces, key: strings.Join(parts, " ")}
 }
 
-func register(instance string, port int, ifaces []net.Interface) (server, error) {
-	srv, err := zeroconf.Register(instance, "_woodhouse._tcp", "local.", port, []string{}, ifaces)
+func register(instance string, port int, txt []string, ifaces []net.Interface) (server, error) {
+	srv, err := zeroconf.Register(instance, "_woodhouse._tcp", "local.", port, txt, ifaces)
 	if err != nil {
 		return nil, err
 	}

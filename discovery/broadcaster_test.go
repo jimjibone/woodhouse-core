@@ -3,13 +3,19 @@ package discovery
 import (
 	"errors"
 	"net"
+	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
+// testTXT is the TXT record of broadcasters made by newTestBroadcaster.
+var testTXT = []string{"fp=aa"}
+
 type fakeServer struct {
 	instance string
+	txt      []string
 	key      string
 	mu       sync.Mutex
 	down     bool
@@ -32,6 +38,8 @@ type fakeNet struct {
 	snap    netSnapshot
 	fails   int // number of upcoming register calls to fail
 	failFor map[string]bool
+	// failTXT makes register fail for these TXT records, each joined with ",".
+	failTXT map[string]bool
 	servers []*fakeServer
 }
 
@@ -51,17 +59,17 @@ func (f *fakeNet) addrs() netSnapshot {
 	return f.snap
 }
 
-func (f *fakeNet) register(instance string, port int, ifaces []net.Interface) (server, error) {
+func (f *fakeNet) register(instance string, port int, txt []string, ifaces []net.Interface) (server, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.fails > 0 {
 		f.fails--
 		return nil, errors.New("register failed")
 	}
-	if f.failFor[instance] {
+	if f.failFor[instance] || f.failTXT[strings.Join(txt, ",")] {
 		return nil, errors.New("register failed")
 	}
-	s := &fakeServer{instance: instance, key: f.snap.key}
+	s := &fakeServer{instance: instance, txt: slices.Clone(txt), key: f.snap.key}
 	f.servers = append(f.servers, s)
 	return s, nil
 }
@@ -85,7 +93,12 @@ func (f *fakeNet) live() []*fakeServer {
 
 func newTestBroadcaster(t *testing.T, f *fakeNet, instance string) *Broadcaster {
 	t.Helper()
-	b := newBroadcaster(instance, 1234, f.addrs, f.register)
+	return newTestBroadcasterTXT(t, f, instance, testTXT)
+}
+
+func newTestBroadcasterTXT(t *testing.T, f *fakeNet, instance string, txt []string) *Broadcaster {
+	t.Helper()
+	b := newBroadcaster(instance, 1234, txt, f.addrs, f.register)
 	b.pollInterval = 5 * time.Millisecond
 	b.minBackoff = 5 * time.Millisecond
 	b.maxBackoff = 20 * time.Millisecond
@@ -110,6 +123,14 @@ func liveIs(f *fakeNet, instance, key string) func() bool {
 	return func() bool {
 		l := f.live()
 		return len(l) == 1 && l[0].instance == instance && l[0].key == key
+	}
+}
+
+// liveTXTIs reports whether exactly one registration is live and it carries txt.
+func liveTXTIs(f *fakeNet, txt []string) func() bool {
+	return func() bool {
+		l := f.live()
+		return len(l) == 1 && slices.Equal(l[0].txt, txt)
 	}
 }
 
@@ -160,7 +181,7 @@ func TestBroadcasterRetriesFailedRegistration(t *testing.T) {
 }
 
 func TestBroadcasterBackoff(t *testing.T) {
-	b := newBroadcaster("alice", 1234, nil, nil)
+	b := newBroadcaster("alice", 1234, nil, nil, nil)
 	b.minBackoff = time.Second
 	b.maxBackoff = 10 * time.Second
 	for failures, want := range map[int]time.Duration{
@@ -220,6 +241,125 @@ func TestBroadcasterSetInstanceRestoresOnFailure(t *testing.T) {
 	}
 	if !liveIs(f, "alice", "wlan0=192.0.2.10")() {
 		t.Fatalf("live registrations after failed rename: %+v", f.live())
+	}
+}
+
+func TestBroadcasterRegistersInitialTXT(t *testing.T) {
+	f := &fakeNet{}
+	f.set("wlan0=192.0.2.10")
+	b := newTestBroadcasterTXT(t, f, "alice", []string{"fp=aa", "setup=1"})
+	waitFor(t, "registration", liveTXTIs(f, []string{"fp=aa", "setup=1"}))
+
+	if got := b.TXT(); !slices.Equal(got, []string{"fp=aa", "setup=1"}) {
+		t.Fatalf("TXT() = %q", got)
+	}
+}
+
+func TestBroadcasterSetTXTWithoutAddress(t *testing.T) {
+	f := &fakeNet{}
+	b := newTestBroadcaster(t, f, "alice")
+
+	if err := b.SetTXT([]string{"fp=bb"}); err != nil {
+		t.Fatalf("SetTXT: %v", err)
+	}
+	if got := b.TXT(); !slices.Equal(got, []string{"fp=bb"}) {
+		t.Fatalf("TXT() = %q, want [fp=bb]", got)
+	}
+
+	f.set("wlan0=192.0.2.10")
+	waitFor(t, "registration with new TXT", liveTXTIs(f, []string{"fp=bb"}))
+	for _, s := range f.all() {
+		if !slices.Equal(s.txt, []string{"fp=bb"}) {
+			t.Fatalf("registered stale TXT %q", s.txt)
+		}
+	}
+}
+
+func TestBroadcasterSetTXTLive(t *testing.T) {
+	f := &fakeNet{}
+	f.set("wlan0=192.0.2.10")
+	b := newTestBroadcasterTXT(t, f, "alice", []string{"fp=aa", "setup=1"})
+	waitFor(t, "registration", liveTXTIs(f, []string{"fp=aa", "setup=1"}))
+
+	if err := b.SetTXT([]string{"fp=aa"}); err != nil {
+		t.Fatalf("SetTXT: %v", err)
+	}
+	if !liveTXTIs(f, []string{"fp=aa"})() {
+		t.Fatalf("live registrations after TXT change: %+v", f.live())
+	}
+	if !liveIs(f, "alice", "wlan0=192.0.2.10")() {
+		t.Fatalf("instance or addresses changed by SetTXT: %+v", f.live())
+	}
+	if got := b.TXT(); !slices.Equal(got, []string{"fp=aa"}) {
+		t.Fatalf("TXT() = %q, want [fp=aa]", got)
+	}
+}
+
+func TestBroadcasterSetTXTUnchangedDoesNotReregister(t *testing.T) {
+	f := &fakeNet{}
+	f.set("wlan0=192.0.2.10")
+	b := newTestBroadcaster(t, f, "alice")
+	waitFor(t, "registration", liveTXTIs(f, testTXT))
+
+	if err := b.SetTXT(slices.Clone(testTXT)); err != nil {
+		t.Fatalf("SetTXT: %v", err)
+	}
+	if n := len(f.all()); n != 1 {
+		t.Fatalf("got %d registrations, want 1", n)
+	}
+}
+
+func TestBroadcasterSetTXTRestoresOnFailure(t *testing.T) {
+	f := &fakeNet{failTXT: map[string]bool{"fp=bb": true}}
+	f.set("wlan0=192.0.2.10")
+	b := newTestBroadcaster(t, f, "alice")
+	waitFor(t, "registration", liveTXTIs(f, testTXT))
+
+	if err := b.SetTXT([]string{"fp=bb"}); err == nil {
+		t.Fatal("SetTXT succeeded, want error")
+	}
+	if got := b.TXT(); !slices.Equal(got, testTXT) {
+		t.Fatalf("TXT() = %q, want %q", got, testTXT)
+	}
+	if !liveTXTIs(f, testTXT)() {
+		t.Fatalf("live registrations after failed TXT change: %+v", f.live())
+	}
+}
+
+func TestBroadcasterSetTXTRestoreFailureWithdrawsAndRetries(t *testing.T) {
+	f := &fakeNet{}
+	f.set("wlan0=192.0.2.10")
+	b := newTestBroadcaster(t, f, "alice")
+	waitFor(t, "registration", liveTXTIs(f, testTXT))
+
+	// Both the new registration and the restore of the old one fail.
+	f.mu.Lock()
+	f.fails = 2
+	f.mu.Unlock()
+
+	err := b.SetTXT([]string{"fp=bb"})
+	if err == nil || !strings.Contains(err.Error(), "failed to restore") {
+		t.Fatalf("SetTXT error = %v, want a failed-to-restore error", err)
+	}
+	if got := b.TXT(); !slices.Equal(got, testTXT) {
+		t.Fatalf("TXT() = %q, want the previous %q", got, testTXT)
+	}
+
+	// The background loop brings the previous TXT back.
+	waitFor(t, "previous TXT re-registered", liveTXTIs(f, testTXT))
+}
+
+func TestBroadcasterSetInstanceKeepsTXT(t *testing.T) {
+	f := &fakeNet{}
+	f.set("wlan0=192.0.2.10")
+	b := newTestBroadcasterTXT(t, f, "alice", []string{"fp=aa", "setup=1"})
+	waitFor(t, "registration", liveTXTIs(f, []string{"fp=aa", "setup=1"}))
+
+	if err := b.SetInstance("bob"); err != nil {
+		t.Fatalf("SetInstance: %v", err)
+	}
+	if !liveTXTIs(f, []string{"fp=aa", "setup=1"})() {
+		t.Fatalf("TXT lost on rename: %+v", f.live())
 	}
 }
 

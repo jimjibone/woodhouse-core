@@ -223,14 +223,21 @@ func main() {
 			}
 			defer notificationManager.Close()
 
+			inviteManager, err := core.NewInviteManager(store, userManager)
+			if err != nil {
+				return fmt.Errorf("failed to create invite manager: %s", err)
+			}
+			defer inviteManager.Close()
+
 			userJwtManager, err := users.NewJWTManager(store)
 			if err != nil {
 				return fmt.Errorf("failed to create user jwt manager: %s", err)
 			}
 			defer userJwtManager.Close()
 			loginLimits := limits.NewLogin(limits.Config{})
-			userAuthService := users.NewAuthService(userManager, userJwtManager, loginLimits)
-			if args.Bool("appliance") {
+			userAuthService := users.NewAuthService(userManager, inviteManager, userJwtManager, loginLimits)
+			appliance := args.Bool("appliance")
+			if appliance {
 				userAuthService.DisableFirstLoginAdmin()
 				log.Infof("appliance mode: first login will not create an admin")
 			}
@@ -238,11 +245,27 @@ func main() {
 			// Broadcast our existence. This is created before the services
 			// because the settings manager renames the advertisement live when
 			// a user changes the instance name.
-			broadcaster, err := discovery.NewBroadcaster(config.InstanceName(), apiLis.Addr())
+			//
+			// The TXT record carries the API certificate fingerprint, and the
+			// setup flag while an appliance is waiting for its first admin.
+			// Subscribe to user changes before reading the admin state for the
+			// initial record, so no change between the two is missed.
+			apiCertDER := certManager.Cert().Certificate[0]
+			discoveryTXT := func() []string {
+				return discovery.TXT(apiCertDER, appliance, userManager.HasAnAdmin())
+			}
+			userUpdates := userManager.GetUserUpdates()
+			broadcaster, err := discovery.NewBroadcaster(config.InstanceName(), apiLis.Addr(), discoveryTXT())
 			if err != nil {
+				userUpdates.Close()
 				return fmt.Errorf("failed to create broadcaster: %w", err)
 			}
 			defer broadcaster.Shutdown()
+
+			// Deferred after the broadcaster's Shutdown so it runs first: the
+			// watcher is stopped before the broadcaster goes away.
+			stopTXTWatcher := watchDiscoveryTXT(userUpdates, broadcaster, discoveryTXT, txtRetryDelay)
+			defer stopTXTWatcher()
 
 			settingsManager := core.NewSettingsManager(broadcaster)
 
@@ -263,7 +286,7 @@ func main() {
 
 			// Create services.
 			clientService := clients.NewClientService(deviceManager, clientManager, clientJwtManager)
-			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, zoneManager, notificationManager, userManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
+			userService := users.NewUserService(deviceManager, favoritesManager, groupManager, zoneManager, notificationManager, userManager, inviteManager, clientManager, settingsManager, clientJwtManager, userJwtManager)
 
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
@@ -323,7 +346,7 @@ func main() {
 				}
 				localServer := grpc.NewServer()
 				localapi.RegisterBootstrapServiceServer(localServer, local.NewBootstrapService(
-					userManager, settingsManager, loginLimits, apiLis.Addr(), webLis.Addr(), certManager.Cert().Certificate[0]))
+					userManager, settingsManager, loginLimits, apiLis.Addr(), webLis.Addr(), apiCertDER))
 				defer localServer.Stop()
 				go func() {
 					log.Infof("local server ready at unix://%s", path)

@@ -58,7 +58,14 @@ func newTestAuthService(t *testing.T, cfg limits.Config) (*AuthService, *core.Us
 	cfg.Now = clock.Now
 	lim := limits.NewLogin(cfg)
 
-	srv := NewAuthService(userManager, jwtManager, lim)
+	// Shares the limiter's clock, so advancing it also expires invites.
+	inviteManager, err := core.NewInviteManagerWithClock(store, userManager, clock.Now)
+	if err != nil {
+		t.Fatalf("failed to create invite manager: %s", err)
+	}
+	t.Cleanup(inviteManager.Close)
+
+	srv := NewAuthService(userManager, inviteManager, jwtManager, lim)
 	return srv, userManager, clock
 }
 

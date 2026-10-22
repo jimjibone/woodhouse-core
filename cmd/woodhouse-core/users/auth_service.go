@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/netip"
@@ -19,10 +20,11 @@ import (
 
 type AuthService struct {
 	clientsapi.UnimplementedUserAuthServiceServer
-	log    *log.Context
-	users  *core.UserManager
-	jwt    *JWTManager
-	limits *limits.Login
+	log     *log.Context
+	users   *core.UserManager
+	invites *core.InviteManager
+	jwt     *JWTManager
+	limits  *limits.Login
 
 	// firstLoginAdmin makes the first login on a server with no admin create
 	// that admin. Appliances turn it off: their first admin is created during
@@ -31,10 +33,11 @@ type AuthService struct {
 	firstLoginAdmin bool
 }
 
-func NewAuthService(users *core.UserManager, jwt *JWTManager, lim *limits.Login) *AuthService {
+func NewAuthService(users *core.UserManager, invites *core.InviteManager, jwt *JWTManager, lim *limits.Login) *AuthService {
 	srv := &AuthService{
 		log:             log.NewContext(log.DefaultLogger, "users-auth", log.DebugLevel),
 		users:           users,
+		invites:         invites,
 		jwt:             jwt,
 		limits:          lim,
 		firstLoginAdmin: true,
@@ -126,6 +129,77 @@ func (srv *AuthService) Login(ctx context.Context, req *clientsapi.UserLoginRequ
 	}
 
 	return res, nil
+}
+
+// AcceptInvite creates an account from an invite token and logs it in.
+func (srv *AuthService) AcceptInvite(ctx context.Context, req *clientsapi.AcceptInviteRequest) (*clientsapi.AcceptInviteResponse, error) {
+	src := limits.PeerAddr(ctx)
+
+	// Gate on the source IP's rate budget before anything else, as loginBase
+	// does: the token is a bearer secret, so this endpoint must not be a free
+	// oracle for guessing it.
+	if ok, rejections := srv.limits.AllowIP(src); !ok {
+		if rejections == 1 || rejections%100 == 0 {
+			srv.log.Warnf("invite rate limit exceeded from %s (%d consecutive rejections)", src, rejections)
+		} else {
+			srv.log.Debugf("invite rate limit exceeded from %s (%d consecutive rejections)", src, rejections)
+		}
+		return nil, status.Errorf(codes.ResourceExhausted, "too many attempts, try again later")
+	}
+
+	var user *core.User
+	err := srv.invites.Redeem(req.Token, func(invite *core.Invite) error {
+		// The invitee may pick another username than the admin did.
+		username := req.Username
+		if username == "" {
+			username = invite.Username
+		}
+		if username != invite.Username && srv.invites.Reserved(username) {
+			return status.Errorf(codes.AlreadyExists, "username already in use")
+		}
+
+		var err error
+		user, err = core.NewUser(username, invite.Fullname, req.Password, invite.Role)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "failed to create user: %v", err)
+		}
+		user.ResetPassword = false // the invitee chose this password
+
+		err = srv.users.Store(user)
+		if errors.Is(err, core.ErrAlreadyExists) {
+			return status.Errorf(codes.AlreadyExists, "username already in use")
+		}
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to add user: %v", err)
+		}
+		return nil
+	})
+	if errors.Is(err, core.ErrInviteNotFound) {
+		// Charge the IP only. The failure names no account, so it must not
+		// feed the per-username backoff, which a stranger could use to lock
+		// out a real user by guessing tokens "for" their name.
+		srv.limits.RecordIPFailure(src)
+		srv.log.Warnf("failed invite redemption from %s", src)
+		// Unknown, used, revoked and expired all read alike.
+		return nil, status.Errorf(codes.NotFound, "invite not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	srv.log.Infof("added new user %q from an invite as %s", user.Username, user.Role)
+
+	// The account exists and the invite is spent by now, so a failure here
+	// leaves the invitee able to log in with the password they just chose.
+	tokens, err := srv.jwt.GenerateTokens(user.Username, user.Fullname, user.Role, user.ResetPassword)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot generate access token")
+	}
+
+	return &clientsapi.AcceptInviteResponse{
+		RefreshToken: tokens.RefreshToken,
+		AccessToken:  tokens.AccessToken,
+	}, nil
 }
 
 func (srv *AuthService) LoginWeb(w http.ResponseWriter, r *http.Request) {

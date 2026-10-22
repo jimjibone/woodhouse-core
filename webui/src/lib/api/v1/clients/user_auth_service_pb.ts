@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clients/user_auth_service.proto.
  */
 export const file_clients_user_auth_service: GenFile = /*@__PURE__*/
-  fileDesc("Ch9jbGllbnRzL3VzZXJfYXV0aF9zZXJ2aWNlLnByb3RvEhh3b29kaG91c2UuYXBpLnYxLmNsaWVudHMiNgoQVXNlckxvZ2luUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJAChFVc2VyTG9naW5SZXNwb25zZRIVCg1yZWZyZXNoX3Rva2VuGAEgASgJEhQKDGFjY2Vzc190b2tlbhgCIAEoCSJEChJVc2VyUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCRIXCg9yZW5ld190aHJlc2hvbGQYAiABKA0iQgoTVXNlclJlZnJlc2hSZXNwb25zZRIVCg1yZWZyZXNoX3Rva2VuGAEgASgJEhQKDGFjY2Vzc190b2tlbhgCIAEoCSIqChFVc2VyTG9nb3V0UmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIhQKElVzZXJMb2dvdXRSZXNwb25zZTLGAgoPVXNlckF1dGhTZXJ2aWNlEmIKBUxvZ2luEioud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJMb2dpblJlcXVlc3QaKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlckxvZ2luUmVzcG9uc2UiABJoCgdSZWZyZXNoEiwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSZWZyZXNoUmVxdWVzdBotLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyUmVmcmVzaFJlc3BvbnNlIgASZQoGTG9nb3V0Eisud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJMb2dvdXRSZXF1ZXN0Giwud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJMb2dvdXRSZXNwb25zZSIAQj1aO2dpdGh1Yi5jb20vamltamlib25lL3dvb2Rob3VzZS1hcGkvZ28vdjEvY2xpZW50cztjbGllbnRzYXBpYgZwcm90bzM");
+  fileDesc("Ch9jbGllbnRzL3VzZXJfYXV0aF9zZXJ2aWNlLnByb3RvEhh3b29kaG91c2UuYXBpLnYxLmNsaWVudHMiNgoQVXNlckxvZ2luUmVxdWVzdBIQCgh1c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJAChFVc2VyTG9naW5SZXNwb25zZRIVCg1yZWZyZXNoX3Rva2VuGAEgASgJEhQKDGFjY2Vzc190b2tlbhgCIAEoCSJEChJVc2VyUmVmcmVzaFJlcXVlc3QSFQoNcmVmcmVzaF90b2tlbhgBIAEoCRIXCg9yZW5ld190aHJlc2hvbGQYAiABKA0iQgoTVXNlclJlZnJlc2hSZXNwb25zZRIVCg1yZWZyZXNoX3Rva2VuGAEgASgJEhQKDGFjY2Vzc190b2tlbhgCIAEoCSIqChFVc2VyTG9nb3V0UmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIhQKElVzZXJMb2dvdXRSZXNwb25zZSJIChNBY2NlcHRJbnZpdGVSZXF1ZXN0Eg0KBXRva2VuGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIkMKFEFjY2VwdEludml0ZVJlc3BvbnNlEhUKDXJlZnJlc2hfdG9rZW4YASABKAkSFAoMYWNjZXNzX3Rva2VuGAIgASgJMrcDCg9Vc2VyQXV0aFNlcnZpY2USYgoFTG9naW4SKi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlckxvZ2luUmVxdWVzdBorLndvb2Rob3VzZS5hcGkudjEuY2xpZW50cy5Vc2VyTG9naW5SZXNwb25zZSIAEmgKB1JlZnJlc2gSLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlclJlZnJlc2hSZXF1ZXN0Gi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLlVzZXJSZWZyZXNoUmVzcG9uc2UiABJlCgZMb2dvdXQSKy53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlckxvZ291dFJlcXVlc3QaLC53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuVXNlckxvZ291dFJlc3BvbnNlIgASbwoMQWNjZXB0SW52aXRlEi0ud29vZGhvdXNlLmFwaS52MS5jbGllbnRzLkFjY2VwdEludml0ZVJlcXVlc3QaLi53b29kaG91c2UuYXBpLnYxLmNsaWVudHMuQWNjZXB0SW52aXRlUmVzcG9uc2UiAEI9WjtnaXRodWIuY29tL2ppbWppYm9uZS93b29kaG91c2UtYXBpL2dvL3YxL2NsaWVudHM7Y2xpZW50c2FwaWIGcHJvdG8z");
 
 /**
  * @generated from message woodhouse.api.v1.clients.UserLoginRequest
@@ -133,6 +133,58 @@ export const UserLogoutResponseSchema: GenMessage<UserLogoutResponse> = /*@__PUR
   messageDesc(file_clients_user_auth_service, 5);
 
 /**
+ * @generated from message woodhouse.api.v1.clients.AcceptInviteRequest
+ */
+export type AcceptInviteRequest = Message<"woodhouse.api.v1.clients.AcceptInviteRequest"> & {
+  /**
+   * @generated from field: string token = 1;
+   */
+  token: string;
+
+  /**
+   * Defaults to the username the admin chose for the invite; the invitee
+   * may pick another.
+   *
+   * @generated from field: string username = 2;
+   */
+  username: string;
+
+  /**
+   * @generated from field: string password = 3;
+   */
+  password: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.AcceptInviteRequest.
+ * Use `create(AcceptInviteRequestSchema)` to create a new message.
+ */
+export const AcceptInviteRequestSchema: GenMessage<AcceptInviteRequest> = /*@__PURE__*/
+  messageDesc(file_clients_user_auth_service, 6);
+
+/**
+ * @generated from message woodhouse.api.v1.clients.AcceptInviteResponse
+ */
+export type AcceptInviteResponse = Message<"woodhouse.api.v1.clients.AcceptInviteResponse"> & {
+  /**
+   * @generated from field: string refresh_token = 1;
+   */
+  refreshToken: string;
+
+  /**
+   * @generated from field: string access_token = 2;
+   */
+  accessToken: string;
+};
+
+/**
+ * Describes the message woodhouse.api.v1.clients.AcceptInviteResponse.
+ * Use `create(AcceptInviteResponseSchema)` to create a new message.
+ */
+export const AcceptInviteResponseSchema: GenMessage<AcceptInviteResponse> = /*@__PURE__*/
+  messageDesc(file_clients_user_auth_service, 7);
+
+/**
  * @generated from service woodhouse.api.v1.clients.UserAuthService
  */
 export const UserAuthService: GenService<{
@@ -159,6 +211,21 @@ export const UserAuthService: GenService<{
     methodKind: "unary";
     input: typeof UserLogoutRequestSchema;
     output: typeof UserLogoutResponseSchema;
+  },
+  /**
+   * Create an account from an invite (UserService.CreateInvite) and log in
+   * with it. Needs no session: the invite token is the authorization. It is
+   * rate limited like Login. An invite works once and expires 24 hours
+   * after it was created. Fails with NOT_FOUND for an unknown, used, revoked
+   * or expired token (all alike), and ALREADY_EXISTS if the username is
+   * taken.
+   *
+   * @generated from rpc woodhouse.api.v1.clients.UserAuthService.AcceptInvite
+   */
+  acceptInvite: {
+    methodKind: "unary";
+    input: typeof AcceptInviteRequestSchema;
+    output: typeof AcceptInviteResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_clients_user_auth_service, 0);

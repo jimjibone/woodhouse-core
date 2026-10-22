@@ -131,6 +131,22 @@ one server and want to tell them apart at a glance, turn on
 `show-instance-name` (also under **Settings**) and the sidebar and browser tab
 will show the instance name instead.
 
+### Discovery
+
+The core advertises itself over mDNS as `_woodhouse._tcp`, named after
+`instance-name`, on the gRPC API port. The TXT record carries:
+
+| Key     | Value                                                                                                   |
+| ------- | ------------------------------------------------------------------------------------------------------- |
+| `fp`    | Lowercase hex SHA-256 of the API's TLS certificate (DER). Always present.                               |
+| `setup` | `1` while a core started with `--appliance` has no admin yet and is waiting to be adopted. Else absent. |
+
+The record follows the admin state live: `setup` disappears when the first admin
+is created and returns if the last one is removed, without a restart. TXT records
+are unauthenticated, so clients use them to recognise and label servers, never in
+place of verifying the pinned certificate. The keys are also documented in the
+`woodhouse-api` README.
+
 ### First run
 
 1. Start the core with `task run-core`.
@@ -143,6 +159,25 @@ will show the instance name instead.
    Bridges pair with the core and must be approved before they can connect.
 4. Write a reactor against the [`wh`](https://github.com/jimjibone/wh) client
    library to start automating your home.
+
+### Inviting users
+
+An admin invites someone with `UserService.CreateInvite`, choosing the username,
+optional full name and role (admin or user). The response carries a one-time
+token for the admin to pass on; the core keeps only a hash of it, so it cannot
+be shown again. Pending invites are listed with `ListInvites` and cancelled with
+`RevokeInvite`.
+
+The invitee redeems the token with `UserAuthService.AcceptInvite`. That needs no
+session: the token is the authorization. They may choose a different username
+than the admin did, set their own password (no forced change on first login) and
+are logged in straight away.
+
+An invite works once and expires 24 hours after it was created. It is not spent
+by a failed attempt (a username already taken, a password that is too short), so
+the invitee can retry until it expires. Unknown, used, revoked and expired tokens
+all fail alike with `NOT_FOUND`, and redemption is rate limited per source
+address, with wrong tokens costing extra budget, so tokens cannot be guessed.
 
 ## Writing a reactor
 

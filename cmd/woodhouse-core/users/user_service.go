@@ -28,13 +28,14 @@ type UserService struct {
 	zoneManager         *core.ZoneManager
 	notificationManager *core.NotificationManager
 	userManager         *core.UserManager
+	inviteManager       *core.InviteManager
 	clientManager       *core.ClientManager
 	settingsManager     *core.SettingsManager
 	clientJwt           *clients.JWTManager
 	userJwt             *JWTManager
 }
 
-func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, zoneManager *core.ZoneManager, notificationManager *core.NotificationManager, userManager *core.UserManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
+func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.FavoritesManager, groupManager *core.GroupManager, zoneManager *core.ZoneManager, notificationManager *core.NotificationManager, userManager *core.UserManager, inviteManager *core.InviteManager, clientManager *core.ClientManager, settingsManager *core.SettingsManager, clientJwt *clients.JWTManager, userJwt *JWTManager) *UserService {
 	service := &UserService{
 		log:                 log.NewContext(log.DefaultLogger, "user-service", log.DebugLevel),
 		deviceManager:       deviceManager,
@@ -43,6 +44,7 @@ func NewUserService(deviceManager *core.DeviceManager, favoritesManager *core.Fa
 		zoneManager:         zoneManager,
 		notificationManager: notificationManager,
 		userManager:         userManager,
+		inviteManager:       inviteManager,
 		clientManager:       clientManager,
 		settingsManager:     settingsManager,
 		clientJwt:           clientJwt,
@@ -1283,6 +1285,69 @@ func (service *UserService) RemoveUser(ctx context.Context, req *clientsapi.Remo
 	}
 
 	return &clientsapi.RemoveUserResponse{}, nil
+}
+
+func (service *UserService) CreateInvite(ctx context.Context, req *clientsapi.CreateInviteRequest) (*clientsapi.CreateInviteResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to create invites")
+	}
+
+	if req.Role != clientsapi.UserRole_USER_ROLE_ADMIN && req.Role != clientsapi.UserRole_USER_ROLE_USER {
+		return nil, status.Errorf(codes.InvalidArgument, "role not defined")
+	}
+
+	invite, token, err := service.inviteManager.Create(req.Username, req.Fullname, auth.RoleFromPb(req.Role), claims.Username)
+	switch {
+	case errors.Is(err, core.ErrUsernameTooShort):
+		return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+	case errors.Is(err, core.ErrAlreadyExists):
+		return nil, status.Errorf(codes.AlreadyExists, "username already in use")
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to create invite: %s", err)
+	}
+
+	return &clientsapi.CreateInviteResponse{
+		Invite: invite.Pb(),
+		Token:  token,
+	}, nil
+}
+
+func (service *UserService) ListInvites(ctx context.Context, req *clientsapi.ListInvitesRequest) (*clientsapi.ListInvitesResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to view invites")
+	}
+
+	invites := service.inviteManager.List()
+	res := &clientsapi.ListInvitesResponse{Invites: make([]*clientsapi.Invite, 0, len(invites))}
+	for _, invite := range invites {
+		res.Invites = append(res.Invites, invite.Pb())
+	}
+	return res, nil
+}
+
+func (service *UserService) RevokeInvite(ctx context.Context, req *clientsapi.RevokeInviteRequest) (*clientsapi.RevokeInviteResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to revoke invites")
+	}
+
+	// An unknown id succeeds: the invite is gone either way.
+	if err := service.inviteManager.Revoke(req.Id); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to revoke invite: %s", err)
+	}
+
+	return &clientsapi.RevokeInviteResponse{}, nil
 }
 
 func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, server clientsapi.UserService_ImagesStreamServer) error {

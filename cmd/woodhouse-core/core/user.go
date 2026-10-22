@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
@@ -19,6 +20,20 @@ const (
 // real user's password.
 var dummySalt = [saltSize]byte{}
 
+// ErrUsernameTooShort is returned by ValidateUsername (and so by NewUser) for
+// an empty username.
+var ErrUsernameTooShort = errors.New("username too short")
+
+// ValidateUsername checks a username against the rules NewUser applies, so
+// that anything that reserves a username before the user exists (an invite)
+// rejects exactly what NewUser would.
+func ValidateUsername(username string) error {
+	if len(username) == 0 {
+		return ErrUsernameTooShort
+	}
+	return nil
+}
+
 type User struct {
 	Username       string    `json:"user"`
 	Fullname       string    `json:"name"`
@@ -30,8 +45,8 @@ type User struct {
 }
 
 func NewUser(username, fullname string, password string, role auth.Role) (*User, error) {
-	if len(username) == 0 {
-		return nil, fmt.Errorf("username too short")
+	if err := ValidateUsername(username); err != nil {
+		return nil, err
 	}
 
 	user := &User{

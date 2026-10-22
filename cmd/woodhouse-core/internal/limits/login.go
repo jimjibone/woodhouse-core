@@ -117,8 +117,7 @@ func (l *Login) AllowIP(ip netip.Addr) (ok bool, rejections int) {
 // corresponds to a real account, otherwise the backoff itself would
 // leak account existence.
 func (l *Login) RecordFailure(ip netip.Addr, username string) {
-	entry := l.ips.get(ip.Unmap())
-	entry.lim.AllowN(l.cfg.Now(), l.cfg.FailPenalty) //nolint:errcheck
+	l.RecordIPFailure(ip)
 
 	now := l.cfg.Now()
 	acct := l.accounts.get(username)
@@ -126,6 +125,15 @@ func (l *Login) RecordFailure(ip netip.Addr, username string) {
 	acct.failures++
 	acct.last = now
 	acct.mu.Unlock()
+}
+
+// RecordIPFailure charges ip the same penalty as RecordFailure but touches no
+// account's failure counter. It is for failures that name no real account,
+// like guessing an invite token: keying the account backoff on a string the
+// attacker picked would let them lock out whoever has that username.
+func (l *Login) RecordIPFailure(ip netip.Addr) {
+	entry := l.ips.get(ip.Unmap())
+	entry.lim.AllowN(l.cfg.Now(), l.cfg.FailPenalty) //nolint:errcheck
 }
 
 // RecordSuccess clears username's consecutive-failure counter.
