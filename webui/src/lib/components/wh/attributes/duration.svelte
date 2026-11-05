@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { DurationAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import type { DurationAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import { Slider } from "$lib/components/ui/slider";
 	import { cn } from '$lib/utils';
 

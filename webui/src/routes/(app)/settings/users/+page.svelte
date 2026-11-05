@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type User } from '$lib/api/v1/clients/user_service_pb';
+	import { type User } from '$lib/api/v2/clients/user_service_pb';
 	import { UsersStore as store } from '$lib/stores/users-stream';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { onDestroy } from 'svelte';

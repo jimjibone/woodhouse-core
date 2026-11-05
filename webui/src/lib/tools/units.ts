@@ -1,4 +1,4 @@
-import { Unit } from '$lib/api/v1/clients/client_service_pb';
+import { Unit } from '$lib/api/v2/clients/client_service_pb';
 
 // unitLabel returns a display suffix for a value with the given unit, or an
 // empty string when the unit is undefined or unknown.

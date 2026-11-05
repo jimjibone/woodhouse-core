@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
 	import { ZonesStore } from '$lib/stores/zones-stream';
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import { DeviceCard } from '$lib/components/wh/device';
 	import { zoneIcon } from '$lib/zone-icons';
 	import { MapPinIcon } from '@lucide/svelte';

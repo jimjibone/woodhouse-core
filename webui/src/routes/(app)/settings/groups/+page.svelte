@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Group } from '$lib/api/v1/clients/group_pb';
+	import type { Group } from '$lib/api/v2/clients/group_pb';
 	import { GroupsStore as store } from '$lib/stores/groups-stream';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { onDestroy } from 'svelte';

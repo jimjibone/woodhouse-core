@@ -4,7 +4,7 @@
 		Device_DeviceType,
 		ServiceSchema,
 		type Service
-	} from '$lib/api/v1/clients/client_service_pb';
+	} from '$lib/api/v2/clients/client_service_pb';
 	import { type Snippet } from 'svelte';
 	import {
 		HeartIcon,

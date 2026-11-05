@@ -8,7 +8,7 @@ import {
 	type ActionResponse,
 	type ImageResponse,
 	Service_ServiceType
-} from '$lib/api/v1/clients/client_service_pb';
+} from '$lib/api/v2/clients/client_service_pb';
 import {
 	AddFavoriteRequestSchema,
 	AddGroupRequestSchema,
@@ -49,8 +49,8 @@ import {
 	UpdateSettingsRequestSchema,
 	type Notification,
 	type UpdateUserRequest
-} from '$lib/api/v1/clients/user_service_pb';
-import { type GroupMember } from '$lib/api/v1/clients/group_pb';
+} from '$lib/api/v2/clients/user_service_pb';
+import { type GroupMember } from '$lib/api/v2/clients/group_pb';
 import { UserServiceClient } from './user-service-client';
 import { ConnectError } from '@connectrpc/connect';
 import { create, toJsonString } from '@bufbuild/protobuf';

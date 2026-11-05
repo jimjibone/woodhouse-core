@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { Group } from '$lib/api/v1/clients/group_pb';
-	import { Service_ServiceType } from '$lib/api/v1/clients/client_service_pb';
+	import type { Group } from '$lib/api/v2/clients/group_pb';
+	import { Service_ServiceType } from '$lib/api/v2/clients/client_service_pb';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { AddGroup, UpdateGroup } from '$lib/stores/requests';
-	import { GroupMemberSchema } from '$lib/api/v1/clients/group_pb';
+	import { GroupMemberSchema } from '$lib/api/v2/clients/group_pb';
 	import { create } from '@bufbuild/protobuf';
 	import type { ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '$lib/tools/headline-case';

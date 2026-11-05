@@ -4,7 +4,7 @@
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
 	import { attributeToDate } from '$lib/tools/time';
 	import { cn } from '$lib/utils';
-	import { Device_DeviceType } from '$lib/api/v1/clients/client_service_pb';
+	import { Device_DeviceType } from '$lib/api/v2/clients/client_service_pb';
 	import {
 		BatteryWarningIcon,
 		BatteryLowIcon,

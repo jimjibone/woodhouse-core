@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';

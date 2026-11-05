@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { EnumAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import type { EnumAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import * as Command from "$lib/components/ui/command";
 	import * as Popover from "$lib/components/ui/popover";
 	import { Button } from "$lib/components/ui/button";

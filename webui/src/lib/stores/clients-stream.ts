@@ -1,8 +1,8 @@
 import { type Subscriber, writable } from 'svelte/store';
 import { ConnectError, Code, type Client, type CallOptions } from '@connectrpc/connect';
 import { create } from '@bufbuild/protobuf';
-import { ClientsStreamRequestSchema, UserService } from '$lib/api/v1/clients/user_service_pb';
-import { type Client as ClientModel } from '$lib/api/v1/clients/client_pb';
+import { ClientsStreamRequestSchema, UserService } from '$lib/api/v2/clients/user_service_pb';
+import { type Client as ClientModel } from '$lib/api/v2/clients/client_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
 

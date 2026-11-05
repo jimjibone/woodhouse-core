@@ -15,7 +15,7 @@
 	import { createConnectionContext } from '$lib/stores/connection-status.svelte';
 	import { settings, loadSettings, displayName } from '$lib/stores/settings-store';
 	import { ZonesStore } from '$lib/stores/zones-stream';
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import { onDestroy } from 'svelte';
 
 	let { children } = $props();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ZonesStore as store } from '$lib/stores/zones-stream';
 	import { DevicesStore } from '$lib/stores/devices-stream';
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import type { DevicesStoreDevice } from '$lib/stores/devices-stream';
 	import { zoneIcon } from '$lib/zone-icons';
 	import { MapPinIcon, TriangleAlertIcon } from '@lucide/svelte';

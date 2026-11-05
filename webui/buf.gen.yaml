@@ -5,7 +5,7 @@ clean: true
 plugins:
   # This will invoke protoc-gen-es and write output to src/gen
   - local: protoc-gen-es
-    out: src/lib/api/v1
+    out: src/lib/api/v2
     # Also generate any imported dependencies
     include_imports: true
     # Add more plugin options here

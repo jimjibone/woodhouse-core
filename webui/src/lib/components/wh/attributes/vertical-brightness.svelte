@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { IntAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import type { IntAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import { SunIcon } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 	import chroma from 'chroma-js';

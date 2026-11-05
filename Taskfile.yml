@@ -22,8 +22,8 @@ tasks:
   build-api:
     desc: Generate API code from protos
     cmds:
-      - task api:proto-go-v1
-      - task webui:proto-web-v1
+      - task api:proto-go-v2
+      - task webui:proto-web-v2
 
   generate-env:
     desc: Generate the default .env file

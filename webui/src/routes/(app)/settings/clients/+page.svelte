@@ -5,7 +5,7 @@
 	import { ClientsStore } from '$lib/stores/clients-stream';
 	import { PairingRequestsStore } from '$lib/stores/pairing-requests-stream';
 	import { ApprovePairing, DenyPairing, UnpairClient, ForgetClient } from '$lib/stores/requests';
-	import type { Client, PairingRequest } from '$lib/api/v1/clients/client_pb';
+	import type { Client, PairingRequest } from '$lib/api/v2/clients/client_pb';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 
 	let clients = $state<Client[]>([]);

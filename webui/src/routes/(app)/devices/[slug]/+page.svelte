@@ -12,7 +12,7 @@
 		ValueSchema,
 		TextValueSchema,
 		ActionResponse_ActionStatus
-	} from '$lib/api/v1/clients/client_service_pb';
+	} from '$lib/api/v2/clients/client_service_pb';
 	import { create, toJsonString } from '@bufbuild/protobuf';
 	import { attributeToDate } from '$lib/tools/time';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';

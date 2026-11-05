@@ -6,8 +6,8 @@
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import { BellIcon, CheckCheckIcon, XIcon } from '@lucide/svelte';
-	import { NotificationLevel } from '$lib/api/v1/clients/user_service_pb';
-	import type { Notification } from '$lib/api/v1/clients/user_service_pb';
+	import { NotificationLevel } from '$lib/api/v2/clients/user_service_pb';
+	import type { Notification } from '$lib/api/v2/clients/user_service_pb';
 	import { NotificationsStore, notificationDate } from '@/stores/notifications-stream';
 	import { DismissNotification, MarkAllNotificationsRead, MarkNotificationRead } from '@/stores/requests';
 	import { clock } from '@/stores/clock';

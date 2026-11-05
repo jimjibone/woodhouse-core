@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ValueSchema, BoolValueSchema } from '$lib/api/v1/clients/client_service_pb';
-	import type { Attribute, BoolAttribute, FloatAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import { ValueSchema, BoolValueSchema } from '$lib/api/v2/clients/client_service_pb';
+	import type { Attribute, BoolAttribute, FloatAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { PowerIcon } from '@lucide/svelte';

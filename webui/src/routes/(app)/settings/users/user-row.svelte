@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type User, UserRole } from '$lib/api/v1/clients/user_service_pb';
+	import { type User, UserRole } from '$lib/api/v2/clients/user_service_pb';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { PencilIcon } from '@lucide/svelte';

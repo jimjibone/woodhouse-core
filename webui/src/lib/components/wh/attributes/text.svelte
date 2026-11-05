@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Permissions, type TextAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import { Permissions, type TextAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input/index.js';
 

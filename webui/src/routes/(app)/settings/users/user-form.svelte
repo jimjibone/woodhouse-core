@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { UserRole } from '$lib/api/v1/clients/user_service_pb';
+	import { UserRole } from '$lib/api/v2/clients/user_service_pb';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';

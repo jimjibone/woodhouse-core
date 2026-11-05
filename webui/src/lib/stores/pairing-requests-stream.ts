@@ -6,8 +6,8 @@ import {
 	PairingRequestsStreamResponseSchema,
 	UserService,
 	type PairingRequestsStreamResponse
-} from '$lib/api/v1/clients/user_service_pb';
-import type { PairingRequest } from '$lib/api/v1/clients/client_pb';
+} from '$lib/api/v2/clients/user_service_pb';
+import type { PairingRequest } from '$lib/api/v2/clients/client_pb';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
 

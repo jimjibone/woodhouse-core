@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import * as Services from '$lib/components/wh/service';
-	import { Service_ServiceType } from '$lib/api/v1/clients/client_service_pb';
+	import { Service_ServiceType } from '$lib/api/v2/clients/client_service_pb';
 
 	let {
 		class: className,

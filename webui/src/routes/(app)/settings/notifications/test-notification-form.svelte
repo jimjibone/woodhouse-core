@@ -9,7 +9,7 @@
 		NotificationLevel,
 		NotificationAudience_Kind,
 		UserRole
-	} from '$lib/api/v1/clients/user_service_pb';
+	} from '$lib/api/v2/clients/user_service_pb';
 	import { ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '@/tools/headline-case';
 	import { toast } from 'svelte-sonner';

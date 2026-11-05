@@ -7,7 +7,7 @@
 	import { toggleMode, mode } from 'mode-watcher';
 	import { page } from '$app/state';
 	import { type Dashboards, isPathActive } from '$lib/nav';
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import { zoneIcon } from '$lib/zone-icons';
 
 	let {

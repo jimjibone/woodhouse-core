@@ -4,8 +4,8 @@
 		ValueSchema,
 		AttributeSchema,
 		FloatValueSchema
-	} from '$lib/api/v1/clients/client_service_pb';
-	import { type Attribute, Unit } from '$lib/api/v1/clients/client_service_pb';
+	} from '$lib/api/v2/clients/client_service_pb';
+	import { type Attribute, Unit } from '$lib/api/v2/clients/client_service_pb';
 	import { ServiceAction } from '$lib/components/wh/service';
 	import { create, toJsonString } from '@bufbuild/protobuf';
 	import { BoolContent, FloatContent } from '$lib/components/wh/attributes';

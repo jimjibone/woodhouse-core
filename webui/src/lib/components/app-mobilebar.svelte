@@ -3,7 +3,7 @@
 	import { type Dashboards } from "$lib/nav";
 	import { MobileNavButton, MobileNavItem } from "$lib/components/wh/nav";
 	import { LayoutGridIcon, SearchIcon, XIcon } from "@lucide/svelte";
-	import type { Zone } from "$lib/api/v1/clients/zone_pb";
+	import type { Zone } from "$lib/api/v2/clients/zone_pb";
 	import { zoneIcon } from "$lib/zone-icons";
 	import Dialog from "$lib/components/wh/ui/dialog.svelte";
 	import { isPathActive } from "$lib/nav";

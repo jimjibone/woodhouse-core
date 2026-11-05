@@ -1,5 +1,5 @@
-import type { Value, ActionResponse } from '$lib/api/v1/clients/client_service_pb';
-import { ActionResponse_ActionStatus } from '$lib/api/v1/clients/client_service_pb';
+import type { Value, ActionResponse } from '$lib/api/v2/clients/client_service_pb';
+import { ActionResponse_ActionStatus } from '$lib/api/v2/clients/client_service_pb';
 import { SendActionRequest } from '$lib/stores/requests';
 import { toast } from 'svelte-sonner';
 

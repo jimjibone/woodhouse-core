@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Attribute, FloatAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import type { Attribute, FloatAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { ThermometerIcon } from '@lucide/svelte';

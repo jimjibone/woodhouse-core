@@ -1,6 +1,6 @@
 import { createGrpcWebTransport } from '@connectrpc/connect-web';
 import { createClient, ConnectError, Code, type Interceptor, type StreamResponse, type UnaryResponse } from '@connectrpc/connect';
-import { UserService } from '$lib/api/v1/clients/user_service_pb';
+import { UserService } from '$lib/api/v2/clients/user_service_pb';
 import { getAccessToken, doRefresh, sessionExpired } from './auth-store';
 
 // Wraps a streaming response's message iterator so that an Unauthenticated

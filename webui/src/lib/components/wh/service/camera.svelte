@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ImageResponse_ImageStatus } from '$lib/api/v1/clients/client_service_pb';
+	import { ImageResponse_ImageStatus } from '$lib/api/v2/clients/client_service_pb';
 	import { type StandardProps } from './service-root.svelte';
 	import { SendImageRequest, SendFavoriteRequest } from '$lib/stores/requests';
 	import {
@@ -18,7 +18,7 @@
 	import { cn } from '$lib/utils';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
-	import { ServiceSchema } from '$lib/api/v1/clients/client_service_pb';
+	import { ServiceSchema } from '$lib/api/v2/clients/client_service_pb';
 	import { toJsonString } from '@bufbuild/protobuf';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { toHeadlineCase } from '$lib/tools/headline-case';

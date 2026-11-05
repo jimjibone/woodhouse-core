@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { PencilIcon, Trash2Icon, LampIcon } from '@lucide/svelte';
 	import Dialog from '$lib/components/wh/ui/dialog.svelte';

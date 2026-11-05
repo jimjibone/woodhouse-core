@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Zone } from '$lib/api/v1/clients/zone_pb';
+	import type { Zone } from '$lib/api/v2/clients/zone_pb';
 	import { ZonesStore as store } from '$lib/stores/zones-stream';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { onDestroy } from 'svelte';

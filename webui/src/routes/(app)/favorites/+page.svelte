@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { FavoritesStore as store } from '$lib/stores/favorites-stream';
-	import { type DeviceService } from '$lib/api/v1/clients/user_service_pb';
+	import { type DeviceService } from '$lib/api/v2/clients/user_service_pb';
 	import { ServiceEnumerator } from '$lib/components/wh/service';
 	import { valueToDate } from '$lib/tools/time';
 	import { search } from '$lib/stores/search';

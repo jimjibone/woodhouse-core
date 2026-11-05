@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ValueSchema, IntValueSchema, EnumValueSchema } from '$lib/api/v1/clients/client_service_pb';
-	import type { Attribute, EnumAttribute, IntAttribute } from '$lib/api/v1/clients/client_service_pb';
+	import { ValueSchema, IntValueSchema, EnumValueSchema } from '$lib/api/v2/clients/client_service_pb';
+	import type { Attribute, EnumAttribute, IntAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { BlindsIcon } from '@lucide/svelte';
