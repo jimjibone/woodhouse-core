@@ -456,9 +456,16 @@ func (manager *UserManager) run(ctx context.Context) {
 			}
 
 		case lis := <-manager.listenerAdd:
-			// Publish all users to the new listener.
+			// Publish all users to the new listener. Copy them under the lock
+			// but send outside it, so a slow listener cannot block writers.
+			manager.mu.RLock()
+			users := make([]*User, 0, len(manager.users))
 			for _, user := range manager.users {
-				manager.publisher.Send(lis, UserUpdate{Updated: user.Clone()})
+				users = append(users, user.Clone())
+			}
+			manager.mu.RUnlock()
+			for _, user := range users {
+				manager.publisher.Send(lis, UserUpdate{Updated: user})
 			}
 
 			// Send and empty update to indicate the end of the initial list.
