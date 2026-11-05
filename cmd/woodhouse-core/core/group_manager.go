@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -15,7 +16,8 @@ import (
 
 	"github.com/jimjibone/log"
 	"github.com/jimjibone/queue/v2"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
+	"github.com/jimjibone/woodhouse-api/values"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
 	"gopkg.in/yaml.v3"
 )
@@ -92,57 +94,46 @@ func (manager *GroupManager) GetListener() *queue.Sub[GroupUpdate] {
 	return sub
 }
 
-func (manager *GroupManager) verifyGroupMembers(members []*GroupMember) error {
-	// Verify that the members exist - device id and service id.
-	var deviceIDs []string
+// verifyGroupMembers checks that every member's device, endpoint and service
+// exist and that the service is of the group's type.
+func (manager *GroupManager) verifyGroupMembers(typ clientsapi.Service_ServiceType, members []*GroupMember) error {
 	for _, member := range members {
-		deviceIDs = append(deviceIDs, member.DeviceID)
-	}
-	serviceType := clientsapi.Service_UNDEFINED
-	for dev := range manager.deviceManager.GetDevicesByIDs(deviceIDs) {
+		dev := manager.deviceManager.GetDevice(member.DeviceID)
 		if dev == nil {
-			return fmt.Errorf("device %q not found", dev.GetId())
+			return fmt.Errorf("device %q not found", member.DeviceID)
 		}
-		for _, member := range members {
-			if dev.GetId() == member.DeviceID {
-				for _, srv := range dev.Services {
-					if srv.GetId() == member.ServiceID {
-						// Verify that all services are of the same type.
-						if serviceType != clientsapi.Service_UNDEFINED && srv.Typ != serviceType {
-							return fmt.Errorf("service %q on device %q is of type %q, expected type %q", member.ServiceID, member.DeviceID, srv.Typ, serviceType)
-						}
-						// Found the service, move to the next member.
-						goto nextMember
-					}
-				}
-				return fmt.Errorf("service %q not found on device %q", member.ServiceID, member.DeviceID)
-			}
+		ep := slices.IndexFunc(dev.GetEndpoints(), func(ep *clientsapi.Endpoint) bool {
+			return ep.GetId() == member.EndpointID
+		})
+		if ep < 0 {
+			return fmt.Errorf("endpoint %q not found on device %q", member.EndpointID, member.DeviceID)
 		}
-	nextMember:
+		services := dev.Endpoints[ep].GetServices()
+		srv := slices.IndexFunc(services, func(srv *clientsapi.Service) bool {
+			return srv.GetId() == member.ServiceID
+		})
+		if srv < 0 {
+			return fmt.Errorf("service %q not found on endpoint %q of device %q", member.ServiceID, member.EndpointID, member.DeviceID)
+		}
+		if services[srv].GetTyp() != typ {
+			return fmt.Errorf("service %q on endpoint %q of device %q is of type %q, expected type %q", member.ServiceID, member.EndpointID, member.DeviceID, services[srv].GetTyp(), typ)
+		}
 	}
 	return nil
 }
 
 func (manager *GroupManager) forceGroupUpdate(grp *Group) {
-	update := grp.initUpdate(true)
-	grp.updateInfo(update)
-
-	// Get all device states that make up the group.
+	// Feed the group the state of all devices that make up the group.
 	var deviceIDs []string
 	for _, member := range grp.Members {
 		deviceIDs = append(deviceIDs, member.DeviceID)
 	}
 	for dev := range manager.deviceManager.GetDevicesByIDs(deviceIDs) {
-		if dev != nil {
-			for _, srv := range dev.Services {
-				grp.updateOnline(true, update, dev.Id, srv)
-				grp.updateMembers(true, update, dev.Id, srv)
-			}
-		}
+		grp.Update(dev)
 	}
 
 	// Publish the update to the device manager, whatever it is.
-	manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
+	manager.deviceManager.PushDeviceUpdate(GroupClientID, grp.fullUpdate())
 }
 
 func (manager *GroupManager) AddGroup(grp *Group) error {
@@ -153,8 +144,8 @@ func (manager *GroupManager) AddGroup(grp *Group) error {
 		return ErrGroupAlreadyExists
 	}
 
-	// Verify that the members exist - device id and service id.
-	err := manager.verifyGroupMembers(grp.Members)
+	// Verify that the members exist - device id, endpoint id and service id.
+	err := manager.verifyGroupMembers(grp.Type, grp.Members)
 	if err != nil {
 		return err
 	}
@@ -213,9 +204,7 @@ func (manager *GroupManager) UpdateGroupName(groupID, name string) error {
 
 	update := grp.initUpdate(false)
 	grp.updateInfo(update)
-	if update != nil {
-		manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
-	}
+	manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
 
 	return nil
 }
@@ -232,16 +221,21 @@ func (manager *GroupManager) handleInfoRequest(groupID string, req *clientsapi.A
 		}, false)
 	}
 
-	for _, val := range req.GetValues() {
+	if req.GetWrite() == nil {
+		respond(clientsapi.ActionResponse_ERR_INVALID, "the info service has no commands")
+		return
+	}
+
+	for _, val := range req.GetWrite().GetValues() {
 		if val.GetId() != "name" {
 			respond(clientsapi.ActionResponse_ERR_READONLY, "attribute is read only")
 			return
 		}
-		if val.GetText() == nil {
-			respond(clientsapi.ActionResponse_ERROR, "incorrect value type for name")
+		if values.Kind(val.GetValue()) != "text" {
+			respond(clientsapi.ActionResponse_ERR_INVALID, "incorrect value type for name")
 			return
 		}
-		name := strings.TrimSpace(val.GetText().GetValue())
+		name := strings.TrimSpace(val.GetValue().GetText())
 		if name == "" {
 			respond(clientsapi.ActionResponse_ERROR, "name cannot be empty")
 			return
@@ -265,8 +259,8 @@ func (manager *GroupManager) UpdateGroupMembers(groupID string, members []*Group
 		return ErrGroupNotFound
 	}
 
-	// Verify that the members exist - device id and service id.
-	err := manager.verifyGroupMembers(members)
+	// Verify that the members exist - device id, endpoint id and service id.
+	err := manager.verifyGroupMembers(grp.Type, members)
 	if err != nil {
 		return err
 	}
@@ -403,9 +397,7 @@ func (manager *GroupManager) run(ctx context.Context) {
 	for _, grp := range manager.groups {
 		update := grp.initUpdate(false)
 		grp.updateInfo(update)
-		if update != nil {
-			manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
-		}
+		manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
 	}
 	manager.mu.RUnlock()
 
@@ -413,16 +405,9 @@ func (manager *GroupManager) run(ctx context.Context) {
 	updateInGroups := func(dev *clientsapi.Device) {
 		manager.mu.RLock()
 		defer manager.mu.RUnlock()
-		for _, srv := range dev.Services {
-			for _, grp := range manager.groups {
-				if grp.WantsServiceUpdate(dev.Id, srv) {
-					update := grp.initUpdate(false)
-					grp.updateOnline(false, update, dev.Id, srv)
-					grp.updateMembers(false, update, dev.Id, srv)
-					if update != nil {
-						manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
-					}
-				}
+		for _, grp := range manager.groups {
+			if update := grp.Update(dev); update != nil {
+				manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
 			}
 		}
 	}
@@ -433,11 +418,7 @@ func (manager *GroupManager) run(ctx context.Context) {
 		defer manager.mu.RUnlock()
 		for _, grp := range manager.groups {
 			if grp.WantsDevice(deviceID) {
-				update := grp.initUpdate(false)
-				grp.removeDevice(update, deviceID)
-				if update != nil {
-					manager.deviceManager.PushDeviceUpdate(GroupClientID, update)
-				}
+				manager.deviceManager.PushDeviceUpdate(GroupClientID, grp.removeDevice(deviceID))
 			}
 		}
 	}

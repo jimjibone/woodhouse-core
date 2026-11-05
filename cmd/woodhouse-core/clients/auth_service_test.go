@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"

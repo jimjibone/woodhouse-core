@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	testUserMethod      = "/woodhouse.api.v1.clients.UserService/GetDevices"
-	testUserAdminMethod = "/woodhouse.api.v1.clients.UserService/AddUser"
-	testClientMethod    = "/woodhouse.api.v1.clients.ClientService/StatusStream"
+	testUserMethod      = "/woodhouse.api.v2.clients.UserService/GetDevices"
+	testUserAdminMethod = "/woodhouse.api.v2.clients.UserService/AddUser"
+	testClientMethod    = "/woodhouse.api.v2.clients.ClientService/StatusStream"
 )
 
 // newTestInterceptor builds a fully wired AuthInterceptor backed by an

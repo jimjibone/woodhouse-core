@@ -7,19 +7,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"slices"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/jimjibone/log"
 	"github.com/jimjibone/queue/v2"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
+	"github.com/jimjibone/woodhouse-api/values"
 	"github.com/jimjibone/woodhouse-core/shared/random"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var (
@@ -42,7 +43,7 @@ type DeviceManager struct {
 	imageRequests     *queue.Pub[ImageRequest]
 	imageResponses    *queue.Pub[ImageResponse]
 	imageCacheMu      sync.RWMutex
-	imageCache        map[string]*CachedImage // key = deviceID+":"+serviceID+":"+attributeID
+	imageCache        map[string]*CachedImage // key = deviceID+":"+endpointID+":"+serviceID+":"+attributeID
 	imageCacheUpdates *queue.Pub[*CachedImage]
 	rxSetFavourites   *queue.Queue[favoriteUpdate]
 	rxRemoveDevices   *queue.Queue[removalUpdate]
@@ -64,9 +65,10 @@ type txDeviceUpdate struct {
 }
 
 type favoriteUpdate struct {
-	DeviceID  string
-	ServiceID string
-	Favorite  bool
+	DeviceID   string
+	EndpointID string
+	ServiceID  string
+	Favorite   bool
 }
 
 type removalUpdate struct {
@@ -100,6 +102,7 @@ type ImageResponse struct {
 // CachedImage holds the most recently fetched image for a camera attribute.
 type CachedImage struct {
 	DeviceID    string
+	EndpointID  string
 	ServiceID   string
 	AttributeID string
 	Data        []byte
@@ -167,8 +170,8 @@ func (manager *DeviceManager) Close() {
 	}
 }
 
-func (manager *DeviceManager) SetFavorite(deviceID, serviceID string, favorite bool) {
-	manager.rxSetFavourites.Push(favoriteUpdate{DeviceID: deviceID, ServiceID: serviceID, Favorite: favorite})
+func (manager *DeviceManager) SetFavorite(deviceID, endpointID, serviceID string, favorite bool) {
+	manager.rxSetFavourites.Push(favoriteUpdate{DeviceID: deviceID, EndpointID: endpointID, ServiceID: serviceID, Favorite: favorite})
 }
 
 // Remove a device from the manager. Devices are not normally removable if they
@@ -250,10 +253,11 @@ func (manager *DeviceManager) GetImageResponses() *queue.Sub[ImageResponse] {
 
 // UpdateImageCache stores a newly fetched image in the cache and publishes it
 // to all ImagesStream subscribers.
-func (manager *DeviceManager) UpdateImageCache(deviceID, serviceID, attributeID string, data []byte, mimeType string) {
-	key := deviceID + ":" + serviceID + ":" + attributeID
+func (manager *DeviceManager) UpdateImageCache(deviceID, endpointID, serviceID, attributeID string, data []byte, mimeType string) {
+	key := deviceID + ":" + endpointID + ":" + serviceID + ":" + attributeID
 	cached := &CachedImage{
 		DeviceID:    deviceID,
+		EndpointID:  endpointID,
 		ServiceID:   serviceID,
 		AttributeID: attributeID,
 		Data:        data,
@@ -288,6 +292,7 @@ func (manager *DeviceManager) GetImageCacheUpdates() *queue.Sub[*CachedImage] {
 
 type CameraDevice struct {
 	DeviceID    string
+	EndpointID  string
 	ServiceID   string
 	AttributeID string
 	ClientID    string
@@ -305,18 +310,21 @@ func (manager *DeviceManager) GetCameraDevices() []CameraDevice {
 		if !dev.isOnline() {
 			continue
 		}
-		for _, svc := range dev.Services {
-			if svc.GetTyp() != clientsapi.Service_CAMERA {
-				continue
-			}
-			for _, attr := range svc.GetAttrs() {
-				if attr.GetImage() != nil {
-					devices = append(devices, CameraDevice{
-						DeviceID:    dev.ID,
-						ServiceID:   svc.GetId(),
-						AttributeID: attr.GetId(),
-						ClientID:    dev.ClientID,
-					})
+		for _, ep := range dev.Endpoints {
+			for _, svc := range ep.Services {
+				if svc.GetTyp() != clientsapi.Service_CAMERA {
+					continue
+				}
+				for _, attr := range svc.GetAttrs() {
+					if attr.GetSpec().GetImage() != nil {
+						devices = append(devices, CameraDevice{
+							DeviceID:    dev.ID,
+							EndpointID:  ep.ID,
+							ServiceID:   svc.GetId(),
+							AttributeID: attr.GetId(),
+							ClientID:    dev.ClientID,
+						})
+					}
 				}
 			}
 		}
@@ -407,58 +415,94 @@ func (manager *DeviceManager) PrepAction(deviceID string) (actionID, clientID st
 	return actionID, dev.ClientID, nil
 }
 
-// ValidateActionPerms rejects action values that write to attributes the last
-// known device state reports as read-only. Attributes not present in the
-// stored state are allowed through; write-only attributes may never appear in
-// the state and the bridge remains the final authority on permissions.
-func (manager *DeviceManager) ValidateActionPerms(deviceID, serviceID string, values []*clientsapi.Value) error {
+// ActionError is returned by ValidateAction when the action itself is wrong.
+// Callers report it to the requester as a final ActionResponse with Status and
+// Details rather than as a gRPC error.
+type ActionError struct {
+	Status  clientsapi.ActionResponse_ActionStatus
+	Details string
+}
+
+func (e *ActionError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Status, e.Details)
+}
+
+// Response returns the final ActionResponse to send to the requester.
+func (e *ActionError) Response(actionID string) *clientsapi.ActionResponse {
+	return &clientsapi.ActionResponse{ActionId: actionID, Status: e.Status, Details: e.Details}
+}
+
+func invalidAction(format string, args ...any) error {
+	return &ActionError{Status: clientsapi.ActionResponse_ERR_INVALID, Details: fmt.Sprintf(format, args...)}
+}
+
+// ValidateAction checks an action against the last known device state: the
+// device, endpoint and service must exist (gRPC NotFound otherwise), writes
+// must name read-write attributes and carry values matching their specs, and
+// commands must be declared by the service with params matching their specs.
+// Any other problem is an *ActionError.
+func (manager *DeviceManager) ValidateAction(req *clientsapi.ActionRequest) error {
 	manager.mu.RLock()
 	defer manager.mu.RUnlock()
 
-	dev, found := manager.devices[deviceID]
+	dev, found := manager.devices[req.GetDeviceId()]
 	if !found {
 		return status.Error(codes.NotFound, "device not found")
 	}
-
-	srv, found := dev.Services[serviceID]
+	ep, found := dev.Endpoints[req.GetEndpointId()]
+	if !found {
+		return status.Error(codes.NotFound, "endpoint not found")
+	}
+	srv, found := ep.Services[req.GetServiceId()]
 	if !found {
 		return status.Error(codes.NotFound, "service not found")
 	}
 
-	for _, val := range values {
-		for _, attr := range srv.GetAttrs() {
-			if attr.GetId() == val.GetId() {
-				if attributePerms(attr) == clientsapi.Permissions_PERM_READONLY {
-					return status.Errorf(codes.FailedPrecondition, "attribute %q is read only", val.GetId())
-				}
-				break
+	switch action := req.GetAction().(type) {
+	case *clientsapi.ActionRequest_Write:
+		return validateWrite(srv, action.Write.GetValues())
+	case *clientsapi.ActionRequest_Command:
+		return validateCommand(srv, action.Command)
+	}
+	return invalidAction("action has neither write nor command")
+}
+
+func validateWrite(srv *clientsapi.Service, writes []*clientsapi.FieldValue) error {
+	if len(writes) == 0 {
+		return invalidAction("write has no values")
+	}
+	for _, write := range writes {
+		i := slices.IndexFunc(srv.GetAttrs(), func(attr *clientsapi.Attribute) bool {
+			return attr.GetId() == write.GetId()
+		})
+		if i < 0 {
+			return invalidAction("unknown attribute %q", write.GetId())
+		}
+		attr := srv.Attrs[i]
+		if attr.GetPerms() == clientsapi.Permissions_PERM_READONLY {
+			return &ActionError{
+				Status:  clientsapi.ActionResponse_ERR_READONLY,
+				Details: fmt.Sprintf("attribute %q is read only", write.GetId()),
 			}
 		}
+		if err := values.Validate(attr.GetSpec(), write.GetValue()); err != nil {
+			return invalidAction("attribute %q: %s", write.GetId(), err)
+		}
 	}
-
 	return nil
 }
 
-func attributePerms(attr *clientsapi.Attribute) clientsapi.Permissions {
-	switch {
-	case attr.GetBool() != nil:
-		return attr.GetBool().GetPerms()
-	case attr.GetInt() != nil:
-		return attr.GetInt().GetPerms()
-	case attr.GetFloat() != nil:
-		return attr.GetFloat().GetPerms()
-	case attr.GetText() != nil:
-		return attr.GetText().GetPerms()
-	case attr.GetDuration() != nil:
-		return attr.GetDuration().GetPerms()
-	case attr.GetTime() != nil:
-		return attr.GetTime().GetPerms()
-	case attr.GetColor() != nil:
-		return attr.GetColor().GetPerms()
-	case attr.GetEnum() != nil:
-		return attr.GetEnum().GetPerms()
+func validateCommand(srv *clientsapi.Service, cmd *clientsapi.CommandAction) error {
+	i := slices.IndexFunc(srv.GetCommands(), func(spec *clientsapi.CommandSpec) bool {
+		return spec.GetId() == cmd.GetId()
+	})
+	if i < 0 {
+		return invalidAction("unknown command %q", cmd.GetId())
 	}
-	return clientsapi.Permissions_PERM_UNDEFINED
+	if err := values.ValidateFields(srv.Commands[i].GetParams(), cmd.GetParams()); err != nil {
+		return invalidAction("command %q: %s", cmd.GetId(), err)
+	}
+	return nil
 }
 
 func (manager *DeviceManager) load() error {
@@ -489,26 +533,28 @@ func (manager *DeviceManager) load() error {
 			return err
 		}
 
-		// Decode it.
+		// Decode it. Each device is protojson, as encoding/json cannot decode
+		// the oneofs in values and specs.
 		config := struct {
-			Devices []*clientsapi.Device `json:"devices"`
+			Devices []json.RawMessage `json:"devices"`
 		}{}
 		err = json.NewDecoder(bytes.NewReader(data)).Decode(&config)
-		// err = yaml.NewDecoder(bytes.NewReader(data)).Decode(&config)
 		if err != nil {
 			if err == io.EOF {
 				return nil
 			}
-			if te, ok := err.(*yaml.TypeError); ok {
-				fmt.Fprintln(os.Stderr, te.Errors)
-			}
-			// fmt.Println(yaml.FormatError(err, true, true))
 			return err
 		}
 
 		// Read the state into the manager (convert slice to map).
 		manager.devices = make(map[string]*Device)
-		for _, upd := range config.Devices {
+		for _, raw := range config.Devices {
+			upd := &clientsapi.Device{}
+			err := protojson.Unmarshal(raw, upd)
+			if err != nil {
+				manager.log.Warnf("failed to decode device: %s", err)
+				continue
+			}
 			dev, err := newDevice(manager.log, upd.GetClientId(), upd)
 			if err != nil {
 				manager.log.Warnf("failed to load device %q: %s", upd.GetId(), err)
@@ -525,23 +571,31 @@ func (manager *DeviceManager) save() error {
 	defer manager.mu.RUnlock()
 
 	// Convert map to slice.
-	config := struct {
-		Devices []*clientsapi.Device `json:"devices"`
-	}{}
+	devices := make([]*clientsapi.Device, 0, len(manager.devices))
 	for _, dev := range manager.devices {
-		config.Devices = append(config.Devices, dev.pb())
+		devices = append(devices, dev.pb())
 	}
 	// Sorted to maintain consistent structure between saves.
-	sort.Slice(config.Devices, func(i, j int) bool {
-		return config.Devices[i].GetId() < config.Devices[j].GetId()
+	sort.Slice(devices, func(i, j int) bool {
+		return devices[i].GetId() < devices[j].GetId()
 	})
 
-	// Encode it.
+	// Encode it. protojson output is deliberately unstable, but the encoder
+	// below compacts and re-indents it.
+	config := struct {
+		Devices []json.RawMessage `json:"devices"`
+	}{Devices: []json.RawMessage{}}
+	for _, dev := range devices {
+		raw, err := protojson.Marshal(dev)
+		if err != nil {
+			return err
+		}
+		config.Devices = append(config.Devices, raw)
+	}
 	data := &bytes.Buffer{}
 	encoder := json.NewEncoder(data)
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(config)
-	// err := yaml.NewEncoder(data).Encode(config)
 	if err != nil {
 		return err
 	}
@@ -604,6 +658,9 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 	if update.ClientID != "" {
 		if update.Update != nil {
 			if update.Update.GetId() != "" {
+				// Events (update.Update.Events) arrive here with the state. They are
+				// not stored and, for now, not forwarded. A later change stamps them
+				// with the epoch and seq and forwards them in the update below.
 				var changes *clientsapi.Device
 				if dev, found := manager.devices[update.Update.GetId()]; found {
 					var err error
@@ -671,15 +728,11 @@ func (manager *DeviceManager) handleFavoriteUpdate(update favoriteUpdate) {
 	defer manager.mu.Unlock()
 
 	if dev, found := manager.devices[update.DeviceID]; found {
-		err := dev.updateFavoriteService(manager.log, update.ServiceID, update.Favorite)
-		if err != nil {
-			manager.log.Warnf("failed to update favorite device %q, service %q: %s", update.DeviceID, update.ServiceID, err)
-		} else {
-			manager.changed = true
-			manager.txDeviceUpdates.Pub(txDeviceUpdate{
-				Update: dev.pb(),
-			})
-		}
+		dev.updateFavoriteService(manager.log, update.EndpointID, update.ServiceID, update.Favorite)
+		manager.changed = true
+		manager.txDeviceUpdates.Pub(txDeviceUpdate{
+			Update: dev.pb(),
+		})
 	} else {
 		manager.log.Warnf("favorite update device ID not found: %s", update)
 	}
@@ -749,6 +802,7 @@ func (manager *DeviceManager) pollCamera(ctx context.Context, dev CameraDevice) 
 	req := &clientsapi.ImageRequest{
 		RequestId:   requestID,
 		DeviceId:    dev.DeviceID,
+		EndpointId:  dev.EndpointID,
 		ServiceId:   dev.ServiceID,
 		AttributeId: dev.AttributeID,
 	}
@@ -782,7 +836,7 @@ func (manager *DeviceManager) pollCamera(ctx context.Context, dev CameraDevice) 
 			if update.Response.Status == clientsapi.ImageResponse_COMPLETE {
 				if len(update.Response.Data) > 0 {
 					manager.log.Debugf("image scheduler: cached image for device %q (%d bytes)", dev.DeviceID, len(update.Response.Data))
-					manager.UpdateImageCache(dev.DeviceID, dev.ServiceID, dev.AttributeID, update.Response.Data, "image/jpeg")
+					manager.UpdateImageCache(dev.DeviceID, dev.EndpointID, dev.ServiceID, dev.AttributeID, update.Response.Data, "image/jpeg")
 				}
 				return
 			}

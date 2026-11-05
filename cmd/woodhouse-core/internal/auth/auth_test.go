@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"google.golang.org/grpc"
 )
 
@@ -44,7 +44,7 @@ func TestVerifyPolicyCoverage_MatchesRegisteredMethods(t *testing.T) {
 func TestVerifyPolicyCoverage_StalePolicyEntry(t *testing.T) {
 	// Drop a method the role policy still names — the shape BlockClient and
 	// UnblockClient were left in after the feature was removed.
-	removed := "/woodhouse.api.v1.clients.UserService/UnpairClient"
+	removed := "/woodhouse.api.v2.clients.UserService/UnpairClient"
 	methods := slices.DeleteFunc(registeredMethods(t), func(method string) bool {
 		return method == removed
 	})
@@ -59,7 +59,7 @@ func TestVerifyPolicyCoverage_StalePolicyEntry(t *testing.T) {
 }
 
 func TestVerifyPolicyCoverage_StaleNoAuthEntry(t *testing.T) {
-	removed := "/woodhouse.api.v1.clients.AuthService/Ping"
+	removed := "/woodhouse.api.v2.clients.AuthService/Ping"
 	methods := slices.DeleteFunc(registeredMethods(t), func(method string) bool {
 		return method == removed
 	})
@@ -77,7 +77,7 @@ func TestVerifyPolicyCoverage_UserMethodWithoutPolicy(t *testing.T) {
 	// A newly added UserService RPC that nobody wrote a policy for. Every role
 	// is denied by IsUserAuthorised's fail-closed default, so without this
 	// check the RPC just quietly never works.
-	added := "/woodhouse.api.v1.clients.UserService/SomeNewMethod"
+	added := "/woodhouse.api.v2.clients.UserService/SomeNewMethod"
 	methods := append(registeredMethods(t), added)
 
 	err := VerifyPolicyCoverage(methods)
@@ -91,7 +91,7 @@ func TestVerifyPolicyCoverage_UserMethodWithoutPolicy(t *testing.T) {
 
 func TestVerifyPolicyCoverage_IgnoresNonUserMethods(t *testing.T) {
 	// Client and auth RPCs are not role-gated, so they need no policy entry.
-	methods := append(registeredMethods(t), "/woodhouse.api.v1.clients.ClientService/SomeNewMethod")
+	methods := append(registeredMethods(t), "/woodhouse.api.v2.clients.ClientService/SomeNewMethod")
 
 	if err := VerifyPolicyCoverage(methods); err != nil {
 		t.Fatalf("non-user methods should not require a role policy: %v", err)
@@ -105,9 +105,9 @@ func TestRequiresAuth(t *testing.T) {
 		}
 	}
 	for _, method := range []string{
-		"/woodhouse.api.v1.clients.UserService/GetClients",
-		"/woodhouse.api.v1.clients.ClientService/StatusStream",
-		"/woodhouse.api.v1.clients.UserService/UnknownMethod",
+		"/woodhouse.api.v2.clients.UserService/GetClients",
+		"/woodhouse.api.v2.clients.ClientService/StatusStream",
+		"/woodhouse.api.v2.clients.UserService/UnknownMethod",
 	} {
 		if !RequiresAuth(method) {
 			t.Errorf("%q should require auth", method)
@@ -117,8 +117,8 @@ func TestRequiresAuth(t *testing.T) {
 
 func TestSettingsAuthorisation(t *testing.T) {
 	const (
-		get    = "/woodhouse.api.v1.clients.UserService/GetSettings"
-		update = "/woodhouse.api.v1.clients.UserService/UpdateSettings"
+		get    = "/woodhouse.api.v2.clients.UserService/GetSettings"
+		update = "/woodhouse.api.v2.clients.UserService/UpdateSettings"
 	)
 
 	// Reading the instance name is what names the server in the UI, so every
@@ -151,9 +151,9 @@ func TestSettingsAuthorisation(t *testing.T) {
 func TestInviteAuthorisation(t *testing.T) {
 	// Managing invites is an admin action, and needs a token.
 	for _, method := range []string{
-		"/woodhouse.api.v1.clients.UserService/CreateInvite",
-		"/woodhouse.api.v1.clients.UserService/ListInvites",
-		"/woodhouse.api.v1.clients.UserService/RevokeInvite",
+		"/woodhouse.api.v2.clients.UserService/CreateInvite",
+		"/woodhouse.api.v2.clients.UserService/ListInvites",
+		"/woodhouse.api.v2.clients.UserService/RevokeInvite",
 	} {
 		if !RequiresAuth(method) {
 			t.Errorf("%q should require auth", method)
@@ -167,7 +167,7 @@ func TestInviteAuthorisation(t *testing.T) {
 
 	// Accepting one is how a person with no account gets a session, so it
 	// cannot ask for one. It is not a role-gated user method either.
-	const accept = "/woodhouse.api.v1.clients.UserAuthService/AcceptInvite"
+	const accept = "/woodhouse.api.v2.clients.UserAuthService/AcceptInvite"
 	if RequiresAuth(accept) {
 		t.Errorf("%q should not require auth", accept)
 	}
@@ -177,7 +177,7 @@ func TestInviteAuthorisation(t *testing.T) {
 }
 
 func TestSystemServiceIsAdminOnlyUserMethod(t *testing.T) {
-	const method = "/woodhouse.api.v1.clients.SystemService/FactoryReset"
+	const method = "/woodhouse.api.v2.clients.SystemService/FactoryReset"
 
 	// Not a user method would mean any paired client (bridge) could call it.
 	if !IsUserMethod(method) {

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 )
 
 // Zone is a room or area of the home. Unlike a Group, a Zone is pure metadata:

@@ -11,13 +11,13 @@ import (
 // accepting an invite (the invite token is the authorization), and the pairing
 // handshake a client must complete before it has one.
 var noAuthMethods = []string{
-	"/woodhouse.api.v1.clients.UserAuthService/Login",
-	"/woodhouse.api.v1.clients.UserAuthService/Refresh",
-	"/woodhouse.api.v1.clients.UserAuthService/Logout",
-	"/woodhouse.api.v1.clients.UserAuthService/AcceptInvite",
-	"/woodhouse.api.v1.clients.AuthService/Pair",
-	"/woodhouse.api.v1.clients.AuthService/Refresh",
-	"/woodhouse.api.v1.clients.AuthService/Ping",
+	"/woodhouse.api.v2.clients.UserAuthService/Login",
+	"/woodhouse.api.v2.clients.UserAuthService/Refresh",
+	"/woodhouse.api.v2.clients.UserAuthService/Logout",
+	"/woodhouse.api.v2.clients.UserAuthService/AcceptInvite",
+	"/woodhouse.api.v2.clients.AuthService/Pair",
+	"/woodhouse.api.v2.clients.AuthService/Refresh",
+	"/woodhouse.api.v2.clients.AuthService/Ping",
 }
 
 func RequiresAuth(method string) bool {
@@ -28,8 +28,8 @@ func RequiresAuth(method string) bool {
 // tokens. Anything else is treated as a client method, callable by any
 // paired client, so user-facing services must be listed here.
 var userServicePrefixes = []string{
-	"/woodhouse.api.v1.clients.UserService/",
-	"/woodhouse.api.v1.clients.SystemService/",
+	"/woodhouse.api.v2.clients.UserService/",
+	"/woodhouse.api.v2.clients.SystemService/",
 }
 
 func IsUserMethod(method string) bool {
@@ -43,55 +43,56 @@ func IsUserMethod(method string) bool {
 
 // roleMap is a map of method names (keys) and the list of roles which are allowed to access them.
 var roleMap = map[string][]Role{
-	"/woodhouse.api.v1.clients.UserService/GetClients":               {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/ClientsStream":            {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/PairingRequestsStream":    {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/ApprovePairing":           {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/DenyPairing":              {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/UnpairClient":             {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/ForgetClient":             {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/GetDevices":               {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/DevicesStream":            {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/RemoveDevice":             {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/FavoritesStream":          {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/AddFavorite":              {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/RemoveFavorite":           {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/GroupsStream":             {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/AddGroup":                 {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/UpdateGroup":              {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/RemoveGroup":              {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/ZonesStream":              {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/AddZone":                  {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/UpdateZone":               {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/RemoveZone":               {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/NotificationsStream":      {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/MarkNotificationRead":     {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/MarkAllNotificationsRead": {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/DismissNotification":      {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/SendTestNotification":     {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/SendAction":               {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/SendImageRequest":         {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/UsersStream":              {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/AddUser":                  {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/UpdateUser":               {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/RemoveUser":               {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/CreateInvite":             {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/ListInvites":              {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/RevokeInvite":             {AdminRole},
-	"/woodhouse.api.v1.clients.UserService/ImagesStream":             {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/GetSettings":              {AdminRole, UserRole},
-	"/woodhouse.api.v1.clients.UserService/UpdateSettings":           {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/GetClients":               {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/ClientsStream":            {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/PairingRequestsStream":    {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/ApprovePairing":           {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/DenyPairing":              {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/UnpairClient":             {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/ForgetClient":             {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/GetDevices":               {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/DevicesStream":            {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/RemoveDevice":             {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/SetEndpointLabel":         {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/FavoritesStream":          {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/AddFavorite":              {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/RemoveFavorite":           {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/GroupsStream":             {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/AddGroup":                 {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/UpdateGroup":              {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/RemoveGroup":              {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/ZonesStream":              {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/AddZone":                  {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/UpdateZone":               {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/RemoveZone":               {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/NotificationsStream":      {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/MarkNotificationRead":     {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/MarkAllNotificationsRead": {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/DismissNotification":      {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/SendTestNotification":     {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/SendAction":               {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/SendImageRequest":         {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/UsersStream":              {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/AddUser":                  {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/UpdateUser":               {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/RemoveUser":               {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/CreateInvite":             {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/ListInvites":              {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/RevokeInvite":             {AdminRole},
+	"/woodhouse.api.v2.clients.UserService/ImagesStream":             {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/GetSettings":              {AdminRole, UserRole},
+	"/woodhouse.api.v2.clients.UserService/UpdateSettings":           {AdminRole},
 
 	// System management (woodhouse-os): admins only.
-	"/woodhouse.api.v1.clients.SystemService/GetSystemInfo":    {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/GetUpdateReports": {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/GetWifiStatus":    {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/ScanWifi":         {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/JoinWifi":         {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/SetSSH":           {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/Reboot":           {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/FactoryReset":     {AdminRole},
-	"/woodhouse.api.v1.clients.SystemService/SetRemoteSupport": {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/GetSystemInfo":    {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/GetUpdateReports": {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/GetWifiStatus":    {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/ScanWifi":         {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/JoinWifi":         {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/SetSSH":           {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/Reboot":           {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/FactoryReset":     {AdminRole},
+	"/woodhouse.api.v2.clients.SystemService/SetRemoteSupport": {AdminRole},
 }
 
 func IsUserAuthorised(method string, role Role) bool {
@@ -113,7 +114,7 @@ func IsUserAuthorised(method string, role Role) bool {
 //     loudly at the point the RPC was added.
 //
 // methods are full gRPC method names, e.g.
-// "/woodhouse.api.v1.clients.UserService/GetClients".
+// "/woodhouse.api.v2.clients.UserService/GetClients".
 func VerifyPolicyCoverage(methods []string) error {
 	registered := make(map[string]struct{}, len(methods))
 	for _, method := range methods {

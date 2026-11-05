@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/jimjibone/log"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"github.com/jimjibone/woodhouse-core/apitools"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
@@ -507,10 +507,13 @@ func (service *UserService) AddFavorite(ctx context.Context, req *clientsapi.Add
 	if req.GetDeviceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "device_id not defined")
 	}
+	if req.GetEndpointId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "endpoint_id not defined")
+	}
 	if req.GetServiceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "service_id not defined")
 	}
-	service.deviceManager.SetFavorite(req.DeviceId, req.ServiceId, true)
+	service.deviceManager.SetFavorite(req.DeviceId, req.EndpointId, req.ServiceId, true)
 	return &clientsapi.AddFavoriteResponse{}, nil
 }
 
@@ -518,10 +521,13 @@ func (service *UserService) RemoveFavorite(ctx context.Context, req *clientsapi.
 	if req.GetDeviceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "device_id not defined")
 	}
+	if req.GetEndpointId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "endpoint_id not defined")
+	}
 	if req.GetServiceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "service_id not defined")
 	}
-	service.deviceManager.SetFavorite(req.DeviceId, req.ServiceId, false)
+	service.deviceManager.SetFavorite(req.DeviceId, req.EndpointId, req.ServiceId, false)
 	return &clientsapi.RemoveFavoriteResponse{}, nil
 }
 
@@ -609,8 +615,9 @@ func (service *UserService) AddGroup(ctx context.Context, req *clientsapi.AddGro
 	members := make([]*core.GroupMember, len(req.GetMembers()))
 	for i, member := range req.GetMembers() {
 		members[i] = &core.GroupMember{
-			DeviceID:  member.GetDeviceId(),
-			ServiceID: member.GetServiceId(),
+			DeviceID:   member.GetDeviceId(),
+			EndpointID: member.GetEndpointId(),
+			ServiceID:  member.GetServiceId(),
 		}
 	}
 	group := core.NewGroup(groupID, serviceID, req.GetName(), req.GetType(), members)
@@ -645,8 +652,9 @@ func (service *UserService) UpdateGroup(ctx context.Context, req *clientsapi.Upd
 		members := make([]*core.GroupMember, len(req.GetMembers()))
 		for i, member := range req.GetMembers() {
 			members[i] = &core.GroupMember{
-				DeviceID:  member.GetDeviceId(),
-				ServiceID: member.GetServiceId(),
+				DeviceID:   member.GetDeviceId(),
+				EndpointID: member.GetEndpointId(),
+				ServiceID:  member.GetServiceId(),
 			}
 		}
 		err := service.groupManager.UpdateGroupMembers(req.GetId(), members)
@@ -874,12 +882,11 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 	if req.DeviceId == "" {
 		return status.Error(codes.InvalidArgument, "device_id required")
 	}
+	if req.EndpointId == "" {
+		return status.Error(codes.InvalidArgument, "endpoint_id required")
+	}
 	if req.ServiceId == "" {
 		return status.Error(codes.InvalidArgument, "service_id required")
-	}
-
-	if err := service.deviceManager.ValidateActionPerms(req.GetDeviceId(), req.GetServiceId(), req.GetValues()); err != nil {
-		return err
 	}
 
 	actionID, clientID, err := service.deviceManager.PrepAction(req.GetDeviceId())
@@ -889,6 +896,16 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 
 	service.log.Infof("action %q for %q started: %s", actionID, clientID, req)
 	defer service.log.Infof("action %q finished", actionID)
+
+	// A wrong action is reported to the requester as a final response.
+	if err := service.deviceManager.ValidateAction(req); err != nil {
+		var actionErr *core.ActionError
+		if errors.As(err, &actionErr) {
+			service.log.Infof("action %q rejected: %s", actionID, actionErr)
+			return server.Send(actionErr.Response(actionID))
+		}
+		return err
+	}
 
 	req.ActionId = actionID
 
@@ -933,6 +950,7 @@ func (service *UserService) SendAction(req *clientsapi.ActionRequest, server cli
 							ActionId: actionID,
 							Status:   update.Response.Status,
 							Details:  update.Response.Details,
+							Result:   update.Response.Result,
 						})
 						if err != nil {
 							service.log.Warnf("action %q send err: %s", actionID, err)
@@ -966,6 +984,9 @@ func (service *UserService) SendImageRequest(req *clientsapi.UserImageRequest, s
 	if req.DeviceId == "" {
 		return status.Error(codes.InvalidArgument, "device_id required")
 	}
+	if req.EndpointId == "" {
+		return status.Error(codes.InvalidArgument, "endpoint_id required")
+	}
 	if req.ServiceId == "" {
 		return status.Error(codes.InvalidArgument, "service_id required")
 	}
@@ -982,10 +1003,11 @@ func (service *UserService) SendImageRequest(req *clientsapi.UserImageRequest, s
 	service.log.Infof("image request %q for %q started", requestID, clientID)
 	defer service.log.Infof("image request %q finished", requestID)
 
-	// Build a plain ImageRequest for the bridge (no size hint — core resizes).
+	// Build a plain ImageRequest for the bridge (no size hint - core resizes).
 	bridgeReq := &clientsapi.ImageRequest{
 		RequestId:   requestID,
 		DeviceId:    req.DeviceId,
+		EndpointId:  req.EndpointId,
 		ServiceId:   req.ServiceId,
 		AttributeId: req.AttributeId,
 	}
@@ -1030,7 +1052,7 @@ func (service *UserService) SendImageRequest(req *clientsapi.UserImageRequest, s
 						// with full-res data; resize only for this caller's response.
 						var sendData []byte
 						if update.Response.Status == clientsapi.ImageResponse_COMPLETE && len(update.Response.Data) > 0 {
-							service.deviceManager.UpdateImageCache(req.DeviceId, req.ServiceId, req.AttributeId, update.Response.Data, "image/jpeg")
+							service.deviceManager.UpdateImageCache(req.DeviceId, req.EndpointId, req.ServiceId, req.AttributeId, update.Response.Data, "image/jpeg")
 							sendData, err = resizeJPEG(update.Response.Data, req.Width, req.Height)
 							if err != nil {
 								service.log.Warnf("image request %q resize err: %s", requestID, err)
@@ -1357,16 +1379,16 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 	sub := service.deviceManager.GetImageCacheUpdates()
 	defer sub.Close()
 
-	// Build a hint lookup keyed by "deviceID:serviceID:attributeID".
+	// Build a hint lookup keyed by "deviceID:endpointID:serviceID:attributeID".
 	type sizeHint struct{ w, h uint32 }
 	hints := make(map[string]sizeHint, len(req.SizeHints))
 	for _, h := range req.SizeHints {
-		key := h.DeviceId + ":" + h.ServiceId + ":" + h.AttributeId
+		key := h.DeviceId + ":" + h.EndpointId + ":" + h.ServiceId + ":" + h.AttributeId
 		hints[key] = sizeHint{h.Width, h.Height}
 	}
 
 	resizeForHint := func(img *core.CachedImage) ([]byte, error) {
-		key := img.DeviceID + ":" + img.ServiceID + ":" + img.AttributeID
+		key := img.DeviceID + ":" + img.EndpointID + ":" + img.ServiceID + ":" + img.AttributeID
 		if hint, ok := hints[key]; ok {
 			return resizeJPEG(img.Data, hint.w, hint.h)
 		}
@@ -1397,6 +1419,7 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 		}
 		err = server.Send(&clientsapi.ImagesStreamResponse{
 			DeviceId:    img.DeviceID,
+			EndpointId:  img.EndpointID,
 			ServiceId:   img.ServiceID,
 			AttributeId: img.AttributeID,
 			Data:        data,
@@ -1441,6 +1464,7 @@ func (service *UserService) ImagesStream(req *clientsapi.ImagesStreamRequest, se
 			}
 			err = server.Send(&clientsapi.ImagesStreamResponse{
 				DeviceId:    img.DeviceID,
+				EndpointId:  img.EndpointID,
 				ServiceId:   img.ServiceID,
 				AttributeId: img.AttributeID,
 				Data:        data,

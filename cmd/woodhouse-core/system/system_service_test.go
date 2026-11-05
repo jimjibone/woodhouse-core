@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
-	localapi "github.com/jimjibone/woodhouse-api/go/v1/local"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
+	localapi "github.com/jimjibone/woodhouse-api/go/v2/local"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

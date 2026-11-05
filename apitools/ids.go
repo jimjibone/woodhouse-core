@@ -3,7 +3,7 @@ package apitools
 import (
 	"strings"
 
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 )
 
 // DefaultServiceID returns the default service ID for a given service type.

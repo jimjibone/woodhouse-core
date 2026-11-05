@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jimjibone/queue/v2"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
 )
 
@@ -17,10 +17,10 @@ func testZoneDeviceManager(deviceIDs ...string) *DeviceManager {
 	devices := make(map[string]*Device, len(deviceIDs))
 	for _, id := range deviceIDs {
 		devices[id] = &Device{
-			ClientID: "client-1",
-			ID:       id,
-			Typ:      clientsapi.Device_DEVICE,
-			Services: map[string]*clientsapi.Service{},
+			ClientID:  "client-1",
+			ID:        id,
+			Typ:       clientsapi.Device_DEVICE,
+			Endpoints: map[string]*DeviceEndpoint{},
 		}
 	}
 	return &DeviceManager{

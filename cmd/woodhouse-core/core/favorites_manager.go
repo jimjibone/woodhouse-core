@@ -61,23 +61,25 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 
 	// Build up faves from initial deviceManager state.
 	for dev := range manager.deviceManager.GetDevices() {
-		for _, srv := range dev.Services {
-			if srv.GetFavorite() {
-				faveID := FavoriteID{
-					DeviceID:  dev.GetId(),
-					ServiceID: srv.GetId(),
+		for _, ep := range dev.GetEndpoints() {
+			for _, srv := range ep.GetServices() {
+				if srv.GetFavorite() {
+					faveID := FavoriteID{
+						DeviceID:   dev.GetId(),
+						EndpointID: ep.GetId(),
+						ServiceID:  srv.GetId(),
+					}
+					fave := &Favorite{
+						DeviceID:   faveID.DeviceID,
+						EndpointID: faveID.EndpointID,
+						ServiceID:  faveID.ServiceID,
+					}
+					fave.Update(dev)
+					faves[faveID.Key()] = fave
 				}
-				// manager.log.Errorf("prior fave: %v", faveID)
-				fave := &Favorite{
-					DeviceID:  faveID.DeviceID,
-					ServiceID: faveID.ServiceID,
-				}
-				fave.Update(dev)
-				faves[faveID.Key()] = fave
 			}
 		}
 	}
-	// manager.log.Debugf("prior faves is: %v", len(faves))
 
 	for {
 		select {
@@ -88,11 +90,8 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 			// Update faves and publish to listeners.
 			for _, fave := range faves {
 				if fave.DeviceID == update.RemovedID {
-					// Remove from the faves.}
-					faveID := FavoriteID{
-						DeviceID:  fave.DeviceID,
-						ServiceID: fave.ServiceID,
-					}
+					// Remove from the faves.
+					faveID := fave.ID()
 					delete(faves, faveID.Key())
 
 					// Publish the removed fave to the listeners.
@@ -107,34 +106,38 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 
 			// Add missing faves.
 			if update.Update != nil {
-				for _, service := range update.Update.Services {
-					faveID := FavoriteID{
-						DeviceID:  update.Update.GetId(),
-						ServiceID: service.GetId(),
-					}
-					if service.GetFavorite() {
-						if _, found := faves[faveID.Key()]; !found {
-							// Get the device state.
-							dev := manager.deviceManager.GetDevice(faveID.DeviceID)
-
-							// Create the new fave.
-							fave := &Favorite{
-								DeviceID:  faveID.DeviceID,
-								ServiceID: faveID.ServiceID,
-							}
-							fave.Update(dev)
-							faves[faveID.Key()] = fave
-
-							// Publish the new fave to the listeners.
-							manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
+				for _, ep := range update.Update.GetEndpoints() {
+					for _, service := range ep.GetServices() {
+						faveID := FavoriteID{
+							DeviceID:   update.Update.GetId(),
+							EndpointID: ep.GetId(),
+							ServiceID:  service.GetId(),
 						}
-					} else {
-						if _, found := faves[faveID.Key()]; found {
-							// Remove from the faves.
-							delete(faves, faveID.Key())
+						if service.GetFavorite() {
+							if _, found := faves[faveID.Key()]; !found {
+								// Get the device state.
+								dev := manager.deviceManager.GetDevice(faveID.DeviceID)
 
-							// Publish the removed fave to the listeners.
-							manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
+								// Create the new fave.
+								fave := &Favorite{
+									DeviceID:   faveID.DeviceID,
+									EndpointID: faveID.EndpointID,
+									ServiceID:  faveID.ServiceID,
+								}
+								fave.Update(dev)
+								faves[faveID.Key()] = fave
+
+								// Publish the new fave to the listeners.
+								manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
+							}
+						} else {
+							if _, found := faves[faveID.Key()]; found {
+								// Remove from the faves.
+								delete(faves, faveID.Key())
+
+								// Publish the removed fave to the listeners.
+								manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
+							}
 						}
 					}
 				}

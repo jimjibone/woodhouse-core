@@ -17,8 +17,8 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jimjibone/log"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
-	localapi "github.com/jimjibone/woodhouse-api/go/v1/local"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
+	localapi "github.com/jimjibone/woodhouse-api/go/v2/local"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"

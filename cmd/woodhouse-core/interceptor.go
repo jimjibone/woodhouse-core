@@ -53,7 +53,7 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return handler(ctx2, req)
 		}
 
-		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
+		if info.FullMethod != "/woodhouse.api.v2.clients.AuthService/Ping" {
 			interceptor.log.Debugf("--> unary %s: no auth required", info.FullMethod)
 		}
 		return handler(ctx, req)
@@ -78,7 +78,7 @@ func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
 			return handler(srv, newWrappedStream(stream, ctx2))
 		}
 
-		if info.FullMethod != "/woodhouse.api.v1.clients.AuthService/Ping" {
+		if info.FullMethod != "/woodhouse.api.v2.clients.AuthService/Ping" {
 			interceptor.log.Debugf("--> stream %s: no auth required", info.FullMethod)
 		}
 		return handler(srv, stream)

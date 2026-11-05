@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jimjibone/queue/v2"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
 )
 
@@ -14,22 +14,25 @@ func fullStateDevice(id string, online bool) *clientsapi.Device {
 		Id:        id,
 		FullState: true,
 		Typ:       clientsapi.Device_DEVICE,
-		Services: []*clientsapi.Service{
-			{
-				Id:  "info",
-				Typ: clientsapi.Service_INFO,
-				Attrs: []*clientsapi.Attribute{
-					{Id: "name", Text: &clientsapi.TextAttribute{Value: id, Perms: clientsapi.Permissions_PERM_READONLY}},
+		Endpoints: []*clientsapi.Endpoint{{
+			Id: RootEndpointID,
+			Services: []*clientsapi.Service{
+				{
+					Id:  "info",
+					Typ: clientsapi.Service_INFO,
+					Attrs: []*clientsapi.Attribute{
+						textAttr("name", id, clientsapi.Permissions_PERM_READONLY),
+					},
+				},
+				{
+					Id:  "online",
+					Typ: clientsapi.Service_ONLINE,
+					Attrs: []*clientsapi.Attribute{
+						boolAttr("online", online, clientsapi.Permissions_PERM_READONLY),
+					},
 				},
 			},
-			{
-				Id:  "online",
-				Typ: clientsapi.Service_ONLINE,
-				Attrs: []*clientsapi.Attribute{
-					{Id: "online", Bool: &clientsapi.BoolAttribute{Value: online, Perms: clientsapi.Permissions_PERM_READONLY}},
-				},
-			},
-		},
+		}},
 	}
 }
 

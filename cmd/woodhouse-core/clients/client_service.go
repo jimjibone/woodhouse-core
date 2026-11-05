@@ -2,10 +2,11 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jimjibone/log"
-	clientsapi "github.com/jimjibone/woodhouse-api/go/v1/clients"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"github.com/jimjibone/woodhouse-core/apitools"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"google.golang.org/grpc/codes"
@@ -120,16 +121,22 @@ func (service *ClientService) StatusStream(server clientsapi.ClientService_Statu
 					return status.Errorf(codes.InvalidArgument, "device has empty id")
 				}
 
-				// A full device state must contain the Info and Online services.
+				// A full device state must contain the Info and Online services on the
+				// root endpoint.
 				if dev.FullState {
 					foundInfo := false
 					foundOnline := false
-					for _, srv := range dev.Services {
-						switch srv.Typ {
-						case clientsapi.Service_INFO:
-							foundInfo = true
-						case clientsapi.Service_ONLINE:
-							foundOnline = true
+					for _, ep := range dev.Endpoints {
+						if ep.GetId() != core.RootEndpointID {
+							continue
+						}
+						for _, srv := range ep.Services {
+							switch srv.Typ {
+							case clientsapi.Service_INFO:
+								foundInfo = true
+							case clientsapi.Service_ONLINE:
+								foundOnline = true
+							}
 						}
 					}
 					if !foundInfo || !foundOnline {
@@ -425,6 +432,9 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 	if req.DeviceId == "" {
 		return status.Error(codes.InvalidArgument, "device_id required")
 	}
+	if req.EndpointId == "" {
+		return status.Error(codes.InvalidArgument, "endpoint_id required")
+	}
 	if req.ServiceId == "" {
 		return status.Error(codes.InvalidArgument, "service_id required")
 	}
@@ -436,6 +446,16 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 
 	service.log.Infof("action %q for %q started: %s", actionID, clientID, req)
 	defer service.log.Infof("action %q finished", actionID)
+
+	// A wrong action is reported to the requester as a final response.
+	if err := service.deviceManager.ValidateAction(req); err != nil {
+		var actionErr *core.ActionError
+		if errors.As(err, &actionErr) {
+			service.log.Infof("action %q rejected: %s", actionID, actionErr)
+			return server.Send(actionErr.Response(actionID))
+		}
+		return err
+	}
 
 	req.ActionId = actionID
 
@@ -480,6 +500,7 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 							ActionId: actionID,
 							Status:   update.Response.Status,
 							Details:  update.Response.Details,
+							Result:   update.Response.Result,
 						})
 						if err != nil {
 							service.log.Warnf("action %q send err: %s", actionID, err)
@@ -512,6 +533,9 @@ func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server c
 func (service *ClientService) SendImageRequest(req *clientsapi.ImageRequest, server clientsapi.ClientService_SendImageRequestServer) error {
 	if req.DeviceId == "" {
 		return status.Error(codes.InvalidArgument, "device_id required")
+	}
+	if req.EndpointId == "" {
+		return status.Error(codes.InvalidArgument, "endpoint_id required")
 	}
 	if req.ServiceId == "" {
 		return status.Error(codes.InvalidArgument, "service_id required")

@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	localapi "github.com/jimjibone/woodhouse-api/go/v1/local"
+	localapi "github.com/jimjibone/woodhouse-api/go/v2/local"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/auth"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/internal/limits"
