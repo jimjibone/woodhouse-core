@@ -454,6 +454,10 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 			}
 
 		case update := <-sub.Sub():
+			if update.UserOnly {
+				// Clients are not told about the user's label changes.
+				continue
+			}
 			if update.Update != nil {
 				live := core.TrimReplayedEvents(update.Update, lastReplayed)
 				if live == nil {

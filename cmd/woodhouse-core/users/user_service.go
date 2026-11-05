@@ -307,7 +307,7 @@ func (service *UserService) ForgetClient(ctx context.Context, req *clientsapi.Fo
 func (service *UserService) GetDevices(req *clientsapi.GetDevicesRequest, server clientsapi.UserService_GetDevicesServer) error {
 	devices := service.deviceManager.GetDevices()
 	for dev := range devices {
-		err := server.Send(dev)
+		err := server.Send(service.deviceManager.ApplyUserLabels(dev))
 		if err != nil {
 			service.log.Errorf("failed to send devices: %s", err)
 			return status.Errorf(codes.Internal, "failed to send devices")
@@ -369,7 +369,7 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 	for dev := range service.deviceManager.GetDevices() {
 		if isInFilter(dev.GetId(), req.IncludeDeviceIds) {
 			err := send(&clientsapi.DevicesStreamResponse{
-				Device: dev,
+				Device: service.deviceManager.ApplyUserLabels(dev),
 			})
 			if err != nil {
 				service.log.Errorf("failed to send device stream: %s", err)
@@ -426,7 +426,7 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 						continue
 					}
 					err := send(&clientsapi.DevicesStreamResponse{
-						Device: live,
+						Device: service.deviceManager.ApplyUserLabels(live),
 					})
 					if err != nil {
 						service.log.Errorf("failed to send device stream update: %s", err)
@@ -485,6 +485,37 @@ func (service *UserService) RemoveDevice(ctx context.Context, req *clientsapi.Re
 	}
 
 	return &clientsapi.RemoveDeviceResponse{}, nil
+}
+
+func (service *UserService) SetEndpointLabel(ctx context.Context, req *clientsapi.SetEndpointLabelRequest) (*clientsapi.SetEndpointLabelResponse, error) {
+	claims := ctx.Value("claims").(*AccessTokenClaims)
+	if claims == nil {
+		return nil, status.Errorf(codes.PermissionDenied, "no claims in request")
+	}
+	if claims.Role != auth.AdminRole {
+		return nil, status.Errorf(codes.PermissionDenied, "not allowed to set endpoint labels")
+	}
+	if req.GetDeviceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "device_id not defined")
+	}
+	if req.GetEndpointId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "endpoint_id not defined")
+	}
+	if service.deviceManager == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "device manager not configured")
+	}
+
+	// An empty label clears the user's label.
+	err := service.deviceManager.SetEndpointLabel(req.GetDeviceId(), req.GetEndpointId(), strings.TrimSpace(req.GetLabel()))
+	switch err {
+	case nil:
+		return &clientsapi.SetEndpointLabelResponse{}, nil
+	case core.ErrDeviceNotFound:
+		return nil, status.Errorf(codes.NotFound, "device not found")
+	case core.ErrEndpointNotFound:
+		return nil, status.Errorf(codes.NotFound, "endpoint not found")
+	}
+	return nil, status.Errorf(codes.Internal, "failed to set endpoint label: %s", err)
 }
 
 func (service *UserService) FavoritesStream(req *clientsapi.FavoritesStreamRequest, server clientsapi.UserService_FavoritesStreamServer) error {

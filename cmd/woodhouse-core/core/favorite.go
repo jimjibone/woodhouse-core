@@ -36,7 +36,8 @@ type Favorite struct {
 	EndpointID    string
 	ServiceID     string
 	Name          Optional[string]
-	EndpointLabel Optional[string]
+	EndpointLabel Optional[string] // The label from the bridge.
+	UserLabel     string           // The user's label for the endpoint, if any. Overrides EndpointLabel.
 	DeviceType    Optional[clientsapi.Device_DeviceType]
 	Online        Optional[bool]
 	LastSeen      Optional[time.Time]
@@ -126,6 +127,16 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 	return changed
 }
 
+// SetUserLabel sets the user's label for the favorite's endpoint, reporting
+// whether it changed.
+func (favorite *Favorite) SetUserLabel(label string) bool {
+	if favorite.UserLabel == label {
+		return false
+	}
+	favorite.UserLabel = label
+	return true
+}
+
 func (favorite *Favorite) Clone() *Favorite {
 	clone := *favorite
 	clone.Service = proto.Clone(favorite.Service).(*clientsapi.Service)
@@ -144,7 +155,9 @@ func (favorite *Favorite) Pb() *clientsapi.DeviceService {
 	if favorite.Name.Has() {
 		srv.DeviceName = proto.String(favorite.Name.Get())
 	}
-	if favorite.EndpointLabel.Has() {
+	if favorite.UserLabel != "" {
+		srv.EndpointLabel = proto.String(favorite.UserLabel)
+	} else if favorite.EndpointLabel.Has() {
 		srv.EndpointLabel = proto.String(favorite.EndpointLabel.Get())
 	}
 	if favorite.DeviceType.Has() {

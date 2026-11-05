@@ -51,6 +51,11 @@ type DeviceManager struct {
 	devices           map[string]*Device // key=device id
 	changed           bool
 
+	// The user's endpoint labels, key=device id then endpoint id. Guarded by
+	// mu. They are saved apart from the devices (see endpoint_labels.go).
+	labels        map[string]map[string]string
+	labelsChanged bool
+
 	// Events are stamped on ingest and buffered per device, in memory only.
 	// All of these are guarded by mu.
 	events          *queue.Pub[DeviceEvent]
@@ -73,6 +78,7 @@ type txDeviceUpdate struct {
 	ClientID  string             // The client that caused the update.
 	Update    *clientsapi.Device // The updated device.
 	RemovedID string             // If the device was removed, the ID of the removed device.
+	UserOnly  bool               // The update is only for users, e.g. an endpoint label change. Clients skip it.
 }
 
 type favoriteUpdate struct {
@@ -160,6 +166,10 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 	err = manager.load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load state: %s", err)
+	}
+	err = manager.loadLabels()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load endpoint labels: %s", err)
 	}
 
 	// Save the state if changed.
@@ -654,7 +664,7 @@ func (manager *DeviceManager) saveIfChanged() error {
 		}
 		manager.changed = false
 	}
-	return nil
+	return manager.saveLabelsIfChanged()
 }
 
 func (manager *DeviceManager) run(ctx context.Context) {
@@ -761,6 +771,7 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 			} else {
 				delete(manager.devices, dev.ID)
 				manager.removeEventBuffer(dev.ID)
+				manager.removeLabels(dev.ID)
 				manager.changed = true
 				manager.txDeviceUpdates.Pub(txDeviceUpdate{
 					ClientID:  update.ClientID,
@@ -826,6 +837,7 @@ func (manager *DeviceManager) handleDeviceRemoval(update removalUpdate) {
 		})
 		delete(manager.devices, dev.ID)
 		manager.removeEventBuffer(dev.ID)
+		manager.removeLabels(dev.ID)
 		manager.log.Infof("removed device %q", dev.ID)
 		update.Callback(nil)
 	} else {

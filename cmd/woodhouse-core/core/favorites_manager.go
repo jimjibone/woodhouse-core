@@ -75,6 +75,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 						ServiceID:  faveID.ServiceID,
 					}
 					fave.Update(dev)
+					fave.SetUserLabel(manager.deviceManager.EndpointUserLabel(faveID.DeviceID, faveID.EndpointID))
 					faves[faveID.Key()] = fave
 				}
 			}
@@ -97,7 +98,13 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 					// Publish the removed fave to the listeners.
 					manager.publisher.Pub(FavoriteUpdate{Removed: &faveID})
 				} else if update.Update != nil && fave.DeviceID == update.Update.GetId() {
-					if fave.Update(update.Update) {
+					// The user label has no update of its own on this stream: a
+					// label change arrives as an update of the device.
+					changed := fave.Update(update.Update)
+					if fave.SetUserLabel(manager.deviceManager.EndpointUserLabel(fave.DeviceID, fave.EndpointID)) {
+						changed = true
+					}
+					if changed {
 						// Publish the updated fave to the listeners.
 						manager.publisher.Pub(FavoriteUpdate{Updated: fave.Clone()})
 					}
@@ -125,6 +132,7 @@ func (manager *FavoritesManager) run(ctx context.Context) {
 									ServiceID:  faveID.ServiceID,
 								}
 								fave.Update(dev)
+								fave.SetUserLabel(manager.deviceManager.EndpointUserLabel(faveID.DeviceID, faveID.EndpointID))
 								faves[faveID.Key()] = fave
 
 								// Publish the new fave to the listeners.
