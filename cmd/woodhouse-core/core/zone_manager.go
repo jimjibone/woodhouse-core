@@ -14,6 +14,7 @@ import (
 
 	"github.com/jimjibone/log"
 	"github.com/jimjibone/queue/v2"
+	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	"github.com/jimjibone/woodhouse-core/shared/stores"
 )
 
@@ -119,6 +120,53 @@ func (manager *ZoneManager) GetZoneForDevice(deviceID string) string {
 	return ""
 }
 
+// GetZoneForEndpoint reports the ID of the zone an endpoint is in, or "" if it
+// is unassigned. An endpoint listed in a zone's overrides is in that zone,
+// otherwise it is in the zone of its device.
+func (manager *ZoneManager) GetZoneForEndpoint(deviceID, endpointID string) string {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	for _, zone := range manager.zones {
+		if zone.HasEndpoint(deviceID, endpointID) {
+			return zone.ZoneID
+		}
+	}
+	for _, zone := range manager.zones {
+		if zone.HasDevice(deviceID) {
+			return zone.ZoneID
+		}
+	}
+	return ""
+}
+
+// verifyEndpoints checks that every reference names an endpoint of a device
+// the system knows about, so a typo cannot leave a zone pointing at nothing.
+func (manager *ZoneManager) verifyEndpoints(refs []EndpointRef) error {
+	seen := make(map[EndpointRef]bool, len(refs))
+	for _, ref := range refs {
+		if ref.DeviceID == "" {
+			return fmt.Errorf("empty device id")
+		}
+		if ref.EndpointID == "" {
+			return fmt.Errorf("empty endpoint id")
+		}
+		if seen[ref] {
+			return fmt.Errorf("endpoint %q of device %q listed more than once", ref.EndpointID, ref.DeviceID)
+		}
+		seen[ref] = true
+
+		switch err := manager.deviceManager.CheckEndpoint(ref.DeviceID, ref.EndpointID); err {
+		case nil:
+		case ErrDeviceNotFound:
+			return fmt.Errorf("device %q not found", ref.DeviceID)
+		default:
+			return fmt.Errorf("endpoint %q of device %q not found", ref.EndpointID, ref.DeviceID)
+		}
+	}
+	return nil
+}
+
 // verifyDevices checks that every device ID names a device the system knows
 // about, so a typo cannot leave a zone pointing at nothing.
 func (manager *ZoneManager) verifyDevices(deviceIDs []string) error {
@@ -166,6 +214,23 @@ func (manager *ZoneManager) claimDevices(claimantID string, deviceIDs []string) 
 	}
 }
 
+// claimEndpoints is claimDevices for endpoint overrides: it strips the given
+// endpoints out of the overrides of every zone other than claimant. Callers
+// must hold manager.mu.
+func (manager *ZoneManager) claimEndpoints(claimantID string, refs []EndpointRef) {
+	for _, zone := range manager.zones {
+		if zone.ZoneID == claimantID {
+			continue
+		}
+
+		if zone.removeEndpoints(func(ref EndpointRef) bool { return slices.Contains(refs, ref) }) {
+			manager.changed = true
+			manager.log.Infof("zone %q lost endpoints claimed by zone %q", zone.ZoneID, claimantID)
+			manager.publisher.Pub(ZoneUpdate{Updated: zone.Clone()})
+		}
+	}
+}
+
 func (manager *ZoneManager) AddZone(zone *Zone) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -177,10 +242,14 @@ func (manager *ZoneManager) AddZone(zone *Zone) error {
 	if err := manager.verifyDevices(zone.DeviceIDs); err != nil {
 		return err
 	}
+	if err := manager.verifyEndpoints(zone.Endpoints); err != nil {
+		return err
+	}
 
-	// Take the devices off any zone that already holds them first, so no client
-	// ever observes a device in two zones at once.
+	// Take the devices and endpoints off any zone that already holds them
+	// first, so no client ever observes one in two zones at once.
 	manager.claimDevices(zone.ZoneID, zone.DeviceIDs)
+	manager.claimEndpoints(zone.ZoneID, zone.Endpoints)
 
 	manager.zones[zone.ZoneID] = zone
 	manager.changed = true
@@ -259,8 +328,35 @@ func (manager *ZoneManager) SetZoneDevices(zoneID string, deviceIDs []string) er
 	return nil
 }
 
-// RemoveZone deletes a zone. Its devices simply become unassigned - there is no
-// synthetic device to tear down, unlike a group.
+// SetZoneEndpoints replaces a zone's endpoint overrides in full. An empty list
+// clears them.
+func (manager *ZoneManager) SetZoneEndpoints(zoneID string, refs []EndpointRef) error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	zone := manager.zones[zoneID]
+	if zone == nil {
+		return ErrZoneNotFound
+	}
+
+	if err := manager.verifyEndpoints(refs); err != nil {
+		return err
+	}
+
+	manager.claimEndpoints(zoneID, refs)
+
+	zone.Endpoints = slices.Clone(refs)
+	manager.changed = true
+
+	manager.log.Infof("zone %q updated endpoints: %d", zone.ZoneID, len(zone.Endpoints))
+
+	manager.publisher.Pub(ZoneUpdate{Updated: zone.Clone()})
+
+	return nil
+}
+
+// RemoveZone deletes a zone. Its devices and endpoints simply become
+// unassigned - there is no synthetic device to tear down, unlike a group.
 func (manager *ZoneManager) RemoveZone(zoneID string) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -279,16 +375,38 @@ func (manager *ZoneManager) RemoveZone(zoneID string) error {
 	return nil
 }
 
-// removeDeviceFromZones drops a device that no longer exists from whichever
-// zone held it, so zones never keep dangling IDs.
+// removeDeviceFromZones drops a device that no longer exists, and its endpoint
+// overrides, from whichever zones held them, so zones never keep dangling IDs.
 func (manager *ZoneManager) removeDeviceFromZones(deviceID string) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
 	for _, zone := range manager.zones {
-		if zone.removeDevice(deviceID) {
+		lostDevice := zone.removeDevice(deviceID)
+		lostEndpoints := zone.removeEndpoints(func(ref EndpointRef) bool { return ref.DeviceID == deviceID })
+		if lostDevice || lostEndpoints {
 			manager.changed = true
 			manager.log.Infof("zone %q dropped removed device %q", zone.ZoneID, deviceID)
+			manager.publisher.Pub(ZoneUpdate{Updated: zone.Clone()})
+		}
+	}
+}
+
+// removeGoneEndpoints drops the endpoint overrides of a device that a full
+// state update no longer reports.
+func (manager *ZoneManager) removeGoneEndpoints(dev *clientsapi.Device) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	gone := func(ref EndpointRef) bool {
+		return ref.DeviceID == dev.GetId() && !slices.ContainsFunc(dev.GetEndpoints(), func(ep *clientsapi.Endpoint) bool {
+			return ep.GetId() == ref.EndpointID
+		})
+	}
+	for _, zone := range manager.zones {
+		if zone.removeEndpoints(gone) {
+			manager.changed = true
+			manager.log.Infof("zone %q dropped endpoints removed from device %q", zone.ZoneID, dev.GetId())
 			manager.publisher.Pub(ZoneUpdate{Updated: zone.Clone()})
 		}
 	}
@@ -381,9 +499,12 @@ func (manager *ZoneManager) run(ctx context.Context, deviceUpdates *queue.Sub[tx
 
 		case update := <-deviceUpdates.Sub():
 			// Zones hold no device state, so an ordinary update is nothing to
-			// us. A removal is - it would otherwise leave a dangling ID.
+			// us. A removal is - it would otherwise leave a dangling ID - and
+			// so is a full state that no longer reports an endpoint.
 			if update.RemovedID != "" {
 				manager.removeDeviceFromZones(update.RemovedID)
+			} else if update.Update != nil && update.Update.GetFullState() {
+				manager.removeGoneEndpoints(update.Update)
 			}
 
 		case lis := <-manager.listenerAdd:

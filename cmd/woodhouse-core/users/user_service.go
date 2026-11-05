@@ -830,7 +830,7 @@ func (service *UserService) AddZone(ctx context.Context, req *clientsapi.AddZone
 		return nil, status.Errorf(codes.Internal, "failed to generate zone id: %s", err)
 	}
 
-	zone := core.NewZone(zoneID, name, req.GetIcon(), req.GetDeviceIds())
+	zone := core.NewZone(zoneID, name, req.GetIcon(), req.GetDeviceIds(), core.EndpointRefsFromPb(req.GetEndpoints())...)
 	err = service.zoneManager.AddZone(zone)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to add zone: %s", err)
@@ -878,6 +878,13 @@ func (service *UserService) UpdateZone(ctx context.Context, req *clientsapi.Upda
 	if req.GetSetDevices() {
 		if err := service.zoneManager.SetZoneDevices(req.GetId(), req.GetDeviceIds()); err != nil {
 			return nil, zoneError("failed to update zone devices", err)
+		}
+	}
+
+	// Endpoint overrides likewise, so they can be cleared.
+	if req.GetSetEndpoints() {
+		if err := service.zoneManager.SetZoneEndpoints(req.GetId(), core.EndpointRefsFromPb(req.GetEndpoints())); err != nil {
+			return nil, zoneError("failed to update zone endpoints", err)
 		}
 	}
 

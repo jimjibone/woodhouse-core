@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -281,4 +282,240 @@ func collectZoneUpdates(t *testing.T, lis *queue.Sub[ZoneUpdate], want int) []*Z
 		}
 	}
 	return zones
+}
+
+// testZoneDeviceManagerEndpoints is testZoneDeviceManager for devices that
+// have endpoints, given as device ID to endpoint IDs.
+func testZoneDeviceManagerEndpoints(endpoints map[string][]string) *DeviceManager {
+	manager := testZoneDeviceManager()
+	for id, epIDs := range endpoints {
+		dev := &Device{
+			ClientID:  "client-1",
+			ID:        id,
+			Typ:       clientsapi.Device_DEVICE,
+			Endpoints: map[string]*DeviceEndpoint{},
+		}
+		for _, epID := range epIDs {
+			dev.Endpoints[epID] = &DeviceEndpoint{ID: epID, Services: map[string]*clientsapi.Service{}}
+		}
+		manager.devices[id] = dev
+	}
+	return manager
+}
+
+func TestZoneManagerEndpointOverride(t *testing.T) {
+	deviceManager := testZoneDeviceManagerEndpoints(map[string][]string{"dev-1": {"0", "1", "2"}, "dev-2": {"0", "1"}})
+	manager, err := NewZoneManager(stores.NewMemStore(), deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager: %s", err)
+	}
+	defer manager.Close()
+
+	if err := manager.AddZone(NewZone("zone-1", "Kitchen", "utensils", []string{"dev-1"})); err != nil {
+		t.Fatalf("AddZone zone-1: %s", err)
+	}
+	ref := EndpointRef{DeviceID: "dev-1", EndpointID: "2"}
+	if err := manager.AddZone(NewZone("zone-2", "Garden", "trees", nil, ref)); err != nil {
+		t.Fatalf("AddZone zone-2: %s", err)
+	}
+
+	for epID, want := range map[string]string{"0": "zone-1", "1": "zone-1", "2": "zone-2", "9": "zone-1"} {
+		if got := manager.GetZoneForEndpoint("dev-1", epID); got != want {
+			t.Errorf("GetZoneForEndpoint(dev-1, %q): got %q, want %q", epID, got, want)
+		}
+	}
+	if got := manager.GetZoneForEndpoint("dev-2", "1"); got != "" {
+		t.Errorf("GetZoneForEndpoint(dev-2, 1): got %q, want unassigned", got)
+	}
+	if got := manager.GetZoneForDevice("dev-1"); got != "zone-1" {
+		t.Errorf("GetZoneForDevice(dev-1): got %q, want zone-1", got)
+	}
+	if got := zoneByID(t, manager, "zone-2").Pb().GetEndpoints(); len(got) != 1 || got[0].GetDeviceId() != "dev-1" || got[0].GetEndpointId() != "2" {
+		t.Errorf("Pb endpoints: got %v", got)
+	}
+}
+
+func TestZoneManagerRejectsUnknownEndpoint(t *testing.T) {
+	deviceManager := testZoneDeviceManagerEndpoints(map[string][]string{"dev-1": {"0", "1"}})
+	manager, err := NewZoneManager(stores.NewMemStore(), deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager: %s", err)
+	}
+	defer manager.Close()
+
+	for name, ref := range map[string]EndpointRef{
+		"unknown device":   {DeviceID: "ghost", EndpointID: "0"},
+		"unknown endpoint": {DeviceID: "dev-1", EndpointID: "7"},
+		"empty device":     {DeviceID: "", EndpointID: "0"},
+		"empty endpoint":   {DeviceID: "dev-1", EndpointID: ""},
+	} {
+		if err := manager.AddZone(NewZone("zone-1", "Kitchen", "sofa", nil, ref)); err == nil {
+			t.Errorf("AddZone with %s: got nil, want an error", name)
+		}
+	}
+
+	dup := EndpointRef{DeviceID: "dev-1", EndpointID: "1"}
+	if err := manager.AddZone(NewZone("zone-1", "Kitchen", "sofa", nil, dup, dup)); err == nil {
+		t.Error("AddZone with a repeated endpoint: got nil, want an error")
+	}
+
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+	if len(manager.zones) != 0 {
+		t.Errorf("a rejected zone was stored anyway: %d zones", len(manager.zones))
+	}
+}
+
+// An endpoint is overridden into one zone only. Claiming it for a second zone
+// takes it off the first, and the loser reaches listeners.
+func TestZoneManagerEndpointBelongsToOneZone(t *testing.T) {
+	deviceManager := testZoneDeviceManagerEndpoints(map[string][]string{"dev-1": {"0", "1", "2"}})
+	manager, err := NewZoneManager(stores.NewMemStore(), deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager: %s", err)
+	}
+	defer manager.Close()
+
+	ep1 := EndpointRef{DeviceID: "dev-1", EndpointID: "1"}
+	ep2 := EndpointRef{DeviceID: "dev-1", EndpointID: "2"}
+	if err := manager.AddZone(NewZone("zone-1", "Kitchen", "utensils", nil, ep1, ep2)); err != nil {
+		t.Fatalf("AddZone zone-1: %s", err)
+	}
+
+	lis := manager.GetListener()
+	defer lis.Close()
+	drainInitialZones(t, lis)
+
+	if err := manager.AddZone(NewZone("zone-2", "Garden", "trees", nil, ep2)); err != nil {
+		t.Fatalf("AddZone zone-2: %s", err)
+	}
+
+	updates := collectZoneUpdates(t, lis, 2)
+	if updates[0].ZoneID != "zone-1" || !slices.Equal(updates[0].Endpoints, []EndpointRef{ep1}) {
+		t.Errorf("first update: got %s, want zone-1 holding only endpoint 1", updates[0])
+	}
+	if updates[1].ZoneID != "zone-2" {
+		t.Errorf("second update: got %s, want zone-2", updates[1])
+	}
+	if got := manager.GetZoneForEndpoint("dev-1", "2"); got != "zone-2" {
+		t.Errorf("GetZoneForEndpoint(dev-1, 2): got %q, want zone-2", got)
+	}
+
+	// SetZoneEndpoints claims the same way.
+	if err := manager.SetZoneEndpoints("zone-1", []EndpointRef{ep2}); err != nil {
+		t.Fatalf("SetZoneEndpoints: %s", err)
+	}
+	if got := zoneByID(t, manager, "zone-2").Endpoints; len(got) != 0 {
+		t.Errorf("zone-2 endpoints after zone-1 claimed: got %v, want none", got)
+	}
+}
+
+// An empty list is a real edit - it clears the overrides.
+func TestZoneManagerSetZoneEndpointsClears(t *testing.T) {
+	deviceManager := testZoneDeviceManagerEndpoints(map[string][]string{"dev-1": {"0", "1"}})
+	manager, err := NewZoneManager(stores.NewMemStore(), deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager: %s", err)
+	}
+	defer manager.Close()
+
+	ref := EndpointRef{DeviceID: "dev-1", EndpointID: "1"}
+	if err := manager.AddZone(NewZone("zone-1", "Kitchen", "utensils", nil, ref)); err != nil {
+		t.Fatalf("AddZone: %s", err)
+	}
+	if err := manager.SetZoneEndpoints("zone-1", nil); err != nil {
+		t.Fatalf("SetZoneEndpoints: %s", err)
+	}
+	if got := zoneByID(t, manager, "zone-1").Endpoints; len(got) != 0 {
+		t.Errorf("endpoints after clearing: got %v, want none", got)
+	}
+	if err := manager.SetZoneEndpoints("nope", nil); err != ErrZoneNotFound {
+		t.Errorf("SetZoneEndpoints unknown zone: got %v, want ErrZoneNotFound", err)
+	}
+	if err := manager.SetZoneEndpoints("zone-1", []EndpointRef{{DeviceID: "dev-1", EndpointID: "7"}}); err == nil {
+		t.Error("SetZoneEndpoints with an unknown endpoint: got nil, want an error")
+	}
+}
+
+func waitForZoneEndpoints(t *testing.T, manager *ZoneManager, zoneID string, want []EndpointRef) {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		got := zoneByID(t, manager, zoneID).Endpoints
+		if slices.Equal(got, want) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("zone %q endpoints: got %v, want %v", zoneID, got, want)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// Removing a device drops its endpoint overrides, and a full state that no
+// longer reports an endpoint drops that endpoint's override. Partial updates
+// leave overrides alone.
+func TestZoneManagerDropsGoneEndpoints(t *testing.T) {
+	deviceManager := testZoneDeviceManagerEndpoints(map[string][]string{"dev-1": {"0", "1", "2"}, "dev-2": {"0", "1"}})
+	manager, err := NewZoneManager(stores.NewMemStore(), deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager: %s", err)
+	}
+	defer manager.Close()
+
+	d1e1 := EndpointRef{DeviceID: "dev-1", EndpointID: "1"}
+	d1e2 := EndpointRef{DeviceID: "dev-1", EndpointID: "2"}
+	d2e1 := EndpointRef{DeviceID: "dev-2", EndpointID: "1"}
+	if err := manager.AddZone(NewZone("zone-1", "Kitchen", "utensils", nil, d1e1, d1e2, d2e1)); err != nil {
+		t.Fatalf("AddZone: %s", err)
+	}
+
+	// A partial update without endpoint 2 changes nothing.
+	deviceManager.txDeviceUpdates.Pub(txDeviceUpdate{Update: &clientsapi.Device{
+		Id:        "dev-1",
+		Endpoints: []*clientsapi.Endpoint{{Id: "1"}},
+	}})
+	// A full state without endpoint 2 drops it, for that device only.
+	deviceManager.txDeviceUpdates.Pub(txDeviceUpdate{Update: &clientsapi.Device{
+		Id:        "dev-1",
+		FullState: true,
+		Endpoints: []*clientsapi.Endpoint{{Id: "0"}, {Id: "1"}},
+	}})
+	waitForZoneEndpoints(t, manager, "zone-1", []EndpointRef{d1e1, d2e1})
+
+	deviceManager.txDeviceUpdates.Pub(txDeviceUpdate{RemovedID: "dev-1"})
+	waitForZoneEndpoints(t, manager, "zone-1", []EndpointRef{d2e1})
+}
+
+func TestZoneManagerPersistsEndpoints(t *testing.T) {
+	store := stores.NewMemStore()
+	deviceManager := testZoneDeviceManagerEndpoints(map[string][]string{"dev-1": {"0", "1"}})
+
+	manager, err := NewZoneManager(store, deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager: %s", err)
+	}
+	ref := EndpointRef{DeviceID: "dev-1", EndpointID: "1"}
+	if err := manager.AddZone(NewZone("zone-1", "Kitchen", "utensils", nil, ref)); err != nil {
+		t.Fatalf("AddZone: %s", err)
+	}
+	manager.Close()
+
+	data, err := store.Get("zones.json")
+	if err != nil {
+		t.Fatalf("Get zones.json: %s", err)
+	}
+	if !strings.Contains(string(data), `"endpoints"`) {
+		t.Errorf("zones.json has no endpoints field: %s", data)
+	}
+
+	reloaded, err := NewZoneManager(store, deviceManager)
+	if err != nil {
+		t.Fatalf("NewZoneManager reload: %s", err)
+	}
+	defer reloaded.Close()
+	if got := zoneByID(t, reloaded, "zone-1").Endpoints; !slices.Equal(got, []EndpointRef{ref}) {
+		t.Errorf("reloaded endpoints: got %v, want %v", got, []EndpointRef{ref})
+	}
 }

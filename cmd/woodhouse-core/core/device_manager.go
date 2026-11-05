@@ -24,9 +24,10 @@ import (
 )
 
 var (
-	ErrDeviceNotFound = errors.New("device not found")
-	ErrDeviceIsOnline = errors.New("device is online")
-	ErrDeviceIsGroup  = errors.New("device is a group")
+	ErrDeviceNotFound   = errors.New("device not found")
+	ErrEndpointNotFound = errors.New("endpoint not found")
+	ErrDeviceIsOnline   = errors.New("device is online")
+	ErrDeviceIsGroup    = errors.New("device is a group")
 )
 
 type DeviceManager struct {
@@ -359,6 +360,22 @@ func (manager *DeviceManager) GetDevice(id string) *clientsapi.Device {
 		return dev.pb()
 	}
 
+	return nil
+}
+
+// CheckEndpoint returns ErrDeviceNotFound or ErrEndpointNotFound unless the
+// device and its endpoint exist.
+func (manager *DeviceManager) CheckEndpoint(deviceID, endpointID string) error {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	dev, found := manager.devices[deviceID]
+	if !found {
+		return ErrDeviceNotFound
+	}
+	if _, found := dev.Endpoints[endpointID]; !found {
+		return ErrEndpointNotFound
+	}
 	return nil
 }
 
