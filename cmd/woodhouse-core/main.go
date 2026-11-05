@@ -153,6 +153,12 @@ func main() {
 			// Create the config store.
 			store := stores.NewFSStore(args.Path("config-dir"))
 
+			// State written by v1 cannot be read by v2, so it is wiped once
+			// before any manager loads it.
+			if err := core.WipeV1State(store); err != nil {
+				return fmt.Errorf("failed to wipe v1 state: %w", err)
+			}
+
 			// Create the cert manager, used for the gRPC server's pinned leaf
 			// certificate.
 			certManager, err := cert.NewCertManager(store)
