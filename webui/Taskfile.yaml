@@ -4,6 +4,7 @@ tasks:
   default:
     deps:
       - proto-web-v2
+      - schema
 
   proto-web-v2:
     run: when_changed
@@ -16,6 +17,17 @@ tasks:
       - mkdir -p ./src/lib/api/v2
       - npx buf generate ../api/proto/v2
 
+  schema:
+    run: when_changed
+    sources:
+      - ../api/schema/services.yaml
+      - ../api/schema/schema.go
+      - ../cmd/webui-schemagen/*.go
+    generates:
+      - ./src/lib/schema/zz_services.ts
+    cmds:
+      - go run ../cmd/webui-schemagen -out src/lib/schema/zz_services.ts
+
   icons:
     cmds:
       - inkscape ../logo/icon-24.svg --export-type=png --export-filename=./static/favicon.png --export-width=24
@@ -27,6 +39,7 @@ tasks:
   build:
     deps:
       - proto-web-v2
+      - schema
     sources:
       - ./package.json
       - ./package-lock.json
@@ -44,5 +57,6 @@ tasks:
   dev:
     deps:
       - proto-web-v2
+      - schema
     cmds:
       - npm run dev -- --host

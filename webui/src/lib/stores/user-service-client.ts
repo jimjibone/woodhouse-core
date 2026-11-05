@@ -1,6 +1,7 @@
 import { createGrpcWebTransport } from '@connectrpc/connect-web';
 import { createClient, ConnectError, Code, type Interceptor, type StreamResponse, type UnaryResponse } from '@connectrpc/connect';
 import { UserService } from '$lib/api/v2/clients/user_service_pb';
+import { SCHEMA_VERSION, SCHEMA_VERSION_HEADER } from '$lib/schema/zz_services';
 import { getAccessToken, doRefresh, sessionExpired } from './auth-store';
 
 // Wraps a streaming response's message iterator so that an Unauthenticated
@@ -39,6 +40,7 @@ async function handleUnauthenticated(err: unknown) {
 //    cleared, the route guard takes the user to /login and the streamer is
 //    torn down).
 const authInterceptor: Interceptor = (next) => async (req) => {
+	req.header.set(SCHEMA_VERSION_HEADER, String(SCHEMA_VERSION));
 	req.header.set('authorization', getAccessToken());
 
 	if (!req.stream) {

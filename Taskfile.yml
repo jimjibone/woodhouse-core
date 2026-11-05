@@ -24,6 +24,7 @@ tasks:
     cmds:
       - task api:proto-go-v2
       - task webui:proto-web-v2
+      - task webui:schema
 
   generate-env:
     desc: Generate the default .env file
