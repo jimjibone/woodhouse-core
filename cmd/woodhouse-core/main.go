@@ -19,6 +19,7 @@ import (
 	"github.com/jimjibone/log"
 	clientsapi "github.com/jimjibone/woodhouse-api/go/v2/clients"
 	localapi "github.com/jimjibone/woodhouse-api/go/v2/local"
+	"github.com/jimjibone/woodhouse-api/schema"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/clients"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/config"
 	"github.com/jimjibone/woodhouse-core/cmd/woodhouse-core/core"
@@ -291,10 +292,17 @@ func main() {
 			// Create the gRPC server.
 			creds := credentials.NewServerTLSFromCert(certManager.Cert())
 			authInterceptor := NewAuthInterceptor(clientJwtManager, userJwtManager, clientManager, userManager)
+
+			// Clients, users and reactors, and the web UI through grpc-web, all
+			// reach this server. The schema version is checked first so a stale
+			// peer is told to upgrade whether or not it is authenticated.
+			schemaVersion := schema.MustLoad().Version
+			schemaInterceptor := NewSchemaVersionInterceptor(schemaVersion)
+			log.Infof("service schema version %d", schemaVersion)
 			server := grpc.NewServer(
 				grpc.Creds(creds),
-				grpc.UnaryInterceptor(authInterceptor.Unary()),
-				grpc.StreamInterceptor(authInterceptor.Stream()),
+				grpc.ChainUnaryInterceptor(schemaInterceptor.Unary(), authInterceptor.Unary()),
+				grpc.ChainStreamInterceptor(schemaInterceptor.Stream(), authInterceptor.Stream()),
 			)
 
 			// Register services.
