@@ -264,6 +264,10 @@ func TestDeviceManagerEventsNotStored(t *testing.T) {
 	defer sub.Close()
 
 	dev := fullStateDevice("dev-a", true)
+	dev.Endpoints[0].Services[0].Events = []*clientsapi.EventSpec{{
+		Id:     "event-id-xyz",
+		Fields: []*clientsapi.FieldSpec{{Id: "payload", Spec: textSpec()}},
+	}}
 	dev.Events = []*clientsapi.Event{{
 		EndpointId: "0",
 		ServiceId:  "info",
@@ -293,7 +297,7 @@ func TestDeviceManagerEventsNotStored(t *testing.T) {
 	if forwarded == nil {
 		t.Fatalf("update not forwarded")
 	}
-	if len(forwarded.Events) != 0 {
+	if len(forwarded.Events) != 1 || forwarded.Events[0].GetSeq() != 1 {
 		t.Errorf("events forwarded: %v", forwarded.Events)
 	}
 	if got := manager.GetDevice("dev-a"); got == nil || len(got.Events) != 0 {
@@ -310,7 +314,8 @@ func TestDeviceManagerEventsNotStored(t *testing.T) {
 	if !strings.Contains(string(data), "dev-a") {
 		t.Fatalf("device not saved: %s", data)
 	}
-	for _, leaked := range []string{"event-id-xyz", "event-payload-xyz"} {
+	// The event spec is state and is saved, the event itself is not.
+	for _, leaked := range []string{"event-payload-xyz", `"seq"`} {
 		if strings.Contains(string(data), leaked) {
 			t.Errorf("devices.json contains %q", leaked)
 		}

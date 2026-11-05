@@ -49,6 +49,16 @@ type DeviceManager struct {
 	rxRemoveDevices   *queue.Queue[removalUpdate]
 	devices           map[string]*Device // key=device id
 	changed           bool
+
+	// Events are stamped on ingest and buffered per device, in memory only.
+	// All of these are guarded by mu.
+	events          *queue.Pub[DeviceEvent]
+	epoch           string                  // Random ID, new for every manager.
+	eventSeq        uint64                  // Seq of the last stamped event.
+	eventBuffers    map[string]*eventBuffer // key=device id
+	eventBufferSize int                     // Zero means DefaultEventBufferSize.
+	eventBufferAge  time.Duration           // Zero means DefaultEventBufferAge.
+	now             func() time.Time        // Nil means time.Now.
 }
 
 type rxDeviceUpdate struct {
@@ -118,6 +128,11 @@ func (ar ActionResponse) String() string {
 }
 
 func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
+	epoch, err := random.GenerateRandomString(12)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate event epoch: %s", err)
+	}
+
 	ctx, close := context.WithCancel(context.Background())
 	manager := &DeviceManager{
 		log:               log.NewContext(log.DefaultLogger, "device-manager", log.DebugLevel),
@@ -135,10 +150,13 @@ func NewDeviceManager(store stores.Store) (*DeviceManager, error) {
 		rxSetFavourites:   queue.New[favoriteUpdate](),
 		rxRemoveDevices:   queue.New[removalUpdate](),
 		devices:           make(map[string]*Device),
+		events:            queue.NewPub[DeviceEvent](),
+		epoch:             epoch,
+		eventBuffers:      make(map[string]*eventBuffer),
 	}
 
 	// Load the previous state.
-	err := manager.load()
+	err = manager.load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load state: %s", err)
 	}
@@ -659,10 +677,25 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 		if update.Update != nil {
 			if update.Update.GetId() != "" {
 				// Events (update.Update.Events) arrive here with the state. They are
-				// not stored and, for now, not forwarded. A later change stamps them
-				// with the epoch and seq and forwards them in the update below.
+				// never stored in the device state. They are stamped, buffered and
+				// forwarded in the update below, after the state they came with.
 				var changes *clientsapi.Device
-				if dev, found := manager.devices[update.Update.GetId()]; found {
+				dev, found := manager.devices[update.Update.GetId()]
+				eventsOnly := len(update.Update.GetEvents()) > 0 && len(update.Update.GetEndpoints()) == 0 && !update.Update.GetFullState()
+				switch {
+				case eventsOnly:
+					// Nothing of the state changes. The device must be known and owned
+					// by the client, as events are checked against its stored specs.
+					if !found {
+						manager.log.Warnf("client %q sent events for unknown device %q", update.ClientID, update.Update.GetId())
+						return
+					}
+					if dev.ClientID != update.ClientID {
+						manager.log.Warnf("client %q cannot send events for device %q owned by client %q", update.ClientID, dev.ID, dev.ClientID)
+						return
+					}
+					changes = &clientsapi.Device{Id: dev.ID, ClientId: update.ClientID}
+				case found:
 					var err error
 					changes, err = dev.update(manager.log, update.ClientID, update.Update)
 					if err != nil {
@@ -670,15 +703,30 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 					} else {
 						manager.changed = true
 					}
-				} else {
-					dev, err := newDevice(manager.log, update.ClientID, update.Update)
+				default:
+					var err error
+					dev, err = newDevice(manager.log, update.ClientID, update.Update)
 					if err != nil {
 						manager.log.Warnf("failed to create device %q: %s", update.Update.GetId(), err)
+						dev = nil
 					} else {
 						manager.devices[update.Update.GetId()] = dev
 						manager.changed = true
 						changes = dev.pb()
 					}
+				}
+
+				if dev != nil {
+					if events := manager.stampEvents(dev, update.Update.GetEvents()); len(events) > 0 {
+						if changes == nil {
+							changes = &clientsapi.Device{Id: dev.ID, ClientId: update.ClientID}
+						}
+						changes.Events = events
+					}
+				}
+				if eventsOnly && changes.GetEvents() == nil {
+					// Every event was invalid.
+					return
 				}
 
 				manager.txDeviceUpdates.Pub(txDeviceUpdate{
@@ -695,6 +743,7 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 				manager.log.Warnf("client %q cannot remove device %q owned by client %q", update.ClientID, dev.ID, dev.ClientID)
 			} else {
 				delete(manager.devices, dev.ID)
+				manager.removeEventBuffer(dev.ID)
 				manager.changed = true
 				manager.txDeviceUpdates.Pub(txDeviceUpdate{
 					ClientID:  update.ClientID,
@@ -759,6 +808,7 @@ func (manager *DeviceManager) handleDeviceRemoval(update removalUpdate) {
 			RemovedID: dev.ID,
 		})
 		delete(manager.devices, dev.ID)
+		manager.removeEventBuffer(dev.ID)
 		manager.log.Infof("removed device %q", dev.ID)
 		update.Callback(nil)
 	} else {

@@ -19,6 +19,19 @@ type ClientService struct {
 	deviceManager *core.DeviceManager
 	clientManager *core.ClientManager
 	jwtManager    *JWTManager
+
+	// How long DeviceStream waits for the first request, which may carry the
+	// cursor to resume events from. Zero means defaultFirstRequestWait.
+	firstRequestTimeout time.Duration
+}
+
+const defaultFirstRequestWait = 2 * time.Second
+
+func (service *ClientService) firstRequestWait() time.Duration {
+	if service.firstRequestTimeout > 0 {
+		return service.firstRequestTimeout
+	}
+	return defaultFirstRequestWait
 }
 
 func NewClientService(deviceManager *core.DeviceManager, clientManager *core.ClientManager, jwtManager *JWTManager) *ClientService {
@@ -323,68 +336,95 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 	sub := service.deviceManager.GetDeviceUpdates()
 	defer sub.Close()
 
-	// isInFilter := func(deviceID string, filter []string) bool {
-	// 	if len(filter) == 0 {
-	// 		return true
-	// 	}
-	// 	for _, id := range filter {
-	// 		if deviceID == id {
-	// 			return true
-	// 		}
-	// 	}
-	// 	return false
-	// }
+	// Read requests in the background and hand them to the loop below, so only
+	// one goroutine sends on the stream.
+	ctx, cancel := context.WithCancel(server.Context())
+	defer cancel()
+	requests := make(chan *clientsapi.DeviceStreamRequest)
+	go func() {
+		defer close(requests)
+		for {
+			req, err := server.Recv()
+			if err != nil {
+				if ctx.Err() == nil {
+					service.log.Errorf("failed to receive device stream request: %s", err)
+				}
+				return
+			}
+			select {
+			case requests <- req:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	// The first request says where to resume events from. Clients send it
+	// straight away; one that does not is served without replay.
+	var first *clientsapi.DeviceStreamRequest
+	wait := time.NewTimer(service.firstRequestWait())
+	select {
+	case first = <-requests:
+		wait.Stop()
+	case <-wait.C:
+	case <-ctx.Done():
+		wait.Stop()
+		return status.Errorf(codes.Canceled, "context canceled")
+	}
+
+	// Replayed events are covered by the replay, so a live copy of one is
+	// dropped. The live subscription starts first so none are missed between
+	// the snapshots and the live updates.
+	replay := service.deviceManager.EventsSince(nil, first.GetEventsSince())
+	lastReplayed := uint64(0)
+	if first.GetEventsSince() != nil {
+		lastReplayed = replay.Last
+	}
+
+	// Report lost events on the first response, whatever it is.
+	eventsLost := replay.Lost
+	send := func(res *clientsapi.DeviceStreamResponse) error {
+		res.EventsLost = eventsLost
+		eventsLost = false
+		return server.Send(res)
+	}
 
 	// Start by sending the full list of devices.
 	for dev := range service.deviceManager.GetDevices() {
-		// if isInFilter(dev.GetId(), req.IncludeDeviceIds) {
-		err := server.Send(&clientsapi.DeviceStreamResponse{
+		err := send(&clientsapi.DeviceStreamResponse{
 			Device: dev,
 		})
 		if err != nil {
 			service.log.Errorf("failed to send device stream: %s", err)
 			return status.Errorf(codes.Internal, "failed to send device")
 		}
-		// }
 	}
 
-	// Read requests for full device status.
-	ctx, cancel := context.WithCancel(server.Context())
-	defer cancel()
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
-			req, err := server.Recv()
-			if err != nil {
-				service.log.Errorf("failed to receive device stream request: %s", err)
-				return
-			}
-			if req.GetDeviceId != "" {
-				// Send the requested device full state.
-				dev := service.deviceManager.GetDevice(req.GetDeviceId)
-				if dev != nil {
-					err := server.Send(&clientsapi.DeviceStreamResponse{
-						Device: dev,
-					})
-					if err != nil {
-						service.log.Errorf("failed to send device stream: %s", err)
-						return
-					}
-				}
-			}
-		}
-	}()
-
 	// Send an empty Device message to indicate the end of current device states.
-	err := server.Send(&clientsapi.DeviceStreamResponse{})
+	err := send(&clientsapi.DeviceStreamResponse{})
 	if err != nil {
 		service.log.Errorf("failed to send device stream keepalive: %s", err)
 		return status.Errorf(codes.Internal, "failed to send device keepalive")
+	}
+
+	// Then the events buffered since the requested cursor.
+	for _, dev := range core.ReplayUpdates(replay.Events) {
+		err := send(&clientsapi.DeviceStreamResponse{
+			Device: dev,
+		})
+		if err != nil {
+			service.log.Errorf("failed to send device stream replay: %s", err)
+			return status.Errorf(codes.Internal, "failed to send device replay")
+		}
+	}
+
+	// The first request may also ask for a device state. Later requests are
+	// read from pending, which is cleared once the client stops sending.
+	pending := requests
+	if first != nil {
+		if err := service.sendRequestedDevice(send, first); err != nil {
+			return err
+		}
 	}
 
 	ticker := time.NewTicker(10 * time.Second)
@@ -393,29 +433,41 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 	// Now send updates.
 	for {
 		select {
-		case <-server.Context().Done():
+		case <-ctx.Done():
 			return status.Errorf(codes.Canceled, "context canceled")
+
+		case req, ok := <-pending:
+			if !ok {
+				pending = nil
+				continue
+			}
+			if err := service.sendRequestedDevice(send, req); err != nil {
+				return err
+			}
 
 		case <-ticker.C:
 			// Send an empty Device message as a keepalive for the client.
-			err := server.Send(&clientsapi.DeviceStreamResponse{})
+			err := send(&clientsapi.DeviceStreamResponse{})
 			if err != nil {
 				service.log.Errorf("failed to send device stream keepalive: %s", err)
 				return status.Errorf(codes.Internal, "failed to send device keepalive")
 			}
 
 		case update := <-sub.Sub():
-			// if isInFilter(update.GetId(), req.IncludeDeviceIds) {
 			if update.Update != nil {
-				err := server.Send(&clientsapi.DeviceStreamResponse{
-					Device: update.Update,
+				live := core.TrimReplayedEvents(update.Update, lastReplayed)
+				if live == nil {
+					continue
+				}
+				err := send(&clientsapi.DeviceStreamResponse{
+					Device: live,
 				})
 				if err != nil {
 					service.log.Errorf("failed to send device stream update: %s", err)
 					return status.Errorf(codes.Internal, "failed to send device update")
 				}
 			} else if update.RemovedID != "" {
-				err := server.Send(&clientsapi.DeviceStreamResponse{
+				err := send(&clientsapi.DeviceStreamResponse{
 					DeviceRemoved: update.RemovedID,
 				})
 				if err != nil {
@@ -423,9 +475,27 @@ func (service *ClientService) DeviceStream(server clientsapi.ClientService_Devic
 					return status.Errorf(codes.Internal, "failed to send device removed update")
 				}
 			}
-			// }
 		}
 	}
+}
+
+// sendRequestedDevice sends the full state of the device a request asks for.
+func (service *ClientService) sendRequestedDevice(send func(*clientsapi.DeviceStreamResponse) error, req *clientsapi.DeviceStreamRequest) error {
+	if req.GetGetDeviceId() == "" {
+		return nil
+	}
+	dev := service.deviceManager.GetDevice(req.GetGetDeviceId())
+	if dev == nil {
+		return nil
+	}
+	err := send(&clientsapi.DeviceStreamResponse{
+		Device: dev,
+	})
+	if err != nil {
+		service.log.Errorf("failed to send device stream: %s", err)
+		return status.Errorf(codes.Internal, "failed to send device")
+	}
+	return nil
 }
 
 func (service *ClientService) SendAction(req *clientsapi.ActionRequest, server clientsapi.ClientService_SendActionServer) error {

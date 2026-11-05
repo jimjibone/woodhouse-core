@@ -343,10 +343,32 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 		return false
 	}
 
+	// Replayed events are covered by the replay, so a live copy of one is
+	// dropped. The live subscription above started first so none are missed
+	// between the snapshots and the live updates. An empty filter means all
+	// devices.
+	var filterIDs []string
+	if len(req.IncludeDeviceIds) > 0 {
+		filterIDs = req.IncludeDeviceIds
+	}
+	replay := service.deviceManager.EventsSince(filterIDs, req.GetEventsSince())
+	lastReplayed := uint64(0)
+	if req.GetEventsSince() != nil {
+		lastReplayed = replay.Last
+	}
+
+	// Report lost events on the first response, whatever it is.
+	eventsLost := replay.Lost
+	send := func(res *clientsapi.DevicesStreamResponse) error {
+		res.EventsLost = eventsLost
+		eventsLost = false
+		return server.Send(res)
+	}
+
 	// Start by sending the full list of devices.
 	for dev := range service.deviceManager.GetDevices() {
 		if isInFilter(dev.GetId(), req.IncludeDeviceIds) {
-			err := server.Send(&clientsapi.DevicesStreamResponse{
+			err := send(&clientsapi.DevicesStreamResponse{
 				Device: dev,
 			})
 			if err != nil {
@@ -357,10 +379,21 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 	}
 
 	// Send an empty device to indicate the end of the initial list.
-	err := server.Send(&clientsapi.DevicesStreamResponse{})
+	err := send(&clientsapi.DevicesStreamResponse{})
 	if err != nil {
 		service.log.Errorf("failed to send empty device: %s", err)
 		return status.Errorf(codes.Internal, "failed to send empty device")
+	}
+
+	// Then the events buffered since the requested cursor.
+	for _, dev := range core.ReplayUpdates(replay.Events) {
+		err := send(&clientsapi.DevicesStreamResponse{
+			Device: dev,
+		})
+		if err != nil {
+			service.log.Errorf("failed to send device stream replay: %s", err)
+			return status.Errorf(codes.Internal, "failed to send device replay")
+		}
 	}
 
 	ticker := time.NewTicker(10 * time.Second)
@@ -379,7 +412,7 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 
 		case <-ticker.C:
 			// Send an empty Device message as a keepalive for the client.
-			err := server.Send(&clientsapi.DevicesStreamResponse{})
+			err := send(&clientsapi.DevicesStreamResponse{})
 			if err != nil {
 				service.log.Errorf("failed to send device stream keepalive: %s", err)
 				return status.Errorf(codes.Internal, "failed to send device keepalive")
@@ -388,8 +421,12 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 		case update := <-sub.Sub():
 			if update.Update != nil {
 				if isInFilter(update.Update.GetId(), req.IncludeDeviceIds) {
-					err := server.Send(&clientsapi.DevicesStreamResponse{
-						Device: update.Update,
+					live := core.TrimReplayedEvents(update.Update, lastReplayed)
+					if live == nil {
+						continue
+					}
+					err := send(&clientsapi.DevicesStreamResponse{
+						Device: live,
 					})
 					if err != nil {
 						service.log.Errorf("failed to send device stream update: %s", err)
@@ -398,7 +435,7 @@ func (service *UserService) DevicesStream(req *clientsapi.DevicesStreamRequest, 
 				}
 			} else if update.RemovedID != "" {
 				if isInFilter(update.RemovedID, req.IncludeDeviceIds) {
-					err := server.Send(&clientsapi.DevicesStreamResponse{
+					err := send(&clientsapi.DevicesStreamResponse{
 						DeviceRemoved: update.RemovedID,
 					})
 					if err != nil {
