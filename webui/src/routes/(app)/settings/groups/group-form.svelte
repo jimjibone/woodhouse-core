@@ -11,6 +11,8 @@
 	import { toSentenceCase } from '$lib/tools/headline-case';
 	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
 	import { onDestroy } from 'svelte';
+	import { iterServices } from '$lib/device';
+	import { keyOf, memberLabel, serviceTypeOptions, typeLabel } from './members';
 
 	let { group = undefined, onSuccess }: { group?: Group; onSuccess: () => void } = $props();
 
@@ -18,36 +20,13 @@
 
 	const isEditing = $derived(group !== undefined);
 
-	const serviceTypeOptions: { value: Service_ServiceType; label: string }[] = [
-		{ value: Service_ServiceType.RELAY, label: 'Relay' },
-		{ value: Service_ServiceType.LIGHTBULB, label: 'Lightbulb' },
-		{ value: Service_ServiceType.CLIMATE, label: 'Climate' },
-		{ value: Service_ServiceType.COVER, label: 'Cover' },
-		{ value: Service_ServiceType.CONTACT, label: 'Contact' },
-		{ value: Service_ServiceType.MOTION, label: 'Motion' },
-		{ value: Service_ServiceType.PRESENCE, label: 'Presence' },
-		{ value: Service_ServiceType.ENVIRONMENT, label: 'Environment' },
-		{ value: Service_ServiceType.BUTTON, label: 'Button' },
-		{ value: Service_ServiceType.INPUT, label: 'Input' },
-		{ value: Service_ServiceType.GENERIC, label: 'Generic' },
-		{ value: Service_ServiceType.BOOL, label: 'Bool' },
-		{ value: Service_ServiceType.INT, label: 'Int' },
-		{ value: Service_ServiceType.FLOAT, label: 'Float' },
-		{ value: Service_ServiceType.COLOR, label: 'Color' },
-		{ value: Service_ServiceType.CAMERA, label: 'Camera' }
-	];
-
-	function typeLabel(type: Service_ServiceType): string {
-		return serviceTypeOptions.find((o) => o.value === type)?.label ?? 'Unknown';
-	}
-
 	// Capture initial values from prop – these are intentionally one-time initialisations.
 	// eslint-disable-next-line svelte/valid-state-references
-	let selectedType = $state<Service_ServiceType>(group?.type ?? Service_ServiceType.RELAY);
+	let selectedType = $state<Service_ServiceType>(group?.type ?? Service_ServiceType.ON_OFF);
 
-	// Track selected members as "deviceId:serviceId" composite keys.
+	// Track selected members as memberKey(device, endpoint, service) keys.
 	// Initialised once from the group prop (intentional one-time capture).
-	const initialMembers = group?.members.map((m) => `${m.deviceId}:${m.serviceId}`) ?? [];
+	const initialMembers = group?.members.map(keyOf) ?? [];
 	let selectedMembers = $state<Set<string>>(new Set(initialMembers));
 
 	let devices = $state<DevicesStoreDevice[]>([]);
@@ -55,26 +34,23 @@
 
 	type MemberOption = {
 		deviceId: string;
+		endpointId: string;
 		serviceId: string;
-		deviceName: string;
-		serviceAlias: string;
+		label: string;
 		key: string;
 	};
 
 	let availableMembers = $derived<MemberOption[]>(
 		devices
 			.flatMap((device) =>
-				device.services
-					.filter((service) => service.typ === selectedType)
-					.map((service) => ({
-						deviceId: device.id,
-						serviceId: service.id,
-						deviceName: device.name ?? device.id,
-						serviceAlias: service.alias,
-						key: `${device.id}:${service.id}`
-					}))
+				[...iterServices(device)]
+					.filter(({ service }) => service.typ === selectedType)
+					.map(({ endpoint, service }) => {
+						const ref = { deviceId: device.id, endpointId: endpoint.id, serviceId: service.id };
+						return { ...ref, label: memberLabel(devices, ref), key: keyOf(ref) };
+					})
 			)
-			.sort((a, b) => (a.deviceName > b.deviceName ? 1 : b.deviceName > a.deviceName ? -1 : 0))
+			.sort((a, b) => (a.label > b.label ? 1 : b.label > a.label ? -1 : 0))
 	);
 
 	// When the type changes while creating, clear member selection
@@ -111,11 +87,8 @@
 		}
 
 		const members = Array.from(selectedMembers).map((key) => {
-			const sep = key.indexOf(':');
-			return create(GroupMemberSchema, {
-				deviceId: key.slice(0, sep),
-				serviceId: key.slice(sep + 1)
-			});
+			const [deviceId, endpointId, serviceId] = JSON.parse(key) as [string, string, string];
+			return create(GroupMemberSchema, { deviceId, endpointId, serviceId });
 		});
 
 		error = null;
@@ -166,7 +139,7 @@
 			<Field.Field>
 				<Field.Label for="type-{id}">Service Type</Field.Label>
 				{#if isEditing}
-					<Input id="type-{id}" disabled value={typeLabel(group?.type ?? Service_ServiceType.RELAY)} />
+					<Input id="type-{id}" disabled value={typeLabel(group?.type ?? Service_ServiceType.ON_OFF)} />
 					<Field.Description>The service type cannot be changed after creation.</Field.Description>
 				{:else}
 					<select
@@ -204,10 +177,7 @@
 								onchange={() => toggleMember(member.key)}
 								class="size-4 rounded accent-primary cursor-pointer"
 							/>
-							<span class="flex-1 font-medium">{member.deviceName}</span>
-							{#if member.serviceAlias}
-								<span class="text-muted-foreground text-xs">{member.serviceAlias}</span>
-							{/if}
+							<span class="flex-1 font-medium">{member.label}</span>
 						</label>
 					{/each}
 				</div>

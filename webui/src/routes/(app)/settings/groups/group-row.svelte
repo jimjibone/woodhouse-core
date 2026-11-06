@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Group } from '$lib/api/v2/clients/group_pb';
-	import { Service_ServiceType } from '$lib/api/v2/clients/client_service_pb';
+	import { onDestroy } from 'svelte';
+	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
+	import { memberLabel, typeLabel } from './members';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import { PencilIcon, Trash2Icon, UsersIcon } from '@lucide/svelte';
@@ -18,32 +20,10 @@
 	let deleteError: ConnectError | null = $state(null);
 	let deleting = $state(false);
 
-	const serviceTypeLabels: Partial<Record<Service_ServiceType, string>> = {
-		[Service_ServiceType.RELAY]: 'Relay',
-		[Service_ServiceType.LIGHTBULB]: 'Lightbulb',
-		[Service_ServiceType.CLIMATE]: 'Climate',
-		[Service_ServiceType.COVER]: 'Cover',
-		[Service_ServiceType.CONTACT]: 'Contact',
-		[Service_ServiceType.MOTION]: 'Motion',
-		[Service_ServiceType.PRESENCE]: 'Presence',
-		[Service_ServiceType.ENVIRONMENT]: 'Environment',
-		[Service_ServiceType.BUTTON]: 'Button',
-		[Service_ServiceType.INPUT]: 'Input',
-		[Service_ServiceType.GENERIC]: 'Generic',
-		[Service_ServiceType.BOOL]: 'Bool',
-		[Service_ServiceType.INT]: 'Int',
-		[Service_ServiceType.FLOAT]: 'Float',
-		[Service_ServiceType.COLOR]: 'Color',
-		[Service_ServiceType.CAMERA]: 'Camera',
-		[Service_ServiceType.ENUM]: 'Enum',
-		[Service_ServiceType.TEXT]: 'Text',
-		[Service_ServiceType.DURATION]: 'Duration',
-		[Service_ServiceType.TIME]: 'Time',
-	};
+	let devices = $state<DevicesStoreDevice[]>([]);
+	onDestroy(DevicesStore.subscribe((s) => (devices = s.devices)));
 
-	function typeLabel(type: Service_ServiceType): string {
-		return serviceTypeLabels[type] ?? 'Unknown';
-	}
+	const memberLabels = $derived(group.members.map((m) => memberLabel(devices, m)));
 
 	async function handleDelete() {
 		deleting = true;
@@ -64,6 +44,13 @@
 		<div>
 			<Badge variant="secondary">{typeLabel(group.type)}</Badge>
 		</div>
+		{#if memberLabels.length > 0}
+			<ul class="text-muted-foreground text-xs">
+				{#each memberLabels as label, i (i)}
+					<li class="truncate">{label}</li>
+				{/each}
+			</ul>
+		{/if}
 	</div>
 	<div class="grow flex flex-row items-center justify-center gap-1.5">
 		<UsersIcon class="size-4 text-muted-foreground shrink-0" />

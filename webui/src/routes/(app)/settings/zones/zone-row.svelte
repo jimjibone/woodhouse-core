@@ -41,7 +41,8 @@
 		<LampIcon class="size-4 text-muted-foreground shrink-0" />
 		<span class="text-muted-foreground text-sm">
 			{zone.deviceIds.length}
-			{zone.deviceIds.length === 1 ? 'device' : 'devices'}
+			{zone.deviceIds.length === 1 ? 'device' : 'devices'}{#if zone.endpoints.length > 0}, {zone.endpoints.length}
+				{zone.endpoints.length === 1 ? 'endpoint' : 'endpoints'}{/if}
 		</span>
 	</div>
 	<div class="shrink-0 flex flex-row pr-2 gap-2 items-center">

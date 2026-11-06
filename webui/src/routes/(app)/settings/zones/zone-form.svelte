@@ -7,7 +7,11 @@
 	import type { ConnectError } from '@connectrpc/connect';
 	import { toSentenceCase } from '$lib/tools/headline-case';
 	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
-	import { ZonesStore } from '$lib/stores/zones-stream';
+	import { memberKey } from '$lib/stores/groups-stream';
+	import { ZonesStore, endpointZone } from '$lib/stores/zones-stream';
+	import { EndpointRefSchema } from '$lib/api/v2/clients/zone_pb';
+	import { create } from '@bufbuild/protobuf';
+	import { endpointLabel, isRootEndpoint, sortedEndpoints } from '$lib/device';
 	import { ZONE_ICONS, DEFAULT_ZONE_ICON_KEY } from '$lib/zone-icons';
 	import { cn } from '$lib/utils';
 	import { onDestroy } from 'svelte';
@@ -15,6 +19,9 @@
 	let { zone = undefined, onSuccess }: { zone?: Zone; onSuccess: () => void } = $props();
 
 	const id = $props.id();
+
+	const epKey = (ref: { deviceId: string; endpointId: string }): string =>
+		memberKey(ref.deviceId, ref.endpointId, '');
 
 	const isEditing = $derived(zone !== undefined);
 
@@ -59,6 +66,43 @@
 		iconGrid?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' });
 	});
 
+	// Endpoint overrides, keyed by memberKey(device, endpoint, ''). Captured
+	// once like the other initial values. Overrides of devices that are not
+	// listed in the picker (one or no non-root endpoint) are kept untouched.
+	// eslint-disable-next-line svelte/valid-state-references
+	let selectedEndpoints = $state<Set<string>>(new Set((zone?.endpoints ?? []).map(epKey)));
+
+	// Devices with more than one non-root endpoint can be split across zones.
+	const splittableDevices = $derived(
+		availableDevices
+			.map((device) => ({
+				device,
+				endpoints: sortedEndpoints(device.endpoints).filter((ep) => !isRootEndpoint(ep))
+			}))
+			.filter((d) => d.endpoints.length > 1)
+	);
+
+	function toggleEndpoint(key: string) {
+		const next = new Set(selectedEndpoints);
+		if (next.has(key)) {
+			next.delete(key);
+		} else {
+			next.add(key);
+		}
+		selectedEndpoints = next;
+	}
+
+	// Where the endpoint sits now, as a short note ('' when unassigned).
+	function endpointNote(deviceID: string, endpointID: string): string {
+		const key = epKey({ deviceId: deviceID, endpointId: endpointID });
+		const current = endpointZone(zones, deviceID, endpointID);
+		if (selectedDevices.has(deviceID)) return 'via device';
+		if (selectedEndpoints.has(key)) {
+			return current && current.id !== zone?.id ? `moving from ${current.name}` : 'override';
+		}
+		return current && current.id !== zone?.id ? `in ${current.name}` : '';
+	}
+
 	function toggleDevice(deviceID: string) {
 		const next = new Set(selectedDevices);
 		if (next.has(deviceID)) {
@@ -85,6 +129,13 @@
 		}
 
 		const deviceIds = Array.from(selectedDevices);
+		// An override is redundant for a device that is in this zone as a whole.
+		const endpoints = Array.from(selectedEndpoints)
+			.map((key) => {
+				const [deviceId, endpointId] = JSON.parse(key) as [string, string, string];
+				return create(EndpointRefSchema, { deviceId, endpointId });
+			})
+			.filter((ref) => !selectedDevices.has(ref.deviceId));
 
 		error = null;
 		submitting = true;
@@ -97,10 +148,11 @@
 			res = await UpdateZone(zone!.id, {
 				name: name !== zone!.name ? name : undefined,
 				icon: selectedIcon !== zone!.icon ? selectedIcon : undefined,
-				deviceIds
+				deviceIds,
+				endpoints
 			});
 		} else {
-			res = await AddZone(name, selectedIcon, deviceIds);
+			res = await AddZone(name, selectedIcon, deviceIds, endpoints);
 		}
 
 		submitting = false;
@@ -200,6 +252,47 @@
 				</Field.Description>
 			</Field.Set>
 		</Field.Group>
+
+		{#if splittableDevices.length > 0}
+			<Field.Group>
+				<Field.Set>
+					<Field.Label>Endpoints</Field.Label>
+					<Field.Description>
+						Assign single endpoints of multi-endpoint devices to this zone, overriding the zone of their device.
+					</Field.Description>
+					<div class="flex flex-col gap-0.5 max-h-52 overflow-y-auto rounded-md border bg-background p-1">
+						{#each splittableDevices as { device, endpoints } (device.id)}
+							<p class="px-2 pt-1.5 text-xs font-medium text-muted-foreground truncate">
+								{device.name ?? device.id}
+							</p>
+							{#each endpoints as ep (ep.id)}
+								{@const key = epKey({ deviceId: device.id, endpointId: ep.id })}
+								{@const viaDevice = selectedDevices.has(device.id)}
+								{@const note = endpointNote(device.id, ep.id)}
+								<label
+									class={cn(
+										'flex items-center gap-2.5 rounded-sm px-2 py-1.5 hover:bg-accent cursor-pointer text-sm select-none',
+										viaDevice && 'opacity-60 cursor-default'
+									)}
+								>
+									<input
+										type="checkbox"
+										checked={viaDevice || selectedEndpoints.has(key)}
+										disabled={viaDevice}
+										onchange={() => toggleEndpoint(key)}
+										class="size-4 rounded accent-primary cursor-pointer"
+									/>
+									<span class="flex-1 truncate">{endpointLabel(ep)}</span>
+									{#if note}
+										<span class="text-muted-foreground text-xs shrink-0">{note}</span>
+									{/if}
+								</label>
+							{/each}
+						{/each}
+					</div>
+				</Field.Set>
+			</Field.Group>
+		{/if}
 
 		{#if error}
 			<Field.Error>{error}</Field.Error>
