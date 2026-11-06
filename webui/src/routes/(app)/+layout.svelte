@@ -10,6 +10,7 @@
 	import { doLogout, loggedIn, userData } from '$lib/stores/auth-store';
 	import ChangePasswordForm from '$lib/components/change-password-form.svelte';
 	import NotificationsBell from '$lib/components/notifications-bell.svelte';
+	import { PairingToasts } from '$lib/components/wh/device';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
 	import { createConnectionContext } from '$lib/stores/connection-status.svelte';
@@ -171,6 +172,7 @@
 		</div>
 	</main>
 {:else}
+	<PairingToasts />
 	<Sidebar.Provider>
 		<AppSidebar {dashboards} {zones} {title} />
 		<Sidebar.Inset>
