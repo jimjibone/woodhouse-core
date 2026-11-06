@@ -1,9 +1,4 @@
-import type { TimeAttribute, TimeValue } from '$lib/api/v2/clients/client_service_pb';
-
-export function attributeToDate(time: TimeAttribute): Date {
-	const ms = Number(time.seconds) * 1000 + Math.floor(Number(time.nanos) / 1_000_000);
-	return new Date(ms);
-}
+import type { TimeValue } from '$lib/api/v2/clients/client_service_pb';
 
 export function valueToDate(time: TimeValue): Date {
 	const ms = Number(time.seconds) * 1000 + Math.floor(Number(time.nanos) / 1_000_000);

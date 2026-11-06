@@ -1,16 +1,21 @@
 <script lang="ts">
-	import type { IntAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import { SunIcon } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 	import chroma from 'chroma-js';
 
 	let {
-		attr,
+		value,
+		min,
+		max,
+		step = 1n,
 		fillColor,
 		onaction,
 		resetOnClose = false
 	}: {
-		attr: IntAttribute;
+		value: bigint | undefined;
+		min: bigint;
+		max: bigint;
+		step?: bigint;
 		fillColor: string;
 		onaction: (value: bigint) => void;
 		resetOnClose?: boolean;
@@ -26,10 +31,10 @@
 		}
 	});
 
-	const bMin = $derived(Number(attr.min));
-	const bMax = $derived(Number(attr.max));
-	const bStep = $derived(Number(attr.step) || 1);
-	const bCurrent = $derived(changing !== null ? changing : Number(attr.value));
+	const bMin = $derived(Number(min));
+	const bMax = $derived(Number(max));
+	const bStep = $derived(Number(step) || 1);
+	const bCurrent = $derived(changing !== null ? changing : Number(value ?? min));
 	const bFillPct = $derived(Math.max(0, Math.min(100, ((bCurrent - bMin) / (bMax - bMin)) * 100)));
 	const labelColor: string = $derived(chroma(fillColor).luminance() < 0.45 ? 'hsl(0 0% 100%)' : 'hsl(240 10% 3.9%)');
 
@@ -68,7 +73,7 @@
 	};
 
 	const onkeydown = (event: KeyboardEvent) => {
-		const current = Number(attr.value);
+		const current = Number(value ?? min);
 		let newVal = current;
 		if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
 			newVal = Math.min(bMax, current + bStep);

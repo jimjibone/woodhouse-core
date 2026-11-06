@@ -41,17 +41,34 @@ export const FavoritesStore = {
 	subscribe
 };
 
+// The optional device-level fields are left unset in a partial update when they
+// have not changed, so keep the held values for those. A full_state update
+// carries them all.
 const updateDeviceService = (prev: DeviceService, next: DeviceService): DeviceService => {
-	// No merging required at the moment...
-	return next;
+	if (next.fullState) {
+		return next;
+	}
+	return {
+		...next,
+		deviceName: next.deviceName ?? prev.deviceName,
+		endpointLabel: next.endpointLabel ?? prev.endpointLabel,
+		online: next.online ?? prev.online,
+		lastSeen: next.lastSeen ?? prev.lastSeen,
+		batteryLevel: next.batteryLevel ?? prev.batteryLevel,
+		deviceType: next.deviceType ?? prev.deviceType
+	};
 };
 
 const getDeviceServiceName = (ds: DeviceService): string => {
 	if (ds.deviceName !== undefined && ds.service !== undefined) {
-		if (ds.service.alias !== '') {
-			return ds.deviceName + ': ' + ds.service.alias;
+		let name = ds.deviceName;
+		if (ds.endpointLabel) {
+			name += ': ' + ds.endpointLabel;
 		}
-		return ds.deviceName;
+		if (ds.service.alias !== '') {
+			name += ': ' + ds.service.alias;
+		}
+		return name;
 	}
 	return ds.key;
 };

@@ -1,17 +1,14 @@
+// The old v1 components (relay, lightbulb, environment, climate, input, enum)
+// are still in this directory but are no longer exported or routed: their
+// service types now render with GenericService until they are ported.
 import BatteryService from './battery.svelte';
 import ButtonService from './button.svelte';
 import CameraService from './camera.svelte';
-import ClimateService from './climate.svelte';
 import ContactService from './contact.svelte';
 import CoverService from './cover.svelte';
-import EnumService from './enum.svelte';
-import EnvironmentService from './environment.svelte';
 import GenericService from './generic.svelte';
-import InputService from './input.svelte';
-import LightbulbService from './lightbulb.svelte';
 import MotionService from './motion.svelte';
 import PresenceService from './presence.svelte';
-import RelayService from './relay.svelte';
 import UpdateService from './update.svelte';
 import ServiceAction from './service-action.svelte';
 import ServiceEnumerator from './service-enumerator.svelte';
@@ -21,17 +18,11 @@ export {
 	BatteryService,
 	ButtonService,
 	CameraService,
-	ClimateService,
 	ContactService,
 	CoverService,
-	EnumService,
-	EnvironmentService,
 	GenericService,
-	InputService,
-	LightbulbService,
 	MotionService,
 	PresenceService,
-	RelayService,
 	UpdateService,
 	ServiceAction,
 	ServiceEnumerator,

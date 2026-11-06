@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { EnumAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import * as Command from "$lib/components/ui/command";
 	import * as Popover from "$lib/components/ui/popover";
 	import { Button } from "$lib/components/ui/button";
@@ -10,12 +9,14 @@
 
 	let {
 		name,
-		attr,
+		value,
+		options,
 		onaction = undefined,
 		class: className = ""
 	}: {
 		name: string,
-		attr: EnumAttribute,
+		value: string | undefined,
+		options: string[],
 		onaction?: (value: string)=>void,
 		class?: string
 	} = $props();
@@ -56,7 +57,7 @@
 				role="combobox"
 				aria-expanded={open}
 			>
-				{attr.value || "Select an option..."}
+				{value || "Select an option..."}
 				<ChevronsUpDownIcon class="opacity-50" />
 			</Button>
 			{/snippet}
@@ -67,11 +68,13 @@
 				<Command.List>
 					<Command.Empty>No framework found.</Command.Empty>
 					<Command.Group value="options">
-						<Command.Item disabled>
-							<CheckIcon class="text-transparent"/>
-							Read Only - Select to Copy
-						</Command.Item>
-						{#each attr.options as option (option)}
+						{#if !onaction}
+							<Command.Item disabled>
+								<CheckIcon class="text-transparent"/>
+								Read Only - Select to Copy
+							</Command.Item>
+						{/if}
+						{#each options as option (option)}
 							<Command.Item
 								value={option}
 								onSelect={() => {
@@ -84,7 +87,7 @@
 								}}
 							>
 								<CheckIcon
-									class={cn(attr.value !== option && "text-transparent")}
+									class={cn(value !== option && "text-transparent")}
 								/>
 								{option}
 							</Command.Item>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { IntAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import { ThermometerIcon } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 	import chroma from 'chroma-js';
@@ -10,12 +9,18 @@
 	// matching the visual gradient (warm amber at bottom → cool blue-white at top).
 
 	let {
-		attr,
+		value,
+		min,
+		max,
+		step = 1n,
 		resetOnClose = false,
 		onaction,
 		class: className = ''
 	}: {
-		attr: IntAttribute;
+		value: bigint | undefined;
+		min: bigint;
+		max: bigint;
+		step?: bigint;
 		resetOnClose?: boolean;
 		onaction: (value: bigint) => void;
 		class?: string;
@@ -32,12 +37,12 @@
 	});
 
 	// Mired bounds straight from the attribute.
-	const miredMin = $derived(Number(attr.min)); // coolest  (e.g. 153 ≈ 6500 K)
-	const miredMax = $derived(Number(attr.max)); // warmest  (e.g. 500 ≈ 2000 K)
-	const miredStep = $derived(Number(attr.step) || 1);
+	const miredMin = $derived(Number(min)); // coolest  (e.g. 153 is about 6500 K)
+	const miredMax = $derived(Number(max)); // warmest  (e.g. 500 is about 2000 K)
+	const miredStep = $derived(Number(step) || 1);
 
 	// Current mired value (live while dragging).
-	const miredCurrent = $derived(changing !== null ? changing : Number(attr.value));
+	const miredCurrent = $derived(changing !== null ? changing : Number(value ?? min));
 
 	// Kelvin for display.
 	const kelvinCurrent = $derived(Math.round(1_000_000 / miredCurrent));
@@ -114,7 +119,7 @@
 	};
 
 	const onkeydown = (event: KeyboardEvent) => {
-		const current = Number(attr.value);
+		const current = Number(value ?? min);
 		let newVal = current;
 		// Arrow UP = warmer = higher mired; Arrow DOWN = cooler = lower mired.
 		if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {

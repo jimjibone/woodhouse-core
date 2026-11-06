@@ -2,9 +2,11 @@ import {
 	ActionRequestSchema,
 	ActionResponseSchema,
 	ActionResponse_ActionStatus,
+	CommandActionSchema,
 	ImageResponseSchema,
 	ImageResponse_ImageStatus,
-	type Value,
+	WriteActionSchema,
+	type FieldValue,
 	type ActionResponse,
 	type ImageResponse,
 	Service_ServiceType
@@ -47,24 +49,42 @@ import {
 	NotificationAudience_Kind,
 	GetSettingsRequestSchema,
 	UpdateSettingsRequestSchema,
+	SetEndpointLabelRequestSchema,
 	type Notification,
 	type UpdateUserRequest
 } from '$lib/api/v2/clients/user_service_pb';
 import { type GroupMember } from '$lib/api/v2/clients/group_pb';
+import { type EndpointRef } from '$lib/api/v2/clients/zone_pb';
 import { UserServiceClient } from './user-service-client';
 import { ConnectError } from '@connectrpc/connect';
 import { create, toJsonString } from '@bufbuild/protobuf';
+import { toast } from 'svelte-sonner';
 
+// The action to send to a service: write attribute values or invoke a command.
+export type ServiceActionBody =
+	| { case: 'write'; values: FieldValue[] }
+	| { case: 'command'; id: string; params: FieldValue[] };
+
+/**
+ * Sends an action to one service and passes every response (including
+ * intermediate QUEUED/SENT ones) to responseHandler. A transport error is
+ * reported to the handler as a final ERROR response.
+ */
 export const SendActionRequest = async (
 	deviceID: string,
+	endpointID: string,
 	serviceID: string,
-	vals: Value[],
+	body: ServiceActionBody,
 	responseHandler: (response: ActionResponse) => void
 ) => {
 	const request = create(ActionRequestSchema, {
 		deviceId: deviceID,
+		endpointId: endpointID,
 		serviceId: serviceID,
-		values: vals
+		action:
+			body.case === 'write'
+				? { case: 'write', value: create(WriteActionSchema, { values: body.values }) }
+				: { case: 'command', value: create(CommandActionSchema, { id: body.id, params: body.params }) }
 	});
 	console.log('sending action: ' + toJsonString(ActionRequestSchema, request));
 	try {
@@ -83,6 +103,113 @@ export const SendActionRequest = async (
 	}
 };
 
+/** True for a status that ends the action in failure. */
+export const isActionFailure = (status: ActionResponse_ActionStatus): boolean =>
+	status >= ActionResponse_ActionStatus.TIMEOUT;
+
+const failureTitle = (status: ActionResponse_ActionStatus): string => {
+	switch (status) {
+		case ActionResponse_ActionStatus.TIMEOUT:
+			return 'Action Timed Out';
+		case ActionResponse_ActionStatus.CANCELED:
+			return 'Action Canceled';
+		case ActionResponse_ActionStatus.ERR_READONLY:
+			return 'Read-Only Attribute';
+		case ActionResponse_ActionStatus.ERR_INVALID:
+			return 'Invalid Action';
+	}
+	return 'Action Failed';
+};
+
+const failureDetails = (response: ActionResponse): string => {
+	if (response.details !== '') return response.details;
+	switch (response.status) {
+		case ActionResponse_ActionStatus.TIMEOUT:
+			return 'The device did not respond in time.';
+		case ActionResponse_ActionStatus.ERR_READONLY:
+			return 'The action wrote to a read-only attribute.';
+		case ActionResponse_ActionStatus.ERR_INVALID:
+			return 'The action does not match what the service accepts.';
+	}
+	return '';
+};
+
+// Sends an action and waits for its final response. Resolves with the result
+// fields on COMPLETE (an empty list when the command returns nothing), or
+// undefined when the action failed; the failure has then already been shown
+// as a toast.
+const runAction = async (
+	deviceID: string,
+	endpointID: string,
+	serviceID: string,
+	body: ServiceActionBody
+): Promise<FieldValue[] | undefined> => {
+	const outcome: { final?: ActionResponse } = {};
+	await SendActionRequest(deviceID, endpointID, serviceID, body, (response) => {
+		if (response.status >= ActionResponse_ActionStatus.COMPLETE) {
+			outcome.final = response;
+		}
+	});
+	const final = outcome.final;
+	if (final === undefined) {
+		toast.error('Action Failed', { description: 'No response from the server.' });
+		return undefined;
+	}
+	if (isActionFailure(final.status)) {
+		console.error('action failed:', final);
+		toast.error(failureTitle(final.status), { description: failureDetails(final) });
+		return undefined;
+	}
+	return final.result;
+};
+
+/**
+ * Writes attribute values of a service. Resolves with the result fields, or
+ * undefined if the write failed (ERR_READONLY, ERR_INVALID, ERROR, TIMEOUT,
+ * CANCELED), after showing the failure as a toast.
+ */
+export const sendWrite = (
+	deviceID: string,
+	endpointID: string,
+	serviceID: string,
+	fields: FieldValue[]
+): Promise<FieldValue[] | undefined> =>
+	runAction(deviceID, endpointID, serviceID, { case: 'write', values: fields });
+
+/**
+ * Invokes a command of a service. Resolves with the command's result fields,
+ * or undefined if it failed, after showing the failure as a toast.
+ */
+export const sendCommand = (
+	deviceID: string,
+	endpointID: string,
+	serviceID: string,
+	commandID: string,
+	params: FieldValue[] = []
+): Promise<FieldValue[] | undefined> =>
+	runAction(deviceID, endpointID, serviceID, { case: 'command', id: commandID, params });
+
+// Sets the user's label for an endpoint. An empty label clears it, so the
+// bridge's label shows again.
+export const SetEndpointLabel = async (
+	deviceID: string,
+	endpointID: string,
+	label: string
+): Promise<null | ConnectError> => {
+	const request = create(SetEndpointLabelRequestSchema, { deviceId: deviceID, endpointId: endpointID, label });
+	console.log('sending set endpoint label: ' + toJsonString(SetEndpointLabelRequestSchema, request));
+	try {
+		await UserServiceClient.setEndpointLabel(request);
+	} catch (err) {
+		if (err instanceof ConnectError) {
+			console.error('error set endpoint label: ' + err.message);
+			return err;
+		}
+		throw err;
+	}
+	return null;
+};
+
 export const SendRemoveDeviceRequest = async (deviceID: string): Promise<null | ConnectError> => {
 	const request = create(RemoveDeviceRequestSchema, {
 		deviceId: deviceID
@@ -99,10 +226,12 @@ export const SendRemoveDeviceRequest = async (deviceID: string): Promise<null | 
 	return null;
 };
 
-export const SendFavoriteRequest = async (deviceID: string, serviceID: string, fave: boolean) => {
+// A favorite is identified by device, endpoint and service.
+export const SendFavoriteRequest = async (deviceID: string, endpointID: string, serviceID: string, fave: boolean) => {
 	if (fave) {
 		const request = create(AddFavoriteRequestSchema, {
 			deviceId: deviceID,
+			endpointId: endpointID,
 			serviceId: serviceID
 		});
 		console.log('sending add favorite request: ' + toJsonString(AddFavoriteRequestSchema, request));
@@ -116,6 +245,7 @@ export const SendFavoriteRequest = async (deviceID: string, serviceID: string, f
 	} else {
 		const request = create(RemoveFavoriteRequestSchema, {
 			deviceId: deviceID,
+			endpointId: endpointID,
 			serviceId: serviceID
 		});
 		console.log('sending remove favorite request: ' + toJsonString(RemoveFavoriteRequestSchema, request));
@@ -329,8 +459,15 @@ export const RemoveGroup = async (id: string): Promise<null | ConnectError> => {
 	return null;
 };
 
-export const AddZone = async (name: string, icon: string, deviceIds: string[]): Promise<null | ConnectError> => {
-	const request = create(AddZoneRequestSchema, { name, icon, deviceIds });
+// `endpoints` are endpoint overrides: endpoints that belong to this zone
+// although their device is in another zone (or none).
+export const AddZone = async (
+	name: string,
+	icon: string,
+	deviceIds: string[],
+	endpoints: EndpointRef[] = []
+): Promise<null | ConnectError> => {
+	const request = create(AddZoneRequestSchema, { name, icon, deviceIds, endpoints });
 	console.log('sending add zone: ' + toJsonString(AddZoneRequestSchema, request));
 	try {
 		const response = await UserServiceClient.addZone(request);
@@ -347,17 +484,20 @@ export const AddZone = async (name: string, icon: string, deviceIds: string[]): 
 // Membership is only sent when `deviceIds` is passed, and then it replaces the
 // zone's devices in full. Passing an empty array empties the zone - that is why
 // the request carries an explicit setDevices flag rather than treating an empty
-// list as "leave it alone", the way UpdateGroup does.
+// list as "leave it alone", the way UpdateGroup does. Endpoint overrides work
+// the same way through `endpoints` and setEndpoints.
 export const UpdateZone = async (
 	id: string,
-	changes: { name?: string; icon?: string; deviceIds?: string[] }
+	changes: { name?: string; icon?: string; deviceIds?: string[]; endpoints?: EndpointRef[] }
 ): Promise<null | ConnectError> => {
 	const request = create(UpdateZoneRequestSchema, {
 		id,
 		name: changes.name,
 		icon: changes.icon,
 		setDevices: changes.deviceIds !== undefined,
-		deviceIds: changes.deviceIds ?? []
+		deviceIds: changes.deviceIds ?? [],
+		setEndpoints: changes.endpoints !== undefined,
+		endpoints: changes.endpoints ?? []
 	});
 	console.log('sending update zone: ' + toJsonString(UpdateZoneRequestSchema, request));
 	try {
@@ -389,6 +529,7 @@ export const RemoveZone = async (id: string): Promise<null | ConnectError> => {
 
 export const SendImageRequest = async (
 	deviceID: string,
+	endpointID: string,
 	serviceID: string,
 	attributeID: string,
 	responseHandler: (response: ImageResponse) => void,
@@ -397,12 +538,15 @@ export const SendImageRequest = async (
 ) => {
 	const request = create(UserImageRequestSchema, {
 		deviceId: deviceID,
+		endpointId: endpointID,
 		serviceId: serviceID,
 		attributeId: attributeID,
 		width,
 		height
 	});
-	console.log('sending image request: deviceId=' + deviceID + ' serviceId=' + serviceID);
+	console.log(
+		'sending image request: deviceId=' + deviceID + ' endpointId=' + endpointID + ' serviceId=' + serviceID
+	);
 	try {
 		for await (const response of UserServiceClient.sendImageRequest(request)) {
 			console.log('received image response: status=' + response.status + ' dataLen=' + response.data.length);

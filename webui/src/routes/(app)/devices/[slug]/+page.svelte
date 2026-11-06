@@ -3,18 +3,17 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { DevicesStore, type DevicesStoreDevice } from '$lib/stores/devices-stream';
-	import { ServiceEnumerator } from '$lib/components/wh/service';
+	import { DeviceEvents, EndpointSection } from '$lib/components/wh/device';
 	import {
 		Device_DeviceType,
-		ServiceSchema,
+		EndpointSchema,
 		Service_ServiceType,
-		Permissions,
-		ValueSchema,
-		TextValueSchema,
 		ActionResponse_ActionStatus
 	} from '$lib/api/v2/clients/client_service_pb';
-	import { create, toJsonString } from '@bufbuild/protobuf';
-	import { attributeToDate } from '$lib/tools/time';
+	import { toJsonString } from '@bufbuild/protobuf';
+	import { valueToDate } from '$lib/tools/time';
+	import { field, findAttr, isWritable, iterServices, sortedEndpoints, textValue } from '$lib/device';
+	import { userData } from '$lib/stores/auth-store';
 	import { useConnectionContext } from '$lib/stores/connection-status.svelte';
 	import { SendActionRequest, SendRemoveDeviceRequest } from '$lib/stores/requests';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -43,19 +42,16 @@
 
 	let connected = $state(false);
 	let backoff = $state(0);
-	let dev = $state<DevicesStoreDevice | undefined>(undefined);
+	let eventsLost = $state(false);
+	let dev = $state.raw<DevicesStoreDevice | undefined>(undefined);
 
 	onDestroy(
 		DevicesStore.subscribe((store) => {
 			connected = store.connected;
 			backoff = store.backoff;
+			eventsLost = store.eventsLost;
 			connStatus.set(store.connected, !store.connected && store.backoff > 0);
-			for (const it of store.devices) {
-				if (it.id === deviceID) {
-					dev = it;
-					break;
-				}
-			}
+			dev = store.devices.find((it) => it.id === deviceID);
 		})
 	);
 	onDestroy(() => connStatus.reset());
@@ -65,13 +61,22 @@
 	let removing = $state(false);
 	let rawOpen = $state(false);
 
+	// Endpoint labels are renamed by admins. The server is the enforcement
+	// point; this only keeps the control away from users who cannot use it.
+	const isAdmin = $derived($userData.role === 'admin');
+
+	const endpoints = $derived(dev ? sortedEndpoints(dev.endpoints) : []);
+
 	// Renaming is only offered when the device's info service reports the name
 	// attribute as writable; bridges that support rename advertise this.
-	const infoService = $derived(dev?.services.find((srv) => srv.typ === Service_ServiceType.INFO));
-	const nameAttr = $derived(infoService?.attrs.find((attr) => attr.id === 'name'));
-	const canRename = $derived(
-		nameAttr?.text?.perms === Permissions.PERM_READWRITE || nameAttr?.text?.perms === Permissions.PERM_WRITEONLY
+	const infoMatch = $derived(
+		dev ? [...iterServices(dev)].find(({ service }) => service.typ === Service_ServiceType.INFO) : undefined
 	);
+	const infoService = $derived(infoMatch?.service);
+	const canRename = $derived.by(() => {
+		const nameAttr = infoService ? findAttr(infoService, 'name') : undefined;
+		return nameAttr !== undefined && isWritable(nameAttr);
+	});
 
 	let renameOpen = $state(false);
 	let newName = $state('');
@@ -81,13 +86,14 @@
 	async function handleRename(event: SubmitEvent) {
 		event.preventDefault();
 		const value = newName.trim();
-		if (!infoService || !value) return;
+		if (!infoService || !infoMatch || !value) return;
 		renaming = true;
 		renameError = null;
 		await SendActionRequest(
 			deviceID!,
+			infoMatch.endpoint.id,
 			infoService.id,
-			[create(ValueSchema, { id: 'name', text: create(TextValueSchema, { value }) })],
+			{ case: 'write', values: [field('name', textValue(value))] },
 			(response) => {
 				if (response.status >= ActionResponse_ActionStatus.COMPLETE) {
 					renaming = false;
@@ -165,7 +171,7 @@
 					{#if dev.lastSeen}
 						<span class="text-muted-foreground/40">·</span>
 						<span class="text-muted-foreground">Last seen</span>
-						<TimeSince past={attributeToDate(dev.lastSeen)} />
+						<TimeSince past={valueToDate(dev.lastSeen)} />
 					{/if}
 				</div>
 			</div>
@@ -220,23 +226,21 @@
 		</div>
 
 		<!-- Services -->
-		{#if dev.services.length > 0}
+		<!-- The root endpoint first and untitled, then one titled section per other endpoint. -->
+		{#if endpoints.length > 0}
 			<div class="grid gap-3">
 				<h2 class="text-sm font-medium text-muted-foreground">Services</h2>
-				<div class="flex flex-col md:flex-row gap-2 overflow-x-auto">
-					{#each dev.services as srv (srv.id)}
-						<ServiceEnumerator
-							showDeviceName={false}
-							{deviceName}
-							deviceID={dev.id}
-							deviceType={dev.typ}
-							online={dev.online}
-							service={srv}
-						/>
-					{/each}
-				</div>
+				{#each endpoints as endpoint (endpoint.id)}
+					<EndpointSection device={dev} {endpoint} editable={isAdmin} />
+				{/each}
 			</div>
 		{/if}
+
+		<!-- Recent events -->
+		<div class="grid gap-3">
+			<h2 class="text-sm font-medium text-muted-foreground">Recent events</h2>
+			<DeviceEvents device={dev} {eventsLost} />
+		</div>
 
 		<!-- Raw JSON (collapsible) -->
 		<Collapsible.Root bind:open={rawOpen}>
@@ -244,12 +248,12 @@
 				class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
 			>
 				<ChevronDownIcon class={cn('size-4 transition-transform duration-200', rawOpen && 'rotate-180')} />
-				Raw service data
+				Raw endpoint data
 			</Collapsible.Trigger>
 			<Collapsible.Content class="grid gap-2 pt-3">
-				{#each dev.services as srv (srv.id)}
+				{#each endpoints as endpoint (endpoint.id)}
 					<div class="min-w-0 overflow-x-auto font-mono bg-muted px-4 py-3 rounded-lg whitespace-pre text-xs">
-						{toJsonString(ServiceSchema, srv, { prettySpaces: 2 })}
+						{toJsonString(EndpointSchema, endpoint, { prettySpaces: 2 })}
 					</div>
 				{/each}
 			</Collapsible.Content>

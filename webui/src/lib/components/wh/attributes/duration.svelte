@@ -1,27 +1,31 @@
 <script lang="ts">
-	import type { DurationAttribute } from '$lib/api/v2/clients/client_service_pb';
-	import { Slider } from "$lib/components/ui/slider";
+	import { Slider } from '$lib/components/ui/slider';
 	import { cn } from '$lib/utils';
 
+	// A slider for a duration attribute (milliseconds) with a min and a max.
 	let {
 		name,
-		attr,
 		value,
+		min,
+		max,
+		step = 1n,
 		onaction,
-		transform = (value) => Number(value)/1000.0,
-		units = "s"
+		transform = (value) => Number(value) / 1000.0,
+		units = 's'
 	}: {
-		name: string,
-		attr: DurationAttribute,
-		value?: bigint,
-		onaction: (value: bigint)=>void,
-		transform?: (value: bigint)=>number,
-		units?: string
+		name: string;
+		value: bigint | undefined;
+		min: bigint;
+		max: bigint;
+		step?: bigint;
+		onaction: (value: bigint) => void;
+		transform?: (value: bigint) => number;
+		units?: string;
 	} = $props();
 
 	let ghostMax: string = $derived.by(() => {
-		const max = transform(attr.max); // Get the transformed version of max.
-		const digits = Math.abs(Math.trunc(max)).toString().length; // Count digits.
+		const tmax = transform(max); // Get the transformed version of max.
+		const digits = Math.abs(Math.trunc(tmax)).toString().length; // Count digits.
 		const ghost = formatNumber(Number('9'.repeat(digits))); // Generate number like 9,999 (if digits = 4).
 		return ghost;
 	});
@@ -46,22 +50,24 @@
 <Slider
 	class="shrink"
 	type="single"
-	step={Number(attr.step)}
-	min={Number(attr.min)}
-	max={Number(attr.max)}
-	value={value ? Number(value) : Number(attr.value)}
+	step={Number(step) || 1}
+	min={Number(min)}
+	max={Number(max)}
+	value={Number(value ?? min)}
 	onValueChange={startAction}
 	onValueCommit={sendAction}
 />
-<div class={cn("inline-block", changing ? "font-semibold" : "text-muted-foreground")}>
+<div class={cn('inline-block', changing !== null ? 'font-semibold' : 'text-muted-foreground')}>
 	<span class="invisible block h-0 overflow-hidden font-semibold">
-		{ghostMax+units}
+		{ghostMax + units}
 	</span>
 	<span>
-		{#if changing}
-			{formatNumber(transform(changing))+units}
+		{#if changing !== null}
+			{formatNumber(transform(changing)) + units}
+		{:else if value !== undefined}
+			{formatNumber(transform(value)) + units}
 		{:else}
-			{formatNumber(transform(value ? value : attr.value))+units}
+			-
 		{/if}
 	</span>
 </div>

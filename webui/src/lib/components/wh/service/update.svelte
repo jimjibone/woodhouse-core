@@ -1,67 +1,26 @@
 <script lang="ts">
-	import {
-		BoolValueSchema,
-		ValueSchema,
-		type Attribute,
-		type BoolAttribute,
-		type DurationAttribute,
-		type IntAttribute,
-		type TextAttribute
-	} from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { PackagePlusIcon, PackageCheckIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
 	import { toHumanDuration } from '$lib/tools/duration';
-	import { create } from '@bufbuild/protobuf';
+	import { attrBool, attrDuration, attrInt, attrText, findCommand } from '$lib/device';
+	import { Update } from '$lib/schema/zz_services';
 	import Button from '@/components/ui/button/button.svelte';
 
-	let { deviceID, service, ...rest }: StandardProps = $props();
+	let { deviceID, endpointID, service, ...rest }: StandardProps = $props();
 
-	let attrAvailable: BoolAttribute | undefined = $state(undefined);
-	let attrUpdating: BoolAttribute | undefined = $state(undefined);
-	let attrCurrentVersion: TextAttribute | undefined = $state(undefined);
-	let attrUpdateVersion: TextAttribute | undefined = $state(undefined);
-	let attrProgress: IntAttribute | undefined = $state(undefined);
-	let attrRemaining: DurationAttribute | undefined = $state(undefined);
-	let attrOthers: Attribute[] = $state([]);
-	let available: boolean = $state(false);
-	let updating: boolean = $state(false);
+	let available = $derived(attrBool(service, Update.attributes.available));
+	let updating = $derived(attrBool(service, Update.attributes.updating));
+	let currentVersion = $derived(attrText(service, Update.attributes.currentVersion));
+	let updateVersion = $derived(attrText(service, Update.attributes.updateVersion));
+	let progress = $derived(attrInt(service, Update.attributes.progress));
+	let remaining = $derived(attrDuration(service, Update.attributes.remaining));
+	let canStart = $derived(findCommand(service, Update.commands.start) !== undefined);
 
-	$effect(() => {
-		let others: Attribute[] = [];
-		for (const attr of service.attrs) {
-			if (attr.id === 'available') {
-				attrAvailable = attr.bool;
-				available = attr.bool?.value!;
-			} else if (attr.id === 'updating') {
-				attrUpdating = attr.bool;
-				updating = attr.bool?.value!;
-			} else if (attr.id === 'current_version') {
-				attrCurrentVersion = attr.text;
-			} else if (attr.id === 'update_version') {
-				attrUpdateVersion = attr.text;
-			} else if (attr.id === 'progress') {
-				attrProgress = attr.int;
-			} else if (attr.id === 'remaining') {
-				attrRemaining = attr.duration;
-			} else {
-				others = [...others, attr];
-			}
-		}
-		attrOthers = others;
-	});
+	let serviceAction = new ServiceAction(deviceID, endpointID, service.id);
 
-	let serviceAction = new ServiceAction(deviceID, service.id);
-
-	const sendActionStartUpdate = async () => {
-		serviceAction.send([
-			create(ValueSchema, {
-				id: 'start_update',
-				bool: create(BoolValueSchema, { value: true })
-			})
-		]);
-	};
+	const startUpdate = () => serviceAction.command(Update.commands.start);
 </script>
 
 {#snippet icon()}
@@ -74,8 +33,8 @@
 
 {#snippet details()}
 	{#if updating}
-		{#if attrProgress && attrRemaining}
-			<p>Updating ({attrProgress.value}% {toHumanDuration(Number(attrRemaining.value))})</p>
+		{#if progress !== undefined && remaining !== undefined}
+			<p>Updating ({progress}% {toHumanDuration(Number(remaining))})</p>
 		{:else}
 			<p>Updating</p>
 		{/if}
@@ -88,49 +47,66 @@
 
 <ServiceRoot
 	{deviceID}
+	{endpointID}
 	{...rest}
 	{service}
+	actionPending={serviceAction.pending}
+	errorSignal={serviceAction.error}
 	{icon}
 	iconclass={available ? 'bg-green-400 text-black' : updating ? 'bg-amber-400 text-black' : false}
 	{details}
 >
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
-		{#if attrAvailable !== undefined}
+		{#if available !== undefined}
 			<div>Available</div>
 			<div class="col-span-2">
 				{#if updating}
 					<Button class={'cursor-pointer'} disabled>Updating...</Button>
-				{:else if available}
-					<Button class={'cursor-pointer'} onclick={() => sendActionStartUpdate()}>Start Update</Button>
+				{:else if available && canStart}
+					<Button class={'cursor-pointer'} onclick={startUpdate}>Start Update</Button>
 				{:else}
-					<p>No</p>
+					<p>{available ? 'Yes' : 'No'}</p>
 				{/if}
 			</div>
 		{/if}
-		{#if attrUpdateVersion !== undefined}
+		{#if updateVersion !== undefined}
 			<div>Update Version</div>
 			<div class="col-span-2">
-				{attrUpdateVersion.value}
+				{updateVersion}
 			</div>
 		{/if}
-		{#if attrCurrentVersion !== undefined}
+		{#if currentVersion !== undefined}
 			<div>Current Version</div>
 			<div class="col-span-2">
-				{attrCurrentVersion.value}
+				{currentVersion}
 			</div>
 		{/if}
-		{#if attrProgress !== undefined}
+		{#if progress !== undefined}
 			<div>Progress</div>
 			<div class="col-span-2">
-				{attrProgress.value}%
+				{progress}%
 			</div>
 		{/if}
-		{#if attrRemaining !== undefined}
+		{#if remaining !== undefined}
 			<div>Remaining</div>
 			<div class="col-span-2">
-				{toHumanDuration(Number(attrRemaining.value))}
+				{toHumanDuration(Number(remaining))}
 			</div>
 		{/if}
 	</div>
-	<OthersContent others={attrOthers} {serviceAction} />
+	<OthersContent
+		{deviceID}
+		{endpointID}
+		{service}
+		action={serviceAction}
+		exclude={[
+			Update.attributes.available,
+			Update.attributes.updating,
+			Update.attributes.currentVersion,
+			Update.attributes.updateVersion,
+			Update.attributes.progress,
+			Update.attributes.remaining
+		]}
+		excludeCommands={[Update.commands.start]}
+	/>
 </ServiceRoot>

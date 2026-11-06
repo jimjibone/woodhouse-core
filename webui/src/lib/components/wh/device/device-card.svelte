@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { DevicesStoreDevice } from '$lib/stores/devices-stream';
-	import { ServiceEnumerator } from '$lib/components/wh/service';
+	import EndpointSection from './endpoint-section.svelte';
 	import TimeSince from '$lib/components/wh/ui/time-since.svelte';
-	import { attributeToDate } from '$lib/tools/time';
+	import { sortedEndpoints } from '$lib/device';
+	import { valueToDate } from '$lib/tools/time';
 	import { cn } from '$lib/utils';
 	import { Device_DeviceType } from '$lib/api/v2/clients/client_service_pb';
 	import {
@@ -15,7 +16,7 @@
 
 	let { device: dev }: { device: DevicesStoreDevice } = $props();
 
-	const deviceName = $derived(dev.name ? dev.name : dev.id);
+	const endpoints = $derived(sortedEndpoints(dev.endpoints));
 </script>
 
 <div
@@ -38,7 +39,7 @@
 			</a>
 			<span class="flex flex-row gap-2 text-sm md:text-xs items-center whitespace-pre">
 				{#if dev.lastSeen}
-					<TimeSince past={attributeToDate(dev.lastSeen)} />
+					<TimeSince past={valueToDate(dev.lastSeen)} />
 				{/if}
 				{#if dev.batteryLevel}
 					<span
@@ -62,18 +63,8 @@
 				{/if}
 			</span>
 		</div>
-		<div class="flex flex-row gap-2 overflow-x-scroll">
-			{#each dev.services as srv (srv.id)}
-				<ServiceEnumerator
-					showDeviceName={false}
-					naturalWidth
-					{deviceName}
-					deviceID={dev.id}
-					deviceType={dev.typ}
-					online={dev.online}
-					service={srv}
-				/>
-			{/each}
-		</div>
+		{#each endpoints as endpoint (endpoint.id)}
+			<EndpointSection device={dev} {endpoint} compact />
+		{/each}
 	</div>
 </div>

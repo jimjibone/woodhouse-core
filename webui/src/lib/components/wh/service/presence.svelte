@@ -1,40 +1,18 @@
 <script lang="ts">
-	import type {
-		Attribute,
-		BoolAttribute,
-		FloatAttribute,
-		IntAttribute,
-		Service
-	} from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { UserRoundCheckIcon, UserRoundXIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
+	import { attrBool, attrFloat } from '$lib/device';
+	import { Presence } from '$lib/schema/zz_services';
 
-	let { deviceID, service, ...rest }: StandardProps = $props();
+	let { deviceID, endpointID, service, ...rest }: StandardProps = $props();
 
-	let motion: boolean = $state(false);
-	let presence: boolean = $state(false);
-	let distance: number = $state(0.0);
-	let attrOthers: Attribute[] = $state([]);
+	let presence = $derived(attrBool(service, Presence.attributes.presence));
+	// Distance is only there when the device reports it (feature "distance").
+	let distance = $derived(attrFloat(service, Presence.attributes.distance));
 
-	$effect(() => {
-		let others: Attribute[] = [];
-		for (const attr of service.attrs) {
-			if (attr.id === 'motion') {
-				motion = attr.bool?.value!;
-			} else if (attr.id === 'presence') {
-				presence = attr.bool?.value!;
-			} else if (attr.id === 'distance') {
-				distance = attr.float?.value!;
-			} else {
-				others = [...others, attr];
-			}
-		}
-		attrOthers = others;
-	});
-
-	let serviceAction = new ServiceAction(deviceID, service.id);
+	let serviceAction = new ServiceAction(deviceID, endpointID, service.id);
 </script>
 
 {#snippet icon()}
@@ -46,33 +24,34 @@
 {/snippet}
 
 {#snippet details()}
-	<p>{presence ? 'Presence' : 'No Presence'}</p>
-	<p class="text-muted-foreground">{motion ? 'Motion' : 'No Motion'}</p>
-	<p class="text-muted-foreground">{distance.toLocaleString(undefined, { maximumFractionDigits: 1 })}m</p>
+	{#if presence !== undefined}
+		<p>{presence ? 'Presence' : 'No Presence'}</p>
+	{/if}
+	{#if distance !== undefined}
+		<p class="text-muted-foreground">{distance.toLocaleString(undefined, { maximumFractionDigits: 1 })}m</p>
+	{/if}
 {/snippet}
 
-<ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
+<ServiceRoot {deviceID} {endpointID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
-		<div>Presence</div>
-		<div class="col-span-2">
-			{#if presence}
-				<p>Yes</p>
-			{:else}
-				<p>No</p>
-			{/if}
-		</div>
-		<div>Motion</div>
-		<div class="col-span-2">
-			{#if motion}
-				<p>Yes</p>
-			{:else}
-				<p>No</p>
-			{/if}
-		</div>
-		<div>Distance</div>
-		<div class="col-span-2">
-			<p>{distance.toLocaleString(undefined, { maximumFractionDigits: 1 })}m</p>
-		</div>
+		{#if presence !== undefined}
+			<div>Presence</div>
+			<div class="col-span-2">
+				<p>{presence ? 'Yes' : 'No'}</p>
+			</div>
+		{/if}
+		{#if distance !== undefined}
+			<div>Distance</div>
+			<div class="col-span-2">
+				<p>{distance.toLocaleString(undefined, { maximumFractionDigits: 1 })}m</p>
+			</div>
+		{/if}
 	</div>
-	<OthersContent others={attrOthers} {serviceAction} />
+	<OthersContent
+		{deviceID}
+		{endpointID}
+		{service}
+		action={serviceAction}
+		exclude={[Presence.attributes.presence, Presence.attributes.distance]}
+	/>
 </ServiceRoot>

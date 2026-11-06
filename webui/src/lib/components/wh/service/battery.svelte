@@ -1,37 +1,31 @@
 <script lang="ts">
-	import type { Attribute, FloatAttribute, IntAttribute, Service } from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
-	import { BatteryFullIcon, BatteryLowIcon, BatteryMediumIcon, BatteryWarningIcon } from '@lucide/svelte';
+	import {
+		BatteryChargingIcon,
+		BatteryFullIcon,
+		BatteryLowIcon,
+		BatteryMediumIcon,
+		BatteryWarningIcon
+	} from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
+	import { attrBool, attrFloat, attrInt } from '$lib/device';
+	import { Battery } from '$lib/schema/zz_services';
 
-	let { deviceID, service, ...rest }: StandardProps = $props();
+	let { deviceID, endpointID, service, ...rest }: StandardProps = $props();
 
-	let attrLevel: IntAttribute | undefined = $state(undefined);
-	let attrVoltage: FloatAttribute | undefined = $state(undefined);
-	let attrOthers: Attribute[] = $state([]);
-	let level: number = $state(100);
+	let attrLevel = $derived(attrInt(service, Battery.attributes.level));
+	let attrVoltage = $derived(attrFloat(service, Battery.attributes.voltage));
+	let charging = $derived(attrBool(service, Battery.attributes.charging));
+	let level = $derived(attrLevel === undefined ? 100 : Number(attrLevel));
 
-	$effect(() => {
-		let others: Attribute[] = [];
-		for (const attr of service.attrs) {
-			if (attr.id === 'level') {
-				attrLevel = attr.int;
-				level = Number(attr.int?.value);
-			} else if (attr.id === 'voltage') {
-				attrVoltage = attr.float;
-			} else {
-				others = [...others, attr];
-			}
-		}
-		attrOthers = others;
-	});
-
-	let serviceAction = new ServiceAction(deviceID, service.id);
+	let serviceAction = new ServiceAction(deviceID, endpointID, service.id);
 </script>
 
 {#snippet icon()}
-	{#if level < 20}
+	{#if charging}
+		<BatteryChargingIcon />
+	{:else if level < 20}
 		<BatteryWarningIcon />
 	{:else if level < 33}
 		<BatteryLowIcon />
@@ -44,21 +38,23 @@
 
 {#snippet details()}
 	{#if attrLevel !== undefined}
-		<!-- <PowerIcon class="text-muted-foreground size-5"/> -->
 		<p>
-			{attrLevel.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
+			{attrLevel.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 		</p>
 	{/if}
 	{#if attrVoltage !== undefined}
-		<!-- <ThermometerIcon class="text-muted-foreground size-5"/> -->
 		<p class="text-muted-foreground">
-			{attrVoltage.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}V
+			{attrVoltage.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}V
 		</p>
+	{/if}
+	{#if charging}
+		<p class="text-muted-foreground">Charging</p>
 	{/if}
 {/snippet}
 
 <ServiceRoot
 	{deviceID}
+	{endpointID}
 	{...rest}
 	{service}
 	{icon}
@@ -69,15 +65,25 @@
 		{#if attrLevel !== undefined}
 			<div>Level</div>
 			<div class="col-span-2">
-				{attrLevel.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
+				{attrLevel.toLocaleString(undefined, { maximumFractionDigits: 0 })}%
 			</div>
 		{/if}
 		{#if attrVoltage !== undefined}
-			<div>Current</div>
+			<div>Voltage</div>
 			<div class="col-span-2">
-				{attrVoltage.value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}V
+				{attrVoltage.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}V
 			</div>
 		{/if}
+		{#if charging !== undefined}
+			<div>Charging</div>
+			<div class="col-span-2">{charging ? 'Yes' : 'No'}</div>
+		{/if}
 	</div>
-	<OthersContent others={attrOthers} {serviceAction} />
+	<OthersContent
+		{deviceID}
+		{endpointID}
+		{service}
+		action={serviceAction}
+		exclude={[Battery.attributes.level, Battery.attributes.voltage, Battery.attributes.charging]}
+	/>
 </ServiceRoot>

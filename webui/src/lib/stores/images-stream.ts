@@ -7,6 +7,7 @@ import { Streamer, type HeartbeatHandler } from './streamer';
 
 export type CachedImage = {
 	deviceId: string;
+	endpointId: string;
 	serviceId: string;
 	attributeId: string;
 	/** Object URL created from image data — revoke when updating. */
@@ -18,26 +19,36 @@ export type CachedImage = {
 export type ImagesStoreType = {
 	connected: boolean;
 	backoff: number;
-	/** Keyed by `"deviceId:serviceId:attributeId"` */
+	/** Keyed by imageKey(deviceId, endpointId, serviceId, attributeId). */
 	images: Map<string, CachedImage>;
 };
+
+/** The key of an image in ImagesStoreType.images. */
+export function imageKey(deviceId: string, endpointId: string, serviceId: string, attributeId: string): string {
+	return JSON.stringify([deviceId, endpointId, serviceId, attributeId]);
+}
 
 // ---------------------------------------------------------------------------
 // Size hint registry
 // Each camera component registers its rendered pixel dimensions here.
-// key = "deviceId:serviceId:attributeId"
-// value = map of component-instance-id → {w, h}
+// key = imageKey(...)
+// value = the image's IDs and a map of component-instance-id to {w, h}
 // ---------------------------------------------------------------------------
 type Dimensions = { w: number; h: number };
-const hintRegistry = new Map<string, Map<symbol, Dimensions>>();
+type HintEntry = {
+	deviceId: string;
+	endpointId: string;
+	serviceId: string;
+	attributeId: string;
+	instances: Map<symbol, Dimensions>;
+};
+const hintRegistry = new Map<string, HintEntry>();
 
-/** Returns the max width and height seen across all instances for a key. */
-function maxHintFor(key: string): Dimensions {
-	const instances = hintRegistry.get(key);
-	if (!instances || instances.size === 0) return { w: 0, h: 0 };
+/** Returns the max width and height seen across all instances of an entry. */
+function maxHintFor(entry: HintEntry): Dimensions {
 	let maxW = 0,
 		maxH = 0;
-	for (const { w, h } of instances.values()) {
+	for (const { w, h } of entry.instances.values()) {
 		if (w > maxW) maxW = w;
 		if (h > maxH) maxH = h;
 	}
@@ -46,12 +57,25 @@ function maxHintFor(key: string): Dimensions {
 
 /** Collect all current hints as a flat array for the proto request. */
 function currentHints() {
-	const result: { deviceId: string; serviceId: string; attributeId: string; w: number; h: number }[] = [];
-	for (const key of hintRegistry.keys()) {
-		const { w, h } = maxHintFor(key);
+	const result: {
+		deviceId: string;
+		endpointId: string;
+		serviceId: string;
+		attributeId: string;
+		w: number;
+		h: number;
+	}[] = [];
+	for (const entry of hintRegistry.values()) {
+		const { w, h } = maxHintFor(entry);
 		if (w > 0 || h > 0) {
-			const [deviceId, serviceId, attributeId] = key.split(':');
-			result.push({ deviceId, serviceId, attributeId, w, h });
+			result.push({
+				deviceId: entry.deviceId,
+				endpointId: entry.endpointId,
+				serviceId: entry.serviceId,
+				attributeId: entry.attributeId,
+				w,
+				h
+			});
 		}
 	}
 	return result;
@@ -59,27 +83,39 @@ function currentHints() {
 
 /**
  * Register a component instance's rendered size for a camera key.
- * Returns an unregister function to call on component destroy.
+ * Call unregisterSizeHint on component destroy.
  */
 export function registerSizeHint(
 	deviceId: string,
+	endpointId: string,
 	serviceId: string,
 	attributeId: string,
 	instanceId: symbol,
 	w: number,
 	h: number
 ): void {
-	const key = `${deviceId}:${serviceId}:${attributeId}`;
-	if (!hintRegistry.has(key)) hintRegistry.set(key, new Map());
-	hintRegistry.get(key)!.set(instanceId, { w, h });
+	const key = imageKey(deviceId, endpointId, serviceId, attributeId);
+	let entry = hintRegistry.get(key);
+	if (!entry) {
+		entry = { deviceId, endpointId, serviceId, attributeId, instances: new Map() };
+		hintRegistry.set(key, entry);
+	}
+	entry.instances.set(instanceId, { w, h });
 	// Restart stream so the server learns the new max size.
 	restartStream();
 }
 
-export function unregisterSizeHint(deviceId: string, serviceId: string, attributeId: string, instanceId: symbol): void {
-	const key = `${deviceId}:${serviceId}:${attributeId}`;
-	hintRegistry.get(key)?.delete(instanceId);
-	if (hintRegistry.get(key)?.size === 0) hintRegistry.delete(key);
+export function unregisterSizeHint(
+	deviceId: string,
+	endpointId: string,
+	serviceId: string,
+	attributeId: string,
+	instanceId: symbol
+): void {
+	const key = imageKey(deviceId, endpointId, serviceId, attributeId);
+	const entry = hintRegistry.get(key);
+	entry?.instances.delete(instanceId);
+	if (entry?.instances.size === 0) hintRegistry.delete(key);
 	restartStream();
 }
 
@@ -135,9 +171,10 @@ const streamImages = async (
 	let didConnect = false;
 
 	// Snapshot current hints at connection time.
-	const hints = currentHints().map(({ deviceId, serviceId, attributeId, w, h }) =>
+	const hints = currentHints().map(({ deviceId, endpointId, serviceId, attributeId, w, h }) =>
 		create(ImageSizeHintSchema, {
 			deviceId,
+			endpointId,
 			serviceId,
 			attributeId,
 			width: w,
@@ -183,7 +220,7 @@ const streamImages = async (
 				continue;
 			}
 
-			const key = `${response.deviceId}:${response.serviceId}:${response.attributeId}`;
+			const key = imageKey(response.deviceId, response.endpointId, response.serviceId, response.attributeId);
 
 			if (!gotSnapshot) {
 				snapshotKeys.push(key);
@@ -201,6 +238,7 @@ const streamImages = async (
 
 					prev.images.set(key, {
 						deviceId: response.deviceId,
+						endpointId: response.endpointId,
 						serviceId: response.serviceId,
 						attributeId: response.attributeId,
 						url,

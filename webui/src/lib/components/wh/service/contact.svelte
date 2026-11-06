@@ -1,68 +1,46 @@
 <script lang="ts">
-	import type {
-		Attribute,
-		BoolAttribute,
-		FloatAttribute,
-		IntAttribute,
-		Service
-	} from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { DoorOpenIcon, DoorClosedIcon } from '@lucide/svelte';
 	import { OthersContent } from '$lib/components/wh/attributes';
+	import { attrBool } from '$lib/device';
+	import { Contact } from '$lib/schema/zz_services';
 
-	let { deviceID, service, ...rest }: StandardProps = $props();
+	let { deviceID, endpointID, service, ...rest }: StandardProps = $props();
 
-	let attrClosed: BoolAttribute | undefined = $state(undefined);
-	let attrOthers: Attribute[] = $state([]);
-	let closed: boolean = $state(false);
+	let closed = $derived(attrBool(service, Contact.attributes.closed));
 
-	$effect(() => {
-		let others: Attribute[] = [];
-		for (const attr of service.attrs) {
-			if (attr.id === 'closed') {
-				attrClosed = attr.bool;
-				closed = attr.bool?.value!;
-			} else {
-				others = [...others, attr];
-			}
-		}
-		attrOthers = others;
-	});
-
-	let serviceAction = new ServiceAction(deviceID, service.id);
+	let serviceAction = new ServiceAction(deviceID, endpointID, service.id);
 </script>
 
 {#snippet icon()}
-	{#if closed}
-		<DoorClosedIcon />
-	{:else}
+	{#if closed === false}
 		<DoorOpenIcon />
+	{:else}
+		<DoorClosedIcon />
 	{/if}
 {/snippet}
 
 {#snippet details()}
-	{#if attrClosed !== undefined}
-		{#if attrClosed.value}
-			<p>Closed</p>
-		{:else}
-			<p>Open</p>
-		{/if}
+	{#if closed !== undefined}
+		<p>{closed ? 'Closed' : 'Open'}</p>
 	{/if}
 {/snippet}
 
-<ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
+<ServiceRoot {deviceID} {endpointID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
-		{#if attrClosed !== undefined}
+		{#if closed !== undefined}
 			<div>Closed</div>
 			<div class="col-span-2">
-				{#if attrClosed.value}
-					<p>Yes</p>
-				{:else}
-					<p>No</p>
-				{/if}
+				<p>{closed ? 'Yes' : 'No'}</p>
 			</div>
 		{/if}
 	</div>
-	<OthersContent others={attrOthers} {serviceAction} />
+	<OthersContent
+		{deviceID}
+		{endpointID}
+		{service}
+		action={serviceAction}
+		exclude={[Contact.attributes.closed]}
+	/>
 </ServiceRoot>

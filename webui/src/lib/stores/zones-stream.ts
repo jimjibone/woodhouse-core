@@ -37,6 +37,14 @@ export const ZonesStore = {
 	subscribe
 };
 
+/**
+ * The zone an endpoint belongs to: the zone that lists the endpoint as an
+ * override, else the zone that lists its device, else undefined.
+ */
+export const endpointZone = (zones: readonly Zone[], deviceID: string, endpointID: string): Zone | undefined =>
+	zones.find((z) => z.endpoints.some((e) => e.deviceId === deviceID && e.endpointId === endpointID)) ??
+	zones.find((z) => z.deviceIds.includes(deviceID));
+
 const byName = (a: Zone, b: Zone) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0);
 
 const markConnected = (prev: ZonesStoreType): ZonesStoreType => {

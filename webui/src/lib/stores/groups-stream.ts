@@ -36,6 +36,10 @@ export const GroupsStore = {
 	subscribe
 };
 
+/** A stable key for a group member: device, endpoint and service IDs. */
+export const memberKey = (deviceID: string, endpointID: string, serviceID: string): string =>
+	JSON.stringify([deviceID, endpointID, serviceID]);
+
 const streamGroups = async (
 	client: Client<typeof UserService>,
 	abortSignal: AbortSignal,

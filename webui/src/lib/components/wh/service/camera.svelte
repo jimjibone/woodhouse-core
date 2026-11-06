@@ -22,23 +22,31 @@
 	import { toJsonString } from '@bufbuild/protobuf';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { toHeadlineCase } from '$lib/tools/headline-case';
-	import { ImagesStore, registerSizeHint, unregisterSizeHint } from '$lib/stores/images-stream';
+	import { ImagesStore, imageKey, registerSizeHint, unregisterSizeHint } from '$lib/stores/images-stream';
+	import { Camera } from '$lib/schema/zz_services';
 
-	let { deviceID, deviceName, showDeviceName = true, service, online, naturalWidth, ...rest }: StandardProps = $props();
+	let {
+		deviceID,
+		endpointID,
+		endpointLabel = '',
+		deviceName,
+		showDeviceName = true,
+		service,
+		online,
+		naturalWidth,
+		...rest
+	}: StandardProps = $props();
 
-	let imageAttrID = $state('image');
-	$effect(() => {
-		for (const attr of service.attrs) {
-			if (attr.image !== undefined) {
-				imageAttrID = attr.id;
-				break;
-			}
-		}
-	});
+	// The attribute holding the image: the one with an image spec (or value),
+	// the camera service's image attribute otherwise.
+	let imageAttrID = $derived(
+		service.attrs.find((attr) => attr.spec?.kind.case === 'image' || attr.value?.kind.case === 'image')?.id ??
+			Camera.attributes.image
+	);
 
 	// Look up this camera's latest image from the shared store.
 	let cachedImage = $derived.by(() => {
-		const key = `${deviceID}:${service.id}:${imageAttrID}`;
+		const key = imageKey(deviceID, endpointID, service.id, imageAttrID);
 		return $ImagesStore.images.get(key) ?? null;
 	});
 
@@ -66,7 +74,7 @@
 				if (w !== renderedW || h !== renderedH) {
 					renderedW = w;
 					renderedH = h;
-					registerSizeHint(deviceID, service.id, imageAttrID, instanceId, w, h);
+					registerSizeHint(deviceID, endpointID, service.id, imageAttrID, instanceId, w, h);
 				}
 			}
 		});
@@ -75,7 +83,7 @@
 
 	onDestroy(() => {
 		observer?.disconnect();
-		unregisterSizeHint(deviceID, service.id, imageAttrID, instanceId);
+		unregisterSizeHint(deviceID, endpointID, service.id, imageAttrID, instanceId);
 	});
 
 	let pending = $state(false);
@@ -88,6 +96,7 @@
 		pending = true;
 		await SendImageRequest(
 			deviceID,
+			endpointID,
 			service.id,
 			imageAttrID,
 			(response) => {
@@ -104,13 +113,14 @@
 	let serviceTitle = $derived.by(() => {
 		if (showDeviceName) {
 			let dev = deviceName !== '' ? deviceName : deviceID;
+			let ep = endpointLabel ? ': ' + endpointLabel : '';
 			let srv = service.alias ? ': ' + toHeadlineCase(service.alias) : '';
-			return dev + srv;
+			return dev + ep + srv;
 		}
 		return service.alias ? toHeadlineCase(service.alias) : '';
 	});
 
-	const toggleFavorite = () => SendFavoriteRequest(deviceID, service.id, !service.favorite);
+	const toggleFavorite = () => SendFavoriteRequest(deviceID, endpointID, service.id, !service.favorite);
 </script>
 
 <div
@@ -225,6 +235,8 @@
 			<div class="font-mono bg-muted p-1 rounded-md">{deviceName}</div>
 			<div>Device ID</div>
 			<div class="font-mono bg-muted p-1 rounded-md">{deviceID}</div>
+			<div>Endpoint ID</div>
+			<div class="font-mono bg-muted p-1 rounded-md">{endpointID}</div>
 			<div>Online</div>
 			<div class="font-mono bg-muted p-1 rounded-md">{online}</div>
 			<div class="col-span-2">Service:</div>

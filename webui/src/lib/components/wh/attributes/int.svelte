@@ -1,29 +1,35 @@
 <script lang="ts">
-	import type { IntAttribute } from '$lib/api/v2/clients/client_service_pb';
-	import { Slider } from "$lib/components/ui/slider";
+	import { Slider } from '$lib/components/ui/slider';
 	import { cn } from '$lib/utils';
 
+	// A slider for an int attribute with a min and a max.
 	let {
 		name,
-		attr,
+		value,
+		min,
+		max,
+		step = 1n,
 		onaction,
 		transform = (value) => Number(value),
 		units,
 		invert,
 		class: className = ''
 	}: {
-		name: string,
-		attr: IntAttribute,
-		onaction: (value: bigint)=>void,
-		transform?: (value: bigint)=>number,
-		units: string,
-		invert?: boolean,
-		class?: string
+		name: string;
+		value: bigint | undefined;
+		min: bigint;
+		max: bigint;
+		step?: bigint;
+		onaction: (value: bigint) => void;
+		transform?: (value: bigint) => number;
+		units: string;
+		invert?: boolean;
+		class?: string;
 	} = $props();
 
 	let ghostMax: string = $derived.by(() => {
-		const max = transform(attr.max); // Get the transformed version of max.
-		const digits = Math.abs(Math.trunc(max)).toString().length; // Count digits.
+		const tmax = transform(max); // Get the transformed version of max.
+		const digits = Math.abs(Math.trunc(tmax)).toString().length; // Count digits.
 		const ghost = formatNumber(Number('9'.repeat(digits))); // Generate number like 9,999 (if digits = 4).
 		return ghost;
 	});
@@ -42,41 +48,46 @@
 		changing = null;
 		onaction(BigInt(val));
 	};
+
+	const current = $derived(value ?? min);
+	const stepNum = $derived(Number(step) || 1);
 </script>
 
 <div class={className}>{name}</div>
 {#if invert}
 	<Slider
-		class={cn("shrink", className)}
+		class={cn('shrink', className)}
 		type="single"
-		step={Number(attr.step)}
-		min={-Number(attr.max)}
-		max={-Number(attr.min)}
-		value={-Number(attr.value)}
+		step={stepNum}
+		min={-Number(max)}
+		max={-Number(min)}
+		value={-Number(current)}
 		onValueChange={(val) => startAction(-val)}
 		onValueCommit={(val) => sendAction(-val)}
 	/>
 {:else}
 	<Slider
-		class={cn("shrink", className)}
+		class={cn('shrink', className)}
 		type="single"
-		step={Number(attr.step)}
-		min={Number(attr.min)}
-		max={Number(attr.max)}
-		value={Number(attr.value)}
+		step={stepNum}
+		min={Number(min)}
+		max={Number(max)}
+		value={Number(current)}
 		onValueChange={startAction}
 		onValueCommit={sendAction}
 	/>
 {/if}
-<div class={cn("inline-block", changing ? "font-semibold" : "text-muted-foreground", className)}>
+<div class={cn('inline-block', changing !== null ? 'font-semibold' : 'text-muted-foreground', className)}>
 	<span class="invisible block h-0 overflow-hidden font-semibold">
-		{ghostMax+units}
+		{ghostMax + units}
 	</span>
 	<span>
-		{#if changing}
-			{formatNumber(transform(changing))+units}
+		{#if changing !== null}
+			{formatNumber(transform(changing)) + units}
+		{:else if value !== undefined}
+			{formatNumber(transform(value)) + units}
 		{:else}
-			{formatNumber(transform(attr.value))+units}
+			-
 		{/if}
 	</span>
 </div>

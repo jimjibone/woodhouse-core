@@ -1,24 +1,18 @@
 <script lang="ts">
-	import { Permissions, type TextAttribute } from '$lib/api/v2/clients/client_service_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input/index.js';
 
 	let {
 		name,
-		attr,
+		value,
 		onaction,
 		class: className = ''
 	}: {
 		name: string;
-		attr: TextAttribute;
+		value: string | undefined;
 		onaction: (value: string) => void;
 		class?: string;
 	} = $props();
-
-	// A write-only attribute has no value to read back, so the field starts
-	// empty and empties again once sent. That suits what write-only text is
-	// for: a one-shot entry such as a pairing PIN, which should not linger.
-	let writeOnly = $derived(attr.perms === Permissions.PERM_WRITEONLY);
 
 	let draft = $state('');
 	let editing = $state(false);
@@ -26,19 +20,15 @@
 	// Follow the device's value while the user is not mid-edit, so an update
 	// from elsewhere shows up without overwriting something being typed.
 	$effect(() => {
-		const incoming = attr.value;
-		if (!writeOnly && !editing) {
+		const incoming = value ?? '';
+		if (!editing) {
 			draft = incoming;
 		}
 	});
 
 	function send() {
-		const value = draft;
-		if (writeOnly) {
-			draft = '';
-		}
 		editing = false;
-		onaction(value);
+		onaction(draft);
 	}
 
 	function onkeydown(event: KeyboardEvent) {
@@ -57,7 +47,6 @@
 		{onkeydown}
 		onfocus={() => (editing = true)}
 		onblur={() => (editing = false)}
-		placeholder={writeOnly ? `Enter ${name.toLowerCase()}` : ''}
 		class={className}
 	/>
 	<Button class={'cursor-pointer ' + className} variant="dark" onclick={send}>Send</Button>

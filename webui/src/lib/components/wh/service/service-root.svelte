@@ -43,6 +43,14 @@
 		deviceName: string;
 		showDeviceName?: boolean;
 		deviceID: string;
+		/** The endpoint the service belongs to. */
+		endpointID: string;
+		/**
+		 * The endpoint's display label, shown after the device name when set.
+		 * Leave empty on the device page, where the endpoint is a section title,
+		 * and for the root endpoint.
+		 */
+		endpointLabel?: string;
 		deviceType?: Device_DeviceType;
 		online: boolean;
 		lastSeen?: Date;
@@ -78,6 +86,8 @@
 		deviceName,
 		showDeviceName = true,
 		deviceID,
+		endpointID,
+		endpointLabel = '',
 		deviceType = undefined,
 		online,
 		lastSeen = undefined,
@@ -101,8 +111,9 @@
 	let serviceTitle = $derived.by(() => {
 		if (showDeviceName) {
 			let dev = deviceName !== '' ? deviceName : deviceID;
+			let ep = endpointLabel ? ': ' + endpointLabel : '';
 			let srv = serviceLabel ? ': ' + toHeadlineCase(serviceLabel) : '';
-			return dev + srv;
+			return dev + ep + srv;
 		}
 		return serviceLabel ? toHeadlineCase(serviceLabel) : '';
 	});
@@ -111,14 +122,15 @@
 
 	let popupTitle = $derived.by(() => {
 		let dev = deviceName !== '' ? deviceName : deviceID;
+		let ep = endpointLabel ? ': ' + endpointLabel : '';
 		let srv = ': ' + toHeadlineCase(service.alias ? service.alias : service.id);
-		return dev + srv;
+		return dev + ep + srv;
 	});
 
 	let rawPanelOpen = $state(false);
 
 	let toggleFavorite = async () => {
-		SendFavoriteRequest(deviceID, service.id, !service.favorite);
+		SendFavoriteRequest(deviceID, endpointID, service.id, !service.favorite);
 	};
 
 	let isError = $state(false);
@@ -373,6 +385,8 @@
 		<div class="font-mono bg-muted p-1 rounded-md">{deviceName}</div>
 		<div>Device ID</div>
 		<div class="font-mono bg-muted p-1 rounded-md">{deviceID}</div>
+		<div>Endpoint ID</div>
+		<div class="font-mono bg-muted p-1 rounded-md">{endpointID}</div>
 		<div>Online</div>
 		<div class="font-mono bg-muted p-1 rounded-md">{online}</div>
 		{#if lastSeen}

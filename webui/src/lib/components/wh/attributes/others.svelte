@@ -1,110 +1,57 @@
 <script lang="ts">
-	import {
-		BoolValueSchema,
-		ValueSchema,
-		AttributeSchema,
-		FloatValueSchema
-	} from '$lib/api/v2/clients/client_service_pb';
-	import { type Attribute, Unit } from '$lib/api/v2/clients/client_service_pb';
-	import { ServiceAction } from '$lib/components/wh/service';
-	import { create, toJsonString } from '@bufbuild/protobuf';
-	import { BoolContent, FloatContent } from '$lib/components/wh/attributes';
-	import { toHeadlineCase } from '$lib/tools/headline-case';
+	// Every attribute of a service not in `exclude`, rendered from its spec,
+	// followed by the service's commands. Typed service components render the
+	// attributes they know how to lay out themselves and hand the rest to this.
+	import type { Service } from '$lib/api/v2/clients/client_service_pb';
+	import type ServiceAction from '$lib/components/wh/service/service-action.svelte';
+	import { isWritable } from '$lib/device';
+	import AttributeRow from './attribute-row.svelte';
+	import Commands from './commands.svelte';
 
 	let {
-		others,
-		serviceAction
+		deviceID,
+		endpointID,
+		service,
+		action,
+		exclude = [],
+		excludeCommands = [],
+		separator = true
 	}: {
-		others: Attribute[];
-		serviceAction: ServiceAction;
+		deviceID: string;
+		endpointID: string;
+		service: Service;
+		action: ServiceAction;
+		/** Attribute IDs the caller renders itself. */
+		exclude?: string[];
+		/** Command IDs the caller renders itself. */
+		excludeCommands?: string[];
+		/** Draw a rule above the attributes. */
+		separator?: boolean;
 	} = $props();
 
-	let sendActionBool = async (id: string, val: boolean) => {
-		serviceAction.send([
-			create(ValueSchema, {
-				id: id,
-				bool: create(BoolValueSchema, {
-					value: val
-				})
+	// Attributes arrive in no particular order, so sort them to keep the
+	// display stable: writable controls first, then read-only values, each
+	// group ordered by ID.
+	const others = $derived(
+		service.attrs
+			.filter((attr) => !exclude.includes(attr.id))
+			.sort((a, b) => {
+				const aw = isWritable(a) ? 0 : 1;
+				const bw = isWritable(b) ? 0 : 1;
+				if (aw !== bw) return aw - bw;
+				return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 			})
-		]);
-	};
-
-	let sendActionFloat = async (id: string, val: number) => {
-		serviceAction.send([
-			create(ValueSchema, {
-				id: id,
-				float: create(FloatValueSchema, {
-					value: val
-				})
-			})
-		]);
-	};
-
-	let floatUnits = (unit: Unit) => {
-		switch (unit) {
-			case Unit.UNDEFINED:
-				return '?';
-			case Unit.PERCENTAGE:
-				return '%';
-			case Unit.ARC_DEGREES:
-				return '°';
-			case Unit.CELSIUS:
-				return '°C';
-			case Unit.LUX:
-				return 'LUX';
-			case Unit.SECONDS:
-				return 's';
-			case Unit.PPM:
-				return 'PPM';
-			case Unit.MICROGRAMS_PER_CUBIC_METER:
-				return 'mg/m³';
-			case Unit.VOLTS:
-				return 'V';
-			case Unit.AMPS:
-				return 'A';
-			case Unit.WATTS:
-				return 'W';
-			case Unit.MIREDS:
-				return 'Mireds';
-			case Unit.HECTOPASCAL:
-				return 'hPa';
-		}
-		return '?';
-	};
+	);
 </script>
 
 {#if others.length > 0}
-	<div class="grid grid-cols-[auto_1fr_auto] pt-4 gap-4 items-center">
-		<div class="col-span-3 text-muted-foreground border-t-2 font-semibold"></div>
-		<!-- <div class="col-span-3 text-muted-foreground pt-3 border-t-2 font-semibold">Others</div> -->
-		{#each others as other}
-			{#if other.bool}
-				<BoolContent
-					name={toHeadlineCase(other.id)}
-					attr={other.bool}
-					onaction={(val) => sendActionBool(other.id, val)}
-				/>
-				<!-- {:else if other.color} -->
-				<!-- {:else if other.duration} -->
-				<!-- {:else if other.enum} -->
-			{:else if other.float}
-				<FloatContent
-					name={toHeadlineCase(other.id)}
-					value={other.float.value}
-					min={other.float.min}
-					max={other.float.max}
-					onaction={(val) => sendActionFloat(other.id, val)}
-					units={floatUnits(other.float.unit)}
-				/>
-				<!-- {:else if other.int} -->
-				<!-- {:else if other.text} -->
-				<!-- {:else if other.time} -->
-			{:else}
-				<div class="col-span-3 font-mono bg-muted px-4 py-2 rounded-md whitespace-pre overflow-x-auto">
-					{toJsonString(AttributeSchema, other)}
-				</div>
-			{/if}
+	<div class={'grid grid-cols-[auto_1fr_auto] gap-4 items-center ' + (separator ? 'pt-4' : '')}>
+		{#if separator}
+			<div class="col-span-3 text-muted-foreground border-t-2 font-semibold"></div>
+		{/if}
+		{#each others as attr (attr.id)}
+			<AttributeRow {attr} {deviceID} {endpointID} serviceID={service.id} {action} />
 		{/each}
 	</div>
 {/if}
+<Commands {service} {action} exclude={excludeCommands} />

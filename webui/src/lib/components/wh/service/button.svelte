@@ -1,31 +1,19 @@
 <script lang="ts">
-	import type { Attribute, DurationAttribute, EnumAttribute, Service } from '$lib/api/v2/clients/client_service_pb';
 	import ServiceRoot, { type StandardProps } from './service-root.svelte';
 	import ServiceAction from './service-action.svelte';
 	import { PointerIcon } from '@lucide/svelte';
 	import { EnumContent, OthersContent } from '$lib/components/wh/attributes';
+	import { attrDuration, attrEnum, findAttr, specEnumOptions } from '$lib/device';
+	import { toHeadlineCase } from '$lib/tools/headline-case';
+	import { Button } from '$lib/schema/zz_services';
 
-	let { deviceID, service, ...rest }: StandardProps = $props();
+	let { deviceID, endpointID, service, ...rest }: StandardProps = $props();
 
-	let attrState: EnumAttribute | undefined = $state(undefined);
-	let attrDuration: DurationAttribute | undefined = $state(undefined);
-	let attrOthers: Attribute[] = $state([]);
+	let lastEvent = $derived(attrEnum(service, Button.attributes.lastEvent));
+	let lastDuration = $derived(attrDuration(service, Button.attributes.lastDuration));
+	let eventOptions = $derived(specEnumOptions(findAttr(service, Button.attributes.lastEvent)?.spec));
 
-	$effect(() => {
-		let others: Attribute[] = [];
-		for (const attr of service.attrs) {
-			if (attr.id === 'state') {
-				attrState = attr.enum;
-			} else if (attr.id === 'duration') {
-				attrDuration = attr.duration;
-			} else {
-				others = [...others, attr];
-			}
-		}
-		attrOthers = others;
-	});
-
-	let serviceAction = new ServiceAction(deviceID, service.id);
+	let serviceAction = new ServiceAction(deviceID, endpointID, service.id);
 </script>
 
 {#snippet icon()}
@@ -33,37 +21,37 @@
 {/snippet}
 
 {#snippet details()}
-	{#if attrState !== undefined}
-		{#if attrState.value === ''}
-			<p>No state</p>
+	{#if findAttr(service, Button.attributes.lastEvent) !== undefined}
+		{#if !lastEvent}
+			<p>No events</p>
 		{:else}
-			<p>
-				{attrState.value}
-			</p>
+			<p>{toHeadlineCase(lastEvent)}</p>
 		{/if}
 	{/if}
-	{#if attrDuration !== undefined}
-		{#if attrDuration.value > 0}
-			<p class="text-muted-foreground">
-				{attrDuration.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}ms
-			</p>
-		{/if}
+	{#if lastDuration !== undefined && lastDuration > 0n}
+		<p class="text-muted-foreground">
+			{lastDuration.toLocaleString(undefined, { maximumFractionDigits: 0 })}ms
+		</p>
 	{/if}
 {/snippet}
 
-<ServiceRoot {deviceID} {...rest} {service} {icon} {details}>
+<ServiceRoot {deviceID} {endpointID} {...rest} {service} {icon} {details}>
 	<div class="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
-		{#if attrState !== undefined}
-			<EnumContent name="State" attr={attrState} />
+		{#if findAttr(service, Button.attributes.lastEvent) !== undefined}
+			<EnumContent name="Last Event" value={lastEvent} options={eventOptions} />
 		{/if}
-		{#if attrDuration !== undefined}
-			{#if attrDuration.value > 0}
-				<div>Duration</div>
-				<div class="col-span-2">
-					{attrDuration.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}ms
-				</div>
-			{/if}
+		{#if lastDuration !== undefined && lastDuration > 0n}
+			<div>Last Duration</div>
+			<div class="col-span-2">
+				{lastDuration.toLocaleString(undefined, { maximumFractionDigits: 0 })}ms
+			</div>
 		{/if}
 	</div>
-	<OthersContent others={attrOthers} {serviceAction} />
+	<OthersContent
+		{deviceID}
+		{endpointID}
+		{service}
+		action={serviceAction}
+		exclude={[Button.attributes.lastEvent, Button.attributes.lastDuration]}
+	/>
 </ServiceRoot>

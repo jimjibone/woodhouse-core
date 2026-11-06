@@ -2,6 +2,7 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import { cn } from '$lib/utils';
 
+	// A slider for a float attribute with a min and a max.
 	let {
 		name,
 		value,
@@ -15,7 +16,7 @@
 		class: className = ''
 	}: {
 		name: string;
-		value: number;
+		value: number | undefined;
 		min: number;
 		max: number;
 		step?: number;
@@ -59,19 +60,21 @@
 	{step}
 	{min}
 	{max}
-	{value}
+	value={value ?? min}
 	onValueChange={startAction}
 	onValueCommit={sendAction}
 />
-<div class={cn('inline-block', changing ? 'font-semibold' : 'text-muted-foreground', className)}>
+<div class={cn('inline-block', changing !== null ? 'font-semibold' : 'text-muted-foreground', className)}>
 	<span class="invisible block h-0 overflow-hidden font-semibold">
 		{ghostMax + units}
 	</span>
 	<span>
-		{#if changing}
+		{#if changing !== null}
 			{formatNumber(transform(changing)) + units}
-		{:else}
+		{:else if value !== undefined}
 			{formatNumber(transform(value)) + units}
+		{:else}
+			-
 		{/if}
 	</span>
 </div>

@@ -65,6 +65,8 @@
 				<ServiceEnumerator
 					deviceName={dev.deviceName ? dev.deviceName : ''}
 					deviceID={dev.deviceId}
+					endpointID={dev.endpointId}
+					endpointLabel={dev.endpointLabel ?? ''}
 					deviceType={dev.deviceType}
 					online={dev.online ? dev.online : false}
 					lastSeen={dev.lastSeen ? valueToDate(dev.lastSeen) : undefined}

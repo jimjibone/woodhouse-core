@@ -24,10 +24,14 @@ export function unitLabel(unit: Unit): string {
 			return 'A';
 		case Unit.WATTS:
 			return 'W';
-		case Unit.MIREDS:
-			return ' mireds';
+		case Unit.KELVIN:
+			return ' K';
 		case Unit.HECTOPASCAL:
 			return ' hPa';
+		case Unit.METERS:
+			return ' m';
+		case Unit.KILOWATT_HOURS:
+			return ' kWh';
 	}
 	return '';
 }
