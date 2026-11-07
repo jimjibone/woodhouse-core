@@ -21,6 +21,7 @@ type Device struct {
 	ID        string
 	Typ       clientsapi.Device_DeviceType
 	Endpoints map[string]*DeviceEndpoint // key=endpoint id
+	LastSeen  time.Time                  // See clientsapi.Device.last_seen.
 }
 
 // DeviceEndpoint is an endpoint of a device and the services it holds. Events
@@ -64,6 +65,7 @@ func (dev *Device) pb() *clientsapi.Device {
 		FullState: true,
 		Typ:       dev.Typ,
 		Endpoints: []*clientsapi.Endpoint{},
+		LastSeen:  dev.lastSeenPb(),
 	}
 	for _, ep := range dev.Endpoints {
 		pb.Endpoints = append(pb.Endpoints, ep.pb())
@@ -89,6 +91,54 @@ func (ep *DeviceEndpoint) pb() *clientsapi.Endpoint {
 		return pb.Services[i].GetId() < pb.Services[j].GetId()
 	})
 	return pb
+}
+
+// lastSeenPb returns LastSeen for the wire, nil if never seen.
+func (dev *Device) lastSeenPb() *clientsapi.TimeValue {
+	if dev.LastSeen.IsZero() {
+		return nil
+	}
+	return values.TimeToPb(dev.LastSeen)
+}
+
+// seen moves LastSeen forward to t and reports whether it moved.
+func (dev *Device) seen(t time.Time) bool {
+	if t.After(dev.LastSeen) {
+		dev.LastSeen = t
+		return true
+	}
+	return false
+}
+
+// seenService moves LastSeen forward for an update of the service: to the time
+// of any of its attributes, or for the online service to its last_seen value.
+// The online service's own attribute times are skipped, as the server stamps
+// them when it marks the device offline.
+func (dev *Device) seenService(srv *clientsapi.Service) bool {
+	moved := false
+	for _, attr := range srv.GetAttrs() {
+		if srv.GetTyp() != clientsapi.Service_ONLINE {
+			if attr.GetTime() != nil && dev.seen(values.TimeFromPb(attr.GetTime())) {
+				moved = true
+			}
+		} else if attr.GetId() == "last_seen" {
+			if t, ok := values.AsTime(attr.GetValue()); ok && dev.seen(t) {
+				moved = true
+			}
+		}
+	}
+	return moved
+}
+
+// seenEvents moves LastSeen forward to the time of any of the events.
+func (dev *Device) seenEvents(events []*clientsapi.Event) bool {
+	moved := false
+	for _, event := range events {
+		if event.GetTime() != nil && dev.seen(values.TimeFromPb(event.GetTime())) {
+			moved = true
+		}
+	}
+	return moved
 }
 
 // onlineService returns the online service of the root endpoint or nil.
@@ -158,6 +208,7 @@ func (dev *Device) setOffline(log *log.Context) *clientsapi.Device {
 // or events and a nil attribute spec mean "unchanged".
 func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.Device) (*clientsapi.Device, error) {
 	update.ClientId = clientID
+	update.LastSeen = nil // Set by the server only.
 	if dev.ClientID != clientID {
 		dev.ClientID = clientID
 		if log != nil {
@@ -192,6 +243,7 @@ func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.
 		FullState: update.GetFullState(),
 		Typ:       update.GetTyp(),
 	}
+	seenMoved := false
 	for _, upd := range update.GetEndpoints() {
 		ep, found := dev.Endpoints[upd.GetId()]
 		if !found {
@@ -210,10 +262,14 @@ func (dev *Device) update(log *log.Context, clientID string, update *clientsapi.
 
 		epChanges := &clientsapi.Endpoint{Id: ep.ID, Label: ep.Label}
 		for _, srv := range upd.GetServices() {
+			seenMoved = dev.seenService(srv) || seenMoved
 			merged := dev.updateService(log, ep, update.GetFullState(), srv)
 			epChanges.Services = append(epChanges.Services, proto.Clone(merged).(*clientsapi.Service))
 		}
 		changes.Endpoints = append(changes.Endpoints, epChanges)
+	}
+	if seenMoved || update.GetFullState() {
+		changes.LastSeen = dev.lastSeenPb()
 	}
 	return changes, nil
 }

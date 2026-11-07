@@ -600,10 +600,14 @@ func (manager *DeviceManager) load() error {
 				manager.log.Warnf("failed to decode device: %s", err)
 				continue
 			}
+			lastSeen := upd.GetLastSeen() // Cleared by newDevice, as bridges may not set it.
 			dev, err := newDevice(manager.log, upd.GetClientId(), upd)
 			if err != nil {
 				manager.log.Warnf("failed to load device %q: %s", upd.GetId(), err)
 			} else {
+				if lastSeen != nil {
+					dev.seen(values.TimeFromPb(lastSeen))
+				}
 				manager.devices[dev.ID] = dev
 			}
 		}
@@ -749,6 +753,10 @@ func (manager *DeviceManager) handleDeviceUpdate(update rxDeviceUpdate) {
 							changes = &clientsapi.Device{Id: dev.ID, ClientId: update.ClientID}
 						}
 						changes.Events = events
+						if dev.seenEvents(events) {
+							changes.LastSeen = dev.lastSeenPb()
+							manager.changed = true
+						}
 					}
 				}
 				if eventsOnly && changes.GetEvents() == nil {

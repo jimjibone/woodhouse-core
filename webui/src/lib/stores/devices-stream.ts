@@ -13,7 +13,7 @@ import {
 	type TimeValue
 } from '$lib/api/v2/clients/client_service_pb';
 import { Info, Online, Battery } from '$lib/schema/zz_services';
-import { ROOT_ENDPOINT_ID, asBool, asInt, asText, asTimeValue, findAttr, iterServices } from '$lib/device';
+import { ROOT_ENDPOINT_ID, asBool, asInt, asText, findAttr, iterServices } from '$lib/device';
 import { UserServiceClient } from './user-service-client';
 import { Streamer, type HeartbeatHandler } from './streamer';
 
@@ -178,34 +178,18 @@ export const mergeEndpoints = (held: Endpoint[], next: Device): Endpoint[] => {
 	return out;
 };
 
-type Summary = Pick<DevicesStoreDevice, 'name' | 'online' | 'batteryLevel' | 'lastSeen'>;
-
-const newer = (a: TimeValue | undefined, b: TimeValue | undefined): TimeValue | undefined => {
-	if (a === undefined) return b;
-	if (b === undefined) return a;
-	return b.seconds > a.seconds || (b.seconds === a.seconds && b.nanos > a.nanos) ? b : a;
-};
+type Summary = Pick<DevicesStoreDevice, 'name' | 'online' | 'batteryLevel'>;
 
 // The device-level summary comes from the info, online and battery services.
 // The root endpoint is looked at first, so a device with a battery per
-// endpoint reports the root's. Last seen is the newest of online.last_seen, the
-// observation time of any other attribute and the time of any held event; the
-// online service's own attribute times are skipped, as the server stamps them
-// when it marks the device offline.
-const summarise = (id: string, endpoints: Endpoint[], events: Event[]): Summary => {
-	const sum: Summary = { name: id, online: false, batteryLevel: undefined, lastSeen: undefined };
-	for (const event of events) {
-		sum.lastSeen = newer(sum.lastSeen, event.time);
-	}
+// endpoint reports the root's. Last seen is not part of it: the server sends
+// it as Device.last_seen.
+const summarise = (id: string, endpoints: Endpoint[]): Summary => {
+	const sum: Summary = { name: id, online: false, batteryLevel: undefined };
 	let gotName = false;
 	let gotOnline = false;
 	let gotBattery = false;
 	for (const { endpoint, service } of iterServices({ endpoints })) {
-		if (service.typ !== Online.type) {
-			for (const attr of service.attrs) {
-				sum.lastSeen = newer(sum.lastSeen, attr.time);
-			}
-		}
 		if (service.typ === Info.type && !gotName) {
 			const name = asText(findAttr(service, Info.attributes.name)?.value);
 			if (name !== undefined) {
@@ -214,7 +198,6 @@ const summarise = (id: string, endpoints: Endpoint[], events: Event[]): Summary 
 			}
 		} else if (service.typ === Online.type && !gotOnline && endpoint.id === ROOT_ENDPOINT_ID) {
 			sum.online = asBool(findAttr(service, Online.attributes.online)?.value) ?? false;
-			sum.lastSeen = newer(sum.lastSeen, asTimeValue(findAttr(service, Online.attributes.lastSeen)?.value));
 			gotOnline = true;
 		} else if (service.typ === Battery.type && !gotBattery) {
 			const level = asInt(findAttr(service, Battery.attributes.level)?.value);
@@ -238,7 +221,9 @@ export const mergeDevice = (held: DevicesStoreDevice | undefined, next: Device):
 		id: next.id,
 		clientID: next.clientId || held?.clientID || '',
 		typ: next.typ,
-		...summarise(next.id, endpoints, events),
+		...summarise(next.id, endpoints),
+		// Unset in a partial update means unchanged.
+		lastSeen: next.lastSeen ?? held?.lastSeen,
 		endpoints,
 		events
 	};

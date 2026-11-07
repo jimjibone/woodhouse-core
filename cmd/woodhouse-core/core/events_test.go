@@ -278,6 +278,7 @@ func TestEventsOnlyUpdateIsForwarded(t *testing.T) {
 		t.Errorf("events = %v", got.GetEvents())
 	}
 	after := manager.GetDevice("dev-a")
+	before.LastSeen, after.LastSeen = nil, nil // Events move last seen.
 	if len(after.GetEvents()) != 0 || after.String() != before.String() {
 		t.Errorf("state changed: %v -> %v", before, after)
 	}
