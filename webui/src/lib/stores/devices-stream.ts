@@ -180,15 +180,29 @@ export const mergeEndpoints = (held: Endpoint[], next: Device): Endpoint[] => {
 
 type Summary = Pick<DevicesStoreDevice, 'name' | 'online' | 'batteryLevel' | 'lastSeen'>;
 
+const newer = (a: TimeValue | undefined, b: TimeValue | undefined): TimeValue | undefined => {
+	if (a === undefined) return b;
+	if (b === undefined) return a;
+	return b.seconds > a.seconds || (b.seconds === a.seconds && b.nanos > a.nanos) ? b : a;
+};
+
 // The device-level summary comes from the info, online and battery services.
 // The root endpoint is looked at first, so a device with a battery per
-// endpoint reports the root's.
+// endpoint reports the root's. Last seen is the newest of online.last_seen and
+// the observation time of any other attribute; the online service's own
+// attribute times are skipped, as the server stamps them when it marks the
+// device offline.
 const summarise = (id: string, endpoints: Endpoint[]): Summary => {
 	const sum: Summary = { name: id, online: false, batteryLevel: undefined, lastSeen: undefined };
 	let gotName = false;
 	let gotOnline = false;
 	let gotBattery = false;
 	for (const { endpoint, service } of iterServices({ endpoints })) {
+		if (service.typ !== Online.type) {
+			for (const attr of service.attrs) {
+				sum.lastSeen = newer(sum.lastSeen, attr.time);
+			}
+		}
 		if (service.typ === Info.type && !gotName) {
 			const name = asText(findAttr(service, Info.attributes.name)?.value);
 			if (name !== undefined) {
@@ -197,7 +211,7 @@ const summarise = (id: string, endpoints: Endpoint[]): Summary => {
 			}
 		} else if (service.typ === Online.type && !gotOnline && endpoint.id === ROOT_ENDPOINT_ID) {
 			sum.online = asBool(findAttr(service, Online.attributes.online)?.value) ?? false;
-			sum.lastSeen = asTimeValue(findAttr(service, Online.attributes.lastSeen)?.value);
+			sum.lastSeen = newer(sum.lastSeen, asTimeValue(findAttr(service, Online.attributes.lastSeen)?.value));
 			gotOnline = true;
 		} else if (service.typ === Battery.type && !gotBattery) {
 			const level = asInt(findAttr(service, Battery.attributes.level)?.value);

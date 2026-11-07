@@ -62,6 +62,17 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 
 		fullState := update.GetFullState()
 
+		// The device was last seen at the newest of online.last_seen and the
+		// observation time of any other attribute. The online service's own
+		// attribute times are skipped, as the server stamps them when it marks
+		// the device offline.
+		seen := func(t time.Time) {
+			if t.After(favorite.LastSeen.Get()) {
+				favorite.LastSeen.Set(t)
+				changed = true
+			}
+		}
+
 		for _, ep := range update.GetEndpoints() {
 			if ep.GetId() == favorite.EndpointID {
 				if favorite.EndpointLabel.Get() != ep.GetLabel() {
@@ -71,6 +82,14 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 			}
 
 			for _, update := range ep.GetServices() {
+				if update.GetTyp() != clientsapi.Service_ONLINE {
+					for _, attr := range update.GetAttrs() {
+						if attr.GetTime() != nil {
+							seen(values.TimeFromPb(attr.GetTime()))
+						}
+					}
+				}
+
 				// The device-wide services live on the root endpoint.
 				if ep.GetId() == RootEndpointID && update.GetTyp() == clientsapi.Service_INFO {
 					for _, attr := range update.GetAttrs() {
@@ -94,10 +113,7 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 
 						case "last_seen":
 							attrTime, _ := values.AsTime(attr.GetValue())
-							if !favorite.LastSeen.Get().Equal(attrTime) {
-								changed = true
-							}
-							favorite.LastSeen.Set(attrTime)
+							seen(attrTime)
 						}
 					}
 				}
