@@ -48,4 +48,15 @@ func TestFavoriteLastSeenFollowsAttributeUpdates(t *testing.T) {
 	if got := fav.LastSeen.Get(); !got.Equal(base.Add(2 * time.Minute)) {
 		t.Fatalf("last seen %s, want it unchanged", got)
 	}
+
+	// An events-only update moves it forward too.
+	events := &clientsapi.Device{Id: "dev", Events: []*clientsapi.Event{{
+		EndpointId: RootEndpointID, ServiceId: "button", Id: "press", Time: values.TimeToPb(base.Add(3 * time.Minute)),
+	}}}
+	if !fav.Update(events) {
+		t.Fatal("event update should report a change")
+	}
+	if got := fav.LastSeen.Get(); !got.Equal(base.Add(3 * time.Minute)) {
+		t.Fatalf("last seen %s, want the event time", got)
+	}
 }

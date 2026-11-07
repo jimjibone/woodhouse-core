@@ -188,12 +188,15 @@ const newer = (a: TimeValue | undefined, b: TimeValue | undefined): TimeValue | 
 
 // The device-level summary comes from the info, online and battery services.
 // The root endpoint is looked at first, so a device with a battery per
-// endpoint reports the root's. Last seen is the newest of online.last_seen and
-// the observation time of any other attribute; the online service's own
-// attribute times are skipped, as the server stamps them when it marks the
-// device offline.
-const summarise = (id: string, endpoints: Endpoint[]): Summary => {
+// endpoint reports the root's. Last seen is the newest of online.last_seen, the
+// observation time of any other attribute and the time of any held event; the
+// online service's own attribute times are skipped, as the server stamps them
+// when it marks the device offline.
+const summarise = (id: string, endpoints: Endpoint[], events: Event[]): Summary => {
 	const sum: Summary = { name: id, online: false, batteryLevel: undefined, lastSeen: undefined };
+	for (const event of events) {
+		sum.lastSeen = newer(sum.lastSeen, event.time);
+	}
 	let gotName = false;
 	let gotOnline = false;
 	let gotBattery = false;
@@ -235,7 +238,7 @@ export const mergeDevice = (held: DevicesStoreDevice | undefined, next: Device):
 		id: next.id,
 		clientID: next.clientId || held?.clientID || '',
 		typ: next.typ,
-		...summarise(next.id, endpoints),
+		...summarise(next.id, endpoints, events),
 		endpoints,
 		events
 	};

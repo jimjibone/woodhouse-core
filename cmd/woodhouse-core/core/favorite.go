@@ -62,14 +62,19 @@ func (favorite *Favorite) Update(update *clientsapi.Device) bool {
 
 		fullState := update.GetFullState()
 
-		// The device was last seen at the newest of online.last_seen and the
-		// observation time of any other attribute. The online service's own
-		// attribute times are skipped, as the server stamps them when it marks
-		// the device offline.
+		// The device was last seen at the newest of online.last_seen, the
+		// observation time of any other attribute and the time of any event.
+		// The online service's own attribute times are skipped, as the server
+		// stamps them when it marks the device offline.
 		seen := func(t time.Time) {
 			if t.After(favorite.LastSeen.Get()) {
 				favorite.LastSeen.Set(t)
 				changed = true
+			}
+		}
+		for _, event := range update.GetEvents() {
+			if event.GetTime() != nil {
+				seen(values.TimeFromPb(event.GetTime()))
 			}
 		}
 
