@@ -562,7 +562,7 @@ func (manager *DeviceManager) load() error {
 		if err != nil {
 			return err
 		}
-		manager.store.Del("devices")
+		err = manager.store.Del("devices")
 		if err != nil {
 			return err
 		}
