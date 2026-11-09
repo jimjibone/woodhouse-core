@@ -335,6 +335,22 @@ export type ButtonAttribute = typeof Button.attributes[keyof typeof Button.attri
 export type ButtonCommand = typeof Button.commands[keyof typeof Button.commands];
 export type ButtonEvent = typeof Button.events[keyof typeof Button.events];
 
+export const Rotary = {
+	name: 'rotary',
+	type: Service_ServiceType.ROTARY,
+	features: {},
+	attributes: {},
+	commands: {},
+	events: {
+		rotate: 'rotate',
+	},
+	options: {},
+} as const;
+export type RotaryFeature = typeof Rotary.features[keyof typeof Rotary.features];
+export type RotaryAttribute = typeof Rotary.attributes[keyof typeof Rotary.attributes];
+export type RotaryCommand = typeof Rotary.commands[keyof typeof Rotary.commands];
+export type RotaryEvent = typeof Rotary.events[keyof typeof Rotary.events];
+
 export const Contact = {
 	name: 'contact',
 	type: Service_ServiceType.CONTACT,
@@ -1506,6 +1522,34 @@ export const SERVICES: readonly ServiceDescriptor[] = [
 						desc: '',
 						min: 1,
 						max: 10,
+						step: 1,
+					},
+				],
+			},
+		],
+	},
+	{
+		name: 'rotary',
+		type: Service_ServiceType.ROTARY,
+		desc: 'A relative rotary input, e.g. a dial or knob. Each turn is an event; the service holds no position.',
+		open: false,
+		features: [],
+		attributes: [],
+		commands: [],
+		events: [
+			{
+				id: 'rotate',
+				desc: '',
+				features: [],
+				fields: [
+					{
+						id: 'steps',
+						type: 'int',
+						required: true,
+						features: [],
+						desc: 'Signed step count; positive is clockwise (up), negative anticlockwise (down).',
+						min: -255,
+						max: 255,
 						step: 1,
 					},
 				],
