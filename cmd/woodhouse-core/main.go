@@ -230,6 +230,9 @@ func main() {
 			}
 			defer notificationManager.Close()
 
+			deviceNotifier := core.NewDeviceNotifier(deviceManager, notificationManager)
+			defer deviceNotifier.Close()
+
 			inviteManager, err := core.NewInviteManager(store, userManager)
 			if err != nil {
 				return fmt.Errorf("failed to create invite manager: %s", err)
