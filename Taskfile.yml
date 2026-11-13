@@ -44,6 +44,12 @@ tasks:
       - task: build-component
         vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "woodhouse-core" }
 
+  build-whctl:
+    desc: Build the whctl command line client
+    cmds:
+      - task: build-component
+        vars: { GOOS: "{{.GOOS}}", GOARCH: "{{.GOARCH}}", COMPONENT: "whctl" }
+
   build-core-full:
     desc: Build woodhouse-core
     cmds:
